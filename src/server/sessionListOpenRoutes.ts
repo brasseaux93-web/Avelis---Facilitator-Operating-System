@@ -8,6 +8,7 @@ import {
 } from '../db/schema';
 import { appendLedgerLine } from '../lib/ledgerAppend';
 import { getJointMinute } from './minute';
+import { createRoomToken } from '../lib/auth';
 
 export function registerSessionListOpenRoutes(
   app: express.Express,
@@ -167,5 +168,34 @@ app.post('/api/sessions/:id/open', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to open session' });
   }
 });
+
+  /**
+   * Mint a host room token for the authenticated facilitator.
+   * partyId is the facilitator account id — not a participant row.
+   */
+  app.post('/api/sessions/:id/room-access', requireAuth, async (req, res) => {
+    const sessionId = req.params.id;
+    const facilitatorId = req.facilitatorId!;
+    try {
+      const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      if (session.facilitatorId !== facilitatorId) {
+        return res.status(403).json({ error: 'Not authorized for this session.' });
+      }
+      if (session.status !== 'open') {
+        return res.status(409).json({ error: 'Room access is only available while the session is open.' });
+      }
+      const roomToken = createRoomToken(sessionId, facilitatorId);
+      res.status(200).json({
+        sessionId,
+        partyId: facilitatorId,
+        roomToken,
+        identityClass: 'facilitator',
+      });
+    } catch (error) {
+      console.error('[API] Failed to mint room access', error);
+      res.status(500).json({ error: 'Could not open live room.' });
+    }
+  });
 
 }

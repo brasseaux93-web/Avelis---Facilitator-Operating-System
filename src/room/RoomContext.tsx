@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 // Product Law L1: Messages MUST NOT touch durable storage on the client.
-// This context stores everything in memory only. It deliberately avoids localStorage,
-// sessionStorage, indexedDB, or caching layers. No history dependency.
+// Tab memory only. Unmount / room_closed clears the live view. No scrollback after close.
 
 interface Message {
   id: string;
@@ -19,6 +18,16 @@ interface RoomContextType {
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
 
+function roomSocketUrl(params: URLSearchParams): string {
+  const configured = import.meta.env.VITE_ROOM_WS_URL as string | undefined;
+  const origin =
+    configured ||
+    `${typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${
+      typeof window !== 'undefined' ? window.location.hostname : 'localhost'
+    }:3002`;
+  return `${origin.replace(/\/$/, '')}?${params.toString()}`;
+}
+
 export function RoomProvider({
   sessionId,
   partyId,
@@ -33,8 +42,8 @@ export function RoomProvider({
   children: ReactNode;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [ws, setWs] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams({
@@ -43,14 +52,25 @@ export function RoomProvider({
       roomToken,
       identityClass,
     });
-    const socket = new WebSocket(`ws://localhost:3002?${params.toString()}`);
+    const socket = new WebSocket(roomSocketUrl(params));
+    socketRef.current = socket;
 
     socket.onopen = () => setIsConnected(true);
-    socket.onclose = () => setIsConnected(false);
+    socket.onclose = () => {
+      setIsConnected(false);
+      setMessages([]);
+    };
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      // Ignore history payloads if a server ever sends them — late joiners get no scrollback.
+      let data: { type?: string; message?: Message & { identityClass?: string } };
+      try {
+        data = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      if (data.type === 'history') {
+        return;
+      }
       if (data.type === 'message' && data.message) {
         const msg = data.message;
         setMessages((prev) => [
@@ -68,17 +88,17 @@ export function RoomProvider({
       }
     };
 
-    setWs(socket);
-
     return () => {
       socket.close();
+      socketRef.current = null;
       setMessages([]);
     };
   }, [sessionId, partyId, roomToken, identityClass]);
 
   const sendMessage = (text: string) => {
-    if (ws && isConnected) {
-      ws.send(JSON.stringify({ type: 'chat', text }));
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'chat', text }));
     }
   };
 

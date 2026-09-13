@@ -1,8 +1,9 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import './sessions.css';
 import { apiPost } from '../lib/apiClient';
 import { setPartyViewToken } from './party';
+import { IDENTITY_CLASS_OPTIONS } from '../lib/identityLabels';
 
 export const Route = createFileRoute('/join')({
   component: JoinPage,
@@ -26,7 +27,6 @@ function JoinPage() {
         sessionId: string;
         partyId: string;
         roomToken: string;
-        supabaseToken: string;
         identityClass: string;
       }>(
         '/api/invites/redeem',
@@ -45,10 +45,8 @@ function JoinPage() {
         state: {
           partyId: res.partyId,
           roomToken: res.roomToken,
-          supabaseToken: res.supabaseToken,
           identityClass: res.identityClass,
           partySessionToken: res.partySessionToken,
-          isHost: false,
         } as Record<string, unknown>,
       });
     } catch (err) {
@@ -59,12 +57,12 @@ function JoinPage() {
   };
 
   return (
-    <div className="sessions-page">
-      <p className="sessions-page__eyebrow">Party access</p>
-      <h1 className="sessions-page__title">Join session</h1>
+    <div className="sessions-page sessions-page--temporal">
+      <p className="sessions-page__eyebrow">Temporary session</p>
+      <h1 className="sessions-page__title">Join with an invite</h1>
       <p className="sessions-disclosure sessions-disclosure--persist" role="note">
-        Room messages are delivered live and are not stored by Avelis. Credentials for this
-        session stay in memory only for the active browser tab.
+        You do not create an account. This tab holds credentials in memory only. Room messages are
+        delivered live and are not stored by Avelis.
       </p>
       <form className="sessions-form" onSubmit={redeem}>
         <div className="sessions-field">
@@ -79,16 +77,17 @@ function JoinPage() {
           />
         </div>
         <div className="sessions-field">
-          <label htmlFor="identity">Identity class</label>
+          <label htmlFor="identity">How you appear</label>
           <select
             id="identity"
             value={identityClass}
             onChange={(e) => setIdentityClass(e.target.value)}
           >
-            <option value="named">named</option>
-            <option value="role_only">role_only</option>
-            <option value="affiliation_only">affiliation_only</option>
-            <option value="unnamed">unnamed</option>
+            {IDENTITY_CLASS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
         </div>
         <div className="sessions-field">
@@ -98,6 +97,7 @@ function JoinPage() {
             value={displayLabel}
             onChange={(e) => setDisplayLabel(e.target.value)}
             autoComplete="off"
+            placeholder="e.g. Counsel for Party A"
           />
         </div>
         {error && (
@@ -106,12 +106,9 @@ function JoinPage() {
           </p>
         )}
         <button type="submit" className="btn btn--primary" disabled={loading}>
-          {loading ? 'Joining…' : 'Join'}
+          {loading ? 'Joining…' : 'Enter the room'}
         </button>
       </form>
-      <p className="sessions-page__subtitle">
-        After joining, process lines published to parties are on <Link to="/party">/party</Link>.
-      </p>
     </div>
   );
 }

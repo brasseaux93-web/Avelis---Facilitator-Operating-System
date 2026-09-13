@@ -12,7 +12,8 @@ import {
   signFacilitatorToken,
   signPartySessionToken,
   createRoomToken,
-  signSupabaseRealtimeToken,
+  organizationKeyIds,
+  isPublicRegisterEnabled,
 } from '../lib/auth';
 import {
   IDENTITY_CLASSES,
@@ -26,6 +27,14 @@ export function registerAuthRoutes(app: express.Express) {
     windowMs: 15 * 60 * 1000,
     max: 3,
     message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  const authRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Too many sign-in attempts. Try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
   });
@@ -46,16 +55,18 @@ export function registerAuthRoutes(app: express.Express) {
         `[Contact API] Access request received (email domain: ${String(email).split('@')[1] ?? '?'})`
       );
       void useCase;
-      await new Promise((resolve) => setTimeout(resolve, 800));
       res.status(200).json({ success: true, message: 'Request received' });
-    } catch (error) {
-      console.error('[Contact API] Failed to process request', error);
+    } catch {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
 
+  app.get('/api/auth/register-status', (_req, res) => {
+    res.status(200).json({ publicRegister: isPublicRegisterEnabled() });
+  });
+
   /** POST /api/auth/login — no password logging. */
-  app.post('/api/auth/login', async (req, res) => {
+  app.post('/api/auth/login', authRateLimiter, async (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
       return res.status(400).json({ error: 'Sign in did not complete.' });
@@ -83,14 +94,8 @@ export function registerAuthRoutes(app: express.Express) {
         email: account.email,
       });
 
-      // We only mint a supabase token when a session starts or they join a room, but they can get a generic one here or per-session.
-      // Wait, in Avelis, Facilitators load the session and THEN connect. We can just mint a host token here that doesn't bind to a specific session, or they mint it later.
-      // Actually, Supabase Realtime channel access can just check the role if we bind it. But for ease, let's let them have a generic token.
-      const supabaseToken = signSupabaseRealtimeToken('any', account.id, 'host');
-
       res.status(200).json({
         token,
-        supabaseToken,
         facilitator: {
           id: account.id,
           email: account.email,
@@ -104,15 +109,27 @@ export function registerAuthRoutes(app: express.Express) {
     }
   });
 
-  /** POST /api/auth/register — Public sign up. */
-  app.post('/api/auth/register', async (req, res) => {
+  /**
+   * POST /api/auth/register — facilitator organization setup.
+   * Disabled in production unless ENABLE_PUBLIC_REGISTER=true.
+   */
+  app.post('/api/auth/register', authRateLimiter, async (req, res) => {
+    if (!isPublicRegisterEnabled()) {
+      return res.status(403).json({
+        error: 'Facilitator accounts are provisioned after institutional evaluation.',
+      });
+    }
 
     const { email, password, displayName, organizationName, region } = req.body || {};
     if (!email || !password || !displayName) {
       return res.status(400).json({ error: 'email, password, and displayName are required' });
     }
+    if (typeof password !== 'string' || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    }
 
     try {
+      const keys = organizationKeyIds();
       const passwordHash = await hashPassword(password);
       const created = await db.transaction(async (tx) => {
         const [org] = await tx
@@ -120,8 +137,8 @@ export function registerAuthRoutes(app: express.Express) {
           .values({
             name: organizationName || 'New Organization',
             region: region || 'local',
-            encryptionKeyId: 'local-dev-encryption',
-            signingKeyId: 'local-dev-signing',
+            encryptionKeyId: keys.encryptionKeyId,
+            signingKeyId: keys.signingKeyId,
           })
           .returning();
 
@@ -145,11 +162,8 @@ export function registerAuthRoutes(app: express.Express) {
         email: created.facilitator.email,
       });
 
-      const supabaseToken = signSupabaseRealtimeToken('any', created.facilitator.id, 'host');
-
       res.status(201).json({
         token,
-        supabaseToken,
         facilitator: {
           id: created.facilitator.id,
           email: created.facilitator.email,
@@ -183,15 +197,9 @@ export function registerAuthRoutes(app: express.Express) {
         .from(parties)
         .where(and(eq(parties.inviteCodeHash, codeHash), eq(parties.inviteStatus, 'pending')));
 
-      let matched = candidates.find((p) => p.inviteCodeHash && verifyInviteCode(code, p.inviteCodeHash));
-      if (!matched) {
-        const pending = await db
-          .select()
-          .from(parties)
-          .where(eq(parties.inviteStatus, 'pending'))
-          .limit(200);
-        matched = pending.find((p) => p.inviteCodeHash && verifyInviteCode(code, p.inviteCodeHash));
-      }
+      const matched = candidates.find(
+        (p) => p.inviteCodeHash && verifyInviteCode(code, p.inviteCodeHash)
+      );
 
       if (!matched) {
         recordInviteFailure(ip);
@@ -228,6 +236,8 @@ export function registerAuthRoutes(app: express.Express) {
             identityClass: nextIdentity as typeof matched.identityClass,
             displayLabel: nextLabel,
             inviteCodeHash: null,
+            // Session-scoped delivery address is no longer needed after join.
+            deliveryAddress: null,
           })
           .where(eq(parties.id, matched.id))
           .returning();
@@ -261,14 +271,12 @@ export function registerAuthRoutes(app: express.Express) {
         partyId: updated.id,
       });
       const roomToken = createRoomToken(updated.sessionId, updated.id);
-      const supabaseToken = signSupabaseRealtimeToken(updated.sessionId, updated.id, 'guest');
 
       res.status(200).json({
         partySessionToken,
         sessionId: updated.sessionId,
         partyId: updated.id,
         roomToken,
-        supabaseToken,
         identityClass: updated.identityClass,
         displayLabel: updated.displayLabel,
       });
