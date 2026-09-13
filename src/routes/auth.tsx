@@ -46,15 +46,23 @@ function AuthPage() {
   return (
     <div className="auth-layout">
       <div className="auth-ambient-glow" aria-hidden="true"></div>
-      
+
       <div className="auth-panel-form">
         <div className="auth-form-container">
           <div className="auth-header">
             <div className="auth-brand-logo" aria-hidden="true">
-              <svg width="24" height="24" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 28L16 4L25 28" />
-                <path d="M11.5 19L20.5 19" />
-                <path d="M13 19V14L16 11L19 14V19" />
+              {/* Geometric protocol A — not a lock */}
+              <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
+                <rect x="4" y="8" width="5" height="48" rx="0.5" fill="currentColor" />
+                <rect x="55" y="8" width="5" height="48" rx="0.5" fill="currentColor" />
+                <path
+                  d="M20 52 L32 12 L44 52"
+                  stroke="currentColor"
+                  strokeWidth="4.5"
+                  strokeLinecap="square"
+                  strokeLinejoin="miter"
+                />
+                <path d="M25 36 H39" stroke="currentColor" strokeWidth="4" strokeLinecap="square" />
               </svg>
             </div>
             <h2 className="auth-title">Facilitator sign in</h2>
@@ -63,10 +71,14 @@ function AuthPage() {
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
             {formError && (
-              <span className="auth-error" role="alert">{formError}</span>
+              <span className="auth-error" role="alert">
+                {formError}
+              </span>
             )}
             <div className="auth-field">
-              <label htmlFor="email" className="auth-label">Work email</label>
+              <label htmlFor="email" className="auth-label">
+                Work email
+              </label>
               <input
                 id="email"
                 type="email"
@@ -76,17 +88,21 @@ function AuthPage() {
                 autoComplete="email"
                 required
                 aria-invalid={!!emailError}
-                aria-describedby={emailError ? "email-error" : undefined}
+                aria-describedby={emailError ? 'email-error' : undefined}
                 disabled={isLoading}
               />
               {emailError && (
-                <span id="email-error" className="auth-error" aria-live="polite">{emailError}</span>
+                <span id="email-error" className="auth-error" aria-live="polite">
+                  {emailError}
+                </span>
               )}
             </div>
 
             <div className="auth-field">
               <div className="auth-actions">
-                <label htmlFor="password" className="auth-label">Password</label>
+                <label htmlFor="password" className="auth-label">
+                  Password
+                </label>
               </div>
               <input
                 id="password"
@@ -100,11 +116,7 @@ function AuthPage() {
               />
             </div>
 
-            <button 
-              type="submit" 
-              className="auth-btn auth-btn--primary" 
-              disabled={isLoading}
-            >
+            <button type="submit" className="auth-btn auth-btn--primary" disabled={isLoading}>
               {isLoading && <span className="auth-spinner" aria-hidden="true"></span>}
               {isLoading ? 'Signing in…' : 'Sign in'}
             </button>
@@ -112,17 +124,15 @@ function AuthPage() {
 
           <div className="auth-divider">or</div>
 
-          <button 
-            type="button" 
-            className="auth-btn auth-btn--sso" 
-            disabled
-            title="Not available in MVP"
-          >
+          <button type="button" className="auth-btn auth-btn--sso" disabled title="Not available in MVP">
             Not available in MVP
           </button>
 
           <div className="auth-trust-note">
-            <span>Facilitator access uses organization-scoped accounts. Tokens stay in memory only.</span>
+            <span>
+              Facilitator access uses organization-scoped accounts. Tokens stay in memory only.
+              Room messages are not stored by Avelis.
+            </span>
           </div>
         </div>
       </div>
