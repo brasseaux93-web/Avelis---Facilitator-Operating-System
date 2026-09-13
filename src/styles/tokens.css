@@ -1,0 +1,217 @@
+/* src/styles/tokens.css — Premium 2026 institutional tokens
+   Binding: docs/visual-system.md + Product Instruction §11
+   Canvas: deep near-black · Panels: warm paper · Accent: desaturated teal
+   Type: system UI stack + refined mono (Google-free)
+*/
+
+:root,
+[data-theme='light'] {
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem);
+  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 0.9375rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.0625rem);
+  --text-lg: clamp(1.125rem, 1rem + 0.625vw, 1.375rem);
+  --text-xl: clamp(1.375rem, 1.1rem + 1.1vw, 2rem);
+  --text-2xl: clamp(1.875rem, 1.2rem + 2.75vw, 3.25rem);
+  --text-3xl: clamp(2.5rem, 1rem + 4.5vw, 4.75rem);
+  --text-hero: clamp(2.75rem, 0.5rem + 8vw, 6.5rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-32: 8rem;
+
+  --color-bg: #F4F0E8;
+  --color-surface: #FAF7F1;
+  --color-surface-2: #FFFDF8;
+  --color-surface-offset: #EBE6DC;
+  --color-surface-offset-2: #E3DDD2;
+  --color-divider: #D9D3C8;
+  --color-border: #CEC7BA;
+  --color-border-subtle: #E5DFD4;
+
+  --color-text: #14141A;
+  --color-text-muted: #5C5A56;
+  --color-text-faint: #8A8680;
+  --color-text-inverse: #F4F0E8;
+
+  --color-accent: oklch(0.48 0.06 195);
+  --color-accent-hover: oklch(0.42 0.06 195);
+  --color-accent-active: oklch(0.38 0.055 195);
+  --color-accent-btn: oklch(0.52 0.07 195);
+  --color-accent-btn-hover: oklch(0.46 0.07 195);
+  --color-accent-btn-active: oklch(0.40 0.06 195);
+  --color-accent-highlight: oklch(0.94 0.02 195);
+  --color-on-accent: #F4F0E8;
+  --color-accent-rgb: 55, 120, 128;
+  --color-accent-solid: #377880;
+
+  --color-success: #3F6B45;
+  --color-success-highlight: #D8E8D6;
+  --color-eyebrow: oklch(0.45 0.05 195);
+  --color-danger: #B91C1C;
+  --color-focus: oklch(0.45 0.07 195);
+
+  --color-ledger-attest: #A67C78;
+  --color-ledger-destroy: #C45C58;
+
+  --glass-bg: rgba(244, 240, 232, 0.78);
+  --glass-bg-strong: rgba(244, 240, 232, 0.92);
+  --glass-border: rgba(180, 172, 158, 0.45);
+  --glass-blur: 20px;
+  --glass-blur-strong: 32px;
+  --glass-saturate: 1.15;
+
+  --atmosphere-1: radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.65 0.05 195 / 0.08), transparent 70%);
+  --atmosphere-2: radial-gradient(ellipse 60% 40% at 80% 20%, oklch(0.65 0.04 195 / 0.04), transparent 60%);
+  --atmosphere-3: radial-gradient(ellipse 50% 30% at 20% 80%, oklch(0.55 0.03 260 / 0.03), transparent 60%);
+
+  --shadow-xs: 0 1px 2px rgba(20, 20, 26, 0.04), 0 1px 1px rgba(20, 20, 26, 0.03);
+  --shadow-sm: 0 1px 3px rgba(20, 20, 26, 0.06), 0 1px 2px rgba(20, 20, 26, 0.04);
+  --shadow-md: 0 4px 16px rgba(20, 20, 26, 0.08), 0 2px 6px rgba(20, 20, 26, 0.04);
+  --shadow-lg: 0 12px 40px rgba(20, 20, 26, 0.12), 0 4px 12px rgba(20, 20, 26, 0.06);
+  --shadow-xl: 0 24px 64px rgba(20, 20, 26, 0.16), 0 8px 24px rgba(20, 20, 26, 0.08);
+  --shadow-glass: 0 8px 32px rgba(20, 20, 26, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --shadow-glass-hover: 0 16px 48px rgba(20, 20, 26, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-accent-glow: 0 0 24px oklch(0.55 0.06 195 / 0.18), 0 4px 16px oklch(0.55 0.06 195 / 0.1);
+  --shadow-inner-top: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --shadow-hairline: 0 0 0 1px var(--color-border);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-full: 9999px;
+
+  --transition-interactive: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-lift: 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-theme: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --content-narrow: 640px;
+  --content-default: 880px;
+  --content-wide: 1120px;
+  --content-full: 100%;
+
+  --font-display: "Segoe UI", "Helvetica Neue", system-ui, -apple-system, sans-serif;
+  --font-body: "Segoe UI", "Helvetica Neue", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --header-height: 4rem;
+  --tracking-eyebrow: 0.14em;
+}
+
+[data-theme='dark'] {
+  --color-bg: oklch(0.16 0.01 260);
+  --color-surface: oklch(0.20 0.012 260);
+  --color-surface-2: oklch(0.23 0.012 260);
+  --color-surface-offset: oklch(0.22 0.01 260);
+  --color-surface-offset-2: oklch(0.26 0.01 260);
+  --color-divider: oklch(0.28 0.01 260);
+  --color-border: oklch(0.32 0.012 260);
+  --color-border-subtle: oklch(0.28 0.01 260);
+
+  --color-text: oklch(0.93 0.01 90);
+  --color-text-muted: oklch(0.72 0.015 260);
+  --color-text-faint: oklch(0.55 0.015 260);
+  --color-text-inverse: oklch(0.16 0.01 260);
+
+  --color-accent: oklch(0.72 0.06 195);
+  --color-accent-hover: oklch(0.78 0.06 195);
+  --color-accent-active: oklch(0.82 0.055 195);
+  --color-accent-btn: oklch(0.62 0.07 195);
+  --color-accent-btn-hover: oklch(0.68 0.07 195);
+  --color-accent-btn-active: oklch(0.74 0.06 195);
+  --color-accent-highlight: oklch(0.28 0.03 195);
+  --color-on-accent: oklch(0.14 0.01 260);
+  --color-accent-rgb: 90, 170, 175;
+  --color-accent-solid: #5AAAB0;
+
+  --color-success: oklch(0.72 0.08 145);
+  --color-success-highlight: oklch(0.26 0.03 145);
+  --color-eyebrow: oklch(0.78 0.04 195);
+  --color-danger: #E07070;
+  --color-focus: oklch(0.72 0.07 195);
+
+  --color-ledger-attest: #ECC3BF;
+  --color-ledger-destroy: #E07070;
+
+  --glass-bg: oklch(0.16 0.01 260 / 0.78);
+  --glass-bg-strong: oklch(0.16 0.01 260 / 0.90);
+  --glass-border: oklch(0.35 0.015 260 / 0.55);
+
+  --atmosphere-1: radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.55 0.05 195 / 0.07), transparent 70%);
+  --atmosphere-2: radial-gradient(ellipse 60% 40% at 80% 20%, oklch(0.55 0.04 195 / 0.04), transparent 60%);
+  --atmosphere-3: radial-gradient(ellipse 50% 30% at 20% 80%, oklch(0.40 0.02 260 / 0.05), transparent 60%);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px 1px rgba(0, 0, 0, 0.18);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.32);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.58), 0 8px 24px rgba(0, 0, 0, 0.36);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-glass-hover: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-accent-glow: 0 0 32px oklch(0.55 0.06 195 / 0.14), 0 4px 16px oklch(0.55 0.06 195 / 0.1);
+  --shadow-inner-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-hairline: 0 0 0 1px var(--color-border);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-bg: oklch(0.16 0.01 260);
+    --color-surface: oklch(0.20 0.012 260);
+    --color-surface-2: oklch(0.23 0.012 260);
+    --color-surface-offset: oklch(0.22 0.01 260);
+    --color-surface-offset-2: oklch(0.26 0.01 260);
+    --color-divider: oklch(0.28 0.01 260);
+    --color-border: oklch(0.32 0.012 260);
+    --color-border-subtle: oklch(0.28 0.01 260);
+    --color-text: oklch(0.93 0.01 90);
+    --color-text-muted: oklch(0.72 0.015 260);
+    --color-text-faint: oklch(0.55 0.015 260);
+    --color-text-inverse: oklch(0.16 0.01 260);
+    --color-accent: oklch(0.72 0.06 195);
+    --color-accent-hover: oklch(0.78 0.06 195);
+    --color-accent-active: oklch(0.82 0.055 195);
+    --color-accent-btn: oklch(0.62 0.07 195);
+    --color-accent-btn-hover: oklch(0.68 0.07 195);
+    --color-accent-btn-active: oklch(0.74 0.06 195);
+    --color-accent-highlight: oklch(0.28 0.03 195);
+    --color-on-accent: oklch(0.14 0.01 260);
+    --color-accent-rgb: 90, 170, 175;
+    --color-accent-solid: #5AAAB0;
+    --color-success: oklch(0.72 0.08 145);
+    --color-success-highlight: oklch(0.26 0.03 145);
+    --color-eyebrow: oklch(0.78 0.04 195);
+    --color-danger: #E07070;
+    --color-focus: oklch(0.72 0.07 195);
+    --color-ledger-attest: #ECC3BF;
+    --color-ledger-destroy: #E07070;
+    --glass-bg: oklch(0.16 0.01 260 / 0.78);
+    --glass-bg-strong: oklch(0.16 0.01 260 / 0.90);
+    --glass-border: oklch(0.35 0.015 260 / 0.55);
+    --atmosphere-1: radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.55 0.05 195 / 0.07), transparent 70%);
+    --atmosphere-2: radial-gradient(ellipse 60% 40% at 80% 20%, oklch(0.55 0.04 195 / 0.04), transparent 60%);
+    --atmosphere-3: radial-gradient(ellipse 50% 30% at 20% 80%, oklch(0.40 0.02 260 / 0.05), transparent 60%);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px 1px rgba(0, 0, 0, 0.18);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.22);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.28);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.32);
+    --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.58), 0 8px 24px rgba(0, 0, 0, 0.36);
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --shadow-glass-hover: 0 16px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --shadow-accent-glow: 0 0 32px oklch(0.55 0.06 195 / 0.14), 0 4px 16px oklch(0.55 0.06 195 / 0.1);
+    --shadow-inner-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+}
