@@ -172,10 +172,7 @@ function PartyViewPage() {
                   The joint minute is optional. It is separate from the live room and may be
                   exported or wiped.
                 </p>
-                <pre
-                  className="sessions-code-once"
-                  style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}
-                >
+                <pre className="sessions-code-once" style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>
                   {minute.content}
                 </pre>
                 <div className="sessions-actions">
