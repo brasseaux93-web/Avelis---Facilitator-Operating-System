@@ -421,30 +421,30 @@ function SessionConsolePage() {
       <div className="sessions-panel">
         <h3>Session controls</h3>
         <div className="sessions-actions">
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => void openSession()}
-            disabled={s.status !== 'draft'}
-          >
-            Open session
-          </button>
-          <button
-            type="button"
-            className="btn btn--secondary"
-            onClick={() => void closeSession()}
-            disabled={s.status !== 'open'}
-          >
-            Close session
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => void enterLiveRoom()}
-            disabled={s.status !== 'open' || enteringRoom}
-          >
-            {enteringRoom ? 'Opening room…' : 'Enter live room'}
-          </button>
+          {s.status === 'open' ? (
+            <>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => void enterLiveRoom()}
+                disabled={enteringRoom}
+              >
+                {enteringRoom ? 'Opening room…' : 'Enter live room'}
+              </button>
+              <button type="button" className="btn btn--secondary" onClick={() => void closeSession()}>
+                Close session
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => void openSession()}
+              disabled={s.status !== 'draft'}
+            >
+              Open session
+            </button>
+          )}
         </div>
         <p className="sessions-page__subtitle">
           Parties join at <code>{joinUrlHint}</code> with a one-time invite. They do not create

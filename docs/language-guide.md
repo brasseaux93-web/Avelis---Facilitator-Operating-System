@@ -34,6 +34,7 @@ Use language that:
 | Product | AI conflict resolution · private rooms |
 | In-room actor | Conflict agent / Avelis |
 | Process aid | Process copilot |
+| Named intervention | Current move |
 | Copilot turn | Ask a process question |
 | Non-persistence disclosure | Room messages are not stored |
 

@@ -7,6 +7,12 @@ interface Message {
   senderClass: string;
   text: string;
   timestamp: number;
+  technique?: string | null;
+}
+
+interface ProcessMove {
+  technique: string;
+  label: string;
 }
 
 interface Whisper {
@@ -17,10 +23,12 @@ interface Whisper {
 interface RoomContextType {
   messages: Message[];
   whispers: Whisper[];
+  processMove: ProcessMove | null;
   sendMessage: (text: string) => void;
   invokeAgent: (prompt?: string) => void;
   isConnected: boolean;
   isFacilitator: boolean;
+  identityClass: string;
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
@@ -50,6 +58,7 @@ export function RoomProvider({
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [whispers, setWhispers] = useState<Whisper[]>([]);
+  const [processMove, setProcessMove] = useState<ProcessMove | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const isFacilitator = identityClass === 'facilitator';
@@ -69,6 +78,7 @@ export function RoomProvider({
       setIsConnected(false);
       setMessages([]);
       setWhispers([]);
+      setProcessMove(null);
     };
 
     socket.onmessage = (event) => {
@@ -76,6 +86,7 @@ export function RoomProvider({
         type?: string;
         text?: string;
         technique?: string | null;
+        label?: string | null;
         message?: Message & { identityClass?: string; technique?: string };
       };
       try {
@@ -84,6 +95,13 @@ export function RoomProvider({
         return;
       }
       if (data.type === 'history') {
+        return;
+      }
+      if (data.type === 'process_state' && typeof data.technique === 'string' && data.technique) {
+        setProcessMove({
+          technique: data.technique,
+          label: typeof data.label === 'string' && data.label ? data.label : data.technique,
+        });
         return;
       }
       if (data.type === 'agent_whisper' && typeof data.text === 'string') {
@@ -102,11 +120,13 @@ export function RoomProvider({
             senderClass: msg.identityClass || msg.senderClass || 'party',
             text: msg.text,
             timestamp: msg.timestamp || Date.now(),
+            technique: msg.technique || null,
           },
         ]);
       } else if (data.type === 'room_closed') {
         setMessages([]);
         setWhispers([]);
+        setProcessMove(null);
         socket.close();
       }
     };
@@ -116,6 +136,7 @@ export function RoomProvider({
       socketRef.current = null;
       setMessages([]);
       setWhispers([]);
+      setProcessMove(null);
     };
   }, [sessionId, partyId, roomToken, identityClass]);
 
@@ -134,7 +155,18 @@ export function RoomProvider({
   };
 
   return (
-    <RoomContext.Provider value={{ messages, whispers, sendMessage, invokeAgent, isConnected, isFacilitator }}>
+    <RoomContext.Provider
+      value={{
+        messages,
+        whispers,
+        processMove,
+        sendMessage,
+        invokeAgent,
+        isConnected,
+        isFacilitator,
+        identityClass,
+      }}
+    >
       {children}
     </RoomContext.Provider>
   );

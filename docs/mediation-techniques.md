@@ -8,10 +8,12 @@ The live agent picks one named move from the rolling room window. The facilitato
 
 | Move | Family | What Avelis does |
 |---|---|---|
+| Name the room | Process | Three facts, then the opening question |
 | Interests, not positions | Principled (Fisher/Ury) | Asks what a workable outcome has to *do* |
 | Name the issue as a label | Principled | Tables a process label, not a quote |
 | People vs problem | Principled | Splits accusation from the issue |
 | Equal turn | Facilitative | Invites the party who has not spoken |
+| Map the constraints | Principled | One constraint per party, before options |
 | Invent options | Principled | Options before evaluation |
 | Park the blocker | Process | Parks the looping item; smaller item first |
 | Shuttle / caucus | Moore / shuttle diplomacy | Private turn; process facts return, not the talk |

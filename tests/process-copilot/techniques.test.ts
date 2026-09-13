@@ -2,6 +2,10 @@ import { describe, expect, test } from 'vitest';
 import { detectLooping, selectTechnique } from '../../src/lib/processCopilot/techniques';
 
 describe('mediation techniques', () => {
+  test('empty room names the room', () => {
+    expect(selectTechnique({ turns: [] }).id).toBe('ground_rules');
+  });
+
   test('opens on interests', () => {
     const move = selectTechnique({
       turns: [{ speaker: 'party', identityClass: 'role_only', text: 'We need the hours changed.' }],

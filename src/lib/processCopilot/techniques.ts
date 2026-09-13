@@ -9,10 +9,12 @@
  */
 
 export const TECHNIQUE_IDS = [
+  'ground_rules',
   'open_interests',
   'frame_label',
   'separate_people',
   'turn_taking',
+  'interest_map',
   'expand_options',
   'park_blocker',
   'caucus_shuttle',
@@ -32,6 +34,13 @@ export type TechniqueMove = {
 };
 
 export const TECHNIQUES: Record<TechniqueId, TechniqueMove> = {
+  ground_rules: {
+    id: 'ground_rules',
+    label: 'Name the room',
+    family: 'process',
+    whisper: 'State the three facts, then ask the opening interest question. Do not perform warmth.',
+    speak: 'Three facts: I am in this room and you can see me. This talk is not stored. The facilitator writes the process record, not me. What does a workable outcome have to do?',
+  },
   open_interests: {
     id: 'open_interests',
     label: 'Interests, not positions',
@@ -59,6 +68,13 @@ export const TECHNIQUES: Record<TechniqueId, TechniqueMove> = {
     family: 'facilitative',
     whisper: 'Invite the party who has not spoken. Do not summarize the other.',
     speak: 'I want a turn from the person who has not spoken yet. One sentence on what a workable outcome has to do.',
+  },
+  interest_map: {
+    id: 'interest_map',
+    label: 'Map the constraints',
+    family: 'principled',
+    whisper: 'Each party names one constraint the outcome must satisfy. Not a position. Not a number.',
+    speak: 'Each of you: one constraint a workable outcome has to satisfy. Not your position. We will hear both before anyone answers.',
   },
   expand_options: {
     id: 'expand_options',
@@ -151,7 +167,8 @@ export function selectTechnique(input: TechniqueInput): TechniqueMove {
   const airtimeSkew =
     classCounts.length >= 2 && Math.max(...classCounts) >= Math.max(3, partyTurns.length - 1);
 
-  if (n <= 2) return TECHNIQUES.open_interests;
+  if (partyTurns.length === 0) return TECHNIQUES.ground_rules;
+  if (partyTurns.length <= 2) return TECHNIQUES.open_interests;
   if (accused) return TECHNIQUES.separate_people;
   if (demanded) return TECHNIQUES.expand_options;
   if (airtimeSkew) return TECHNIQUES.turn_taking;
@@ -160,7 +177,7 @@ export function selectTechnique(input: TechniqueInput): TechniqueMove {
   if ((input.agreedCount || 0) > 0) return TECHNIQUES.single_text;
   if (n >= 10) return TECHNIQUES.reality_test_process;
   if (n >= 8) return TECHNIQUES.pause;
-  if (n >= 5) return TECHNIQUES.expand_options;
+  if (n >= 5) return TECHNIQUES.interest_map;
   return TECHNIQUES.frame_label;
 }
 
