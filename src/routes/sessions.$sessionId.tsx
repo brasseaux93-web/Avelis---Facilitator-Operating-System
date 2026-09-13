@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import './sessions.css';
 import { useFacilitatorAuth } from '../lib/FacilitatorAuthContext';
-import { apiGet, apiPatch, apiPost } from '../lib/apiClient';
+import { apiGet, apiPatch, apiPost, getApiToken } from '../lib/apiClient';
 import { IDENTITY_CLASS_OPTIONS, identityClassLabel } from '../lib/identityLabels';
 import { ProcessAgent, type CopilotAction, type CopilotState } from '../components/ProcessAgent';
 
@@ -55,6 +55,9 @@ function SessionConsolePage() {
   const [error, setError] = useState('');
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteChannel, setInviteChannel] = useState<'copy_link' | 'email'>('copy_link');
+  const [inviteNote, setInviteNote] = useState('');
+  const [codesByParty, setCodesByParty] = useState<Record<string, string>>({});
   const [inviteLabel, setInviteLabel] = useState('Party');
   const [inviteClass, setInviteClass] = useState('role_only');
   const [deliverEmail, setDeliverEmail] = useState('');
@@ -106,9 +109,14 @@ function SessionConsolePage() {
     if (isAuthenticated) void refresh();
   }, [isAuthenticated, refresh]);
 
-  const showCodeOnce = (code: string) => {
+  const showCodeOnce = (code: string, partyId?: string, channel: 'copy_link' | 'email' = 'copy_link', note = '') => {
     setInviteCode(code);
+    setInviteChannel(channel);
+    setInviteNote(note);
     setInviteModalOpen(true);
+    if (partyId) {
+      setCodesByParty((prev) => ({ ...prev, [partyId]: code }));
+    }
   };
 
   const openSession = async () => {
@@ -157,12 +165,37 @@ function SessionConsolePage() {
   const createInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteCode(null);
+    setError('');
     try {
       const res = (await apiPost('/api/sessions/' + sessionId + '/invites', {
         identityClass: inviteClass,
         displayLabel: inviteLabel,
-      })) as { inviteCode: string };
-      showCodeOnce(res.inviteCode);
+      })) as { inviteCode: string; party: { id: string } };
+      const address = deliverEmail.trim();
+      if (address) {
+        const delivered = (await apiPost(
+          '/api/sessions/' + sessionId + '/invites/' + res.party.id + '/deliver',
+          { deliveryAddress: address }
+        )) as { delivered: boolean; channel: string; inviteCode?: string; joinUrl?: string };
+        if (delivered.joinUrl) setJoinUrlHint(delivered.joinUrl);
+        if (delivered.delivered) {
+          showCodeOnce(
+            delivered.inviteCode || res.inviteCode,
+            res.party.id,
+            'email',
+            'Sent. If it does not arrive, copy the link. The address is wiped when they join.'
+          );
+        } else {
+          showCodeOnce(
+            delivered.inviteCode || res.inviteCode,
+            res.party.id,
+            'copy_link',
+            'Email is not configured, or the send failed. Give them this code. The link still works.'
+          );
+        }
+      } else {
+        showCodeOnce(res.inviteCode, res.party.id, 'copy_link', 'No email was sent. Copy the code. It is shown once.');
+      }
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create invite.');
@@ -174,7 +207,7 @@ function SessionConsolePage() {
       const res = (await apiPost(
         '/api/sessions/' + sessionId + '/invites/' + partyId + '/resend'
       )) as { inviteCode: string };
-      showCodeOnce(res.inviteCode);
+      showCodeOnce(res.inviteCode, partyId, 'copy_link', 'New code. The previous code no longer works.');
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not resend invite.');
@@ -196,7 +229,21 @@ function SessionConsolePage() {
         deliveryAddress: deliverEmail || undefined,
       })) as { delivered: boolean; channel: string; inviteCode?: string; joinUrl?: string };
       if (res.joinUrl) setJoinUrlHint(res.joinUrl);
-      if (!res.delivered && res.inviteCode) showCodeOnce(res.inviteCode);
+      if (res.delivered) {
+        showCodeOnce(
+          res.inviteCode || codesByParty[partyId] || '',
+          partyId,
+          'email',
+          'Sent. Copy-link remains if the mail does not arrive.'
+        );
+      } else if (res.inviteCode) {
+        showCodeOnce(
+          res.inviteCode,
+          partyId,
+          'copy_link',
+          'Email is not configured, or the send failed. Give them this code.'
+        );
+      }
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not deliver invite.');
@@ -204,11 +251,15 @@ function SessionConsolePage() {
   };
 
   const copyJoinLink = async (code?: string | null) => {
+    if (!code) {
+      setError('The code was shown once. Resend to issue a new one, then copy.');
+      return;
+    }
     const base = joinUrlHint.startsWith('http')
       ? joinUrlHint
       : window.location.origin + (joinUrlHint.startsWith('/') ? joinUrlHint : '/' + joinUrlHint);
     try {
-      await navigator.clipboard.writeText(code ? base + ' (code: ' + code + ')' : base);
+      await navigator.clipboard.writeText(base + '  ·  code: ' + code);
     } catch {
       setError('Could not copy join link.');
     }
@@ -266,6 +317,26 @@ function SessionConsolePage() {
     try {
       const text = await apiGet('/api/sessions/' + sessionId + '/minute/export.md');
       setExportMd(typeof text === 'string' ? text : String(text));
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not export joint minute.');
+    }
+  };
+
+  const exportMinutePdf = async () => {
+    try {
+      const headers: Record<string, string> = { Accept: 'application/pdf' };
+      const token = getApiToken();
+      if (token) headers.Authorization = 'Bearer ' + token;
+      const res = await fetch('/api/sessions/' + sessionId + '/minute/export.pdf', { headers });
+      if (!res.ok) throw new Error('Could not export PDF.');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'avelis-joint-minute.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not export joint minute.');
@@ -397,8 +468,12 @@ function SessionConsolePage() {
 
       {inviteModalOpen && inviteCode && (
         <div className="sessions-panel" role="dialog" aria-labelledby="invite-code-title">
-          <h3 id="invite-code-title">One-time invite code</h3>
-          <p className="sessions-page__subtitle">Shown once — copy now. It will not be logged.</p>
+          <h3 id="invite-code-title">
+            {inviteChannel === 'email' ? 'Invite sent' : 'One-time invite code'}
+          </h3>
+          <p className="sessions-page__subtitle">
+            {inviteNote || 'Shown once. It will not be logged.'}
+          </p>
           <div className="sessions-code-once">{inviteCode}</div>
           <div className="sessions-actions">
             <button type="button" className="btn btn--primary" onClick={() => void copyJoinLink(inviteCode)}>
@@ -520,7 +595,11 @@ function SessionConsolePage() {
                   <td>{p.inviteStatus}</td>
                   <td>
                     <div className="sessions-actions">
-                      <button type="button" className="btn btn--secondary" onClick={() => void copyJoinLink(inviteCode)}>
+                      <button
+                        type="button"
+                        className="btn btn--secondary"
+                        onClick={() => void copyJoinLink(codesByParty[p.id] || inviteCode)}
+                      >
                         Copy link
                       </button>
                       <button
@@ -681,6 +760,9 @@ function SessionConsolePage() {
           </button>
           <button type="button" className="btn btn--secondary" onClick={() => void exportMinute()}>
             Export markdown
+          </button>
+          <button type="button" className="btn btn--secondary" onClick={() => void exportMinutePdf()}>
+            Export PDF
           </button>
           <button type="button" className="btn btn--secondary" onClick={() => void wipeMinute()}>
             Wipe minute

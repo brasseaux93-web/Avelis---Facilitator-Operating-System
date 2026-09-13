@@ -4,6 +4,7 @@ import { db } from '../db/index';
 import { sessions, jointMinutes } from '../db/schema';
 import { appendLedgerLine } from '../lib/ledgerAppend';
 import { upsertJointMinute, wipeJointMinute, getJointMinute } from './minute';
+import { renderMinutePdf } from '../lib/minutePdf';
 
 export function registerMinuteRoutes(
   app: express.Express,
@@ -174,6 +175,58 @@ export function registerMinuteRoutes(
       res.status(200).type('text/markdown').send(body);
     } catch (error) {
       console.error('[API] Failed to export minute', error);
+      res.status(500).json({ error: 'Could not export joint minute.' });
+    }
+  });
+
+  /** PDF in the response only. No file is written. */
+  app.get('/api/sessions/:id/minute/export.pdf', requireAuth, async (req, res) => {
+    const sessionId = req.params.id;
+    const facilitatorId = req.facilitatorId!;
+
+    try {
+      const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      if (session.facilitatorId !== facilitatorId) {
+        return res.status(403).json({ error: 'Not authorized for this session.' });
+      }
+
+      const minute = await getJointMinute(sessionId);
+      if (!minute || !minute.content) {
+        return res.status(404).json({ error: 'Joint minute not found.' });
+      }
+
+      const pdf = renderMinutePdf({
+        title: session.title,
+        status: minute.status,
+        body: minute.content,
+        exportedAt: new Date().toISOString(),
+      });
+
+      await db.transaction(async (tx) => {
+        await appendLedgerLine(tx, {
+          sessionId,
+          lineType: 'joint_minute_exported',
+          payload: { minuteId: minute.id, format: 'pdf' },
+          actorKind: 'facilitator',
+          actorRef: facilitatorId,
+          source: 'facilitator_ui',
+          initialVisibility: 'facilitator_only',
+        });
+        await tx
+          .update(jointMinutes)
+          .set({ lastExportedAt: new Date(), updatedAt: new Date() })
+          .where(eq(jointMinutes.id, minute.id));
+      });
+
+      res
+        .status(200)
+        .type('application/pdf')
+        .setHeader('Content-Disposition', 'attachment; filename="avelis-joint-minute.pdf"')
+        .setHeader('Cache-Control', 'no-store')
+        .send(pdf);
+    } catch (error) {
+      console.error('[API] Failed to export minute pdf', error);
       res.status(500).json({ error: 'Could not export joint minute.' });
     }
   });

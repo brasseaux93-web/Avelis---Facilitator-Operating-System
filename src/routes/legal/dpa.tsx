@@ -1,5 +1,5 @@
 import React from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { BackButton } from '../../components/BackButton';
 
 export const Route = createFileRoute('/legal/dpa')({
@@ -13,31 +13,85 @@ function DpaComponent() {
         <BackButton />
       </div>
       <p className="section-eyebrow">Legal & Compliance</p>
-      <h1 className="hero__title">Data Processing Agreement (DPA)</h1>
-      
+      <h1 className="hero__title">Data Processing Agreement</h1>
+
       <div className="legal-document__surface">
         <div className="legal-document__content">
-          <p><strong>Last Updated: September 2026</strong></p>
-          <p>This Data Processing Agreement ("DPA") governs the processing of personal data by Avelis ("Processor") on behalf of the institutional customer ("Controller"). This document is provided as boilerplate and must be customized and executed bilaterally during institutional onboarding.</p>
-          
-          <h3>1. Nature of Processing & Zero Retention</h3>
-          <p>Avelis provides an ephemeral dispute resolution infrastructure. The Controller acknowledges and agrees that the Processor is architecturally restricted from persisting communication contents (audio, video, text messages) beyond the active duration of a session.</p>
-          <p>All in-room communications are processed entirely in volatile memory (RAM) and are cryptographically zeroized upon session termination. Consequently, Avelis cannot process, store, or produce transcripts of session communications.</p>
+          <p>
+            <strong>Last updated: 13 September 2026</strong>
+          </p>
+          <p>
+            This is the evaluation DPA. It is not a signed contract until both sides execute it. It
+            describes what Avelis actually does with data — not what would sound better in a pitch.
+          </p>
 
-          <h3>2. Types of Personal Data</h3>
-          <p>In accordance with Product Law L7 (Minimum Data), the Processor will process only the following data types:</p>
+          <h3>1. What is processed</h3>
           <ul>
-            <li>Facilitator account credentials (email).</li>
-            <li>Ephemeral connection metadata (IP addresses, WebSocket tokens) strictly for routing, discarded after connection termination.</li>
-            <li>The Process Ledger, containing only structural metadata (e.g., timestamps, closed-vocabulary event tags).</li>
+            <li>
+              <strong>Facilitator account:</strong> email and credentials for the organization seat.
+            </li>
+            <li>
+              <strong>Invite delivery address:</strong> optional email used only to send a one-time
+              code. Wiped when the party joins or the invite is revoked.
+            </li>
+            <li>
+              <strong>Process ledger:</strong> closed-vocabulary lines (opened, invited, tabled,
+              agreed, closed). Not quotation. Not a transcript.
+            </li>
+            <li>
+              <strong>Joint minute (optional):</strong> facilitator-authored text, separate from the
+              live room. Destroyed at the retention deadline or when wiped.
+            </li>
+            <li>
+              <strong>Destruction receipt:</strong> hashes and timestamps after purge. No speech.
+            </li>
           </ul>
-          <p>The Controller agrees not to submit highly sensitive PII (e.g., health data, SSNs) into the process ledger titles or event notes.</p>
 
-          <h3>3. Subprocessors</h3>
-          <p>Avelis maintains a strict whitelist of infrastructure subprocessors required to route encrypted ephemeral data. A complete list is available in the <a href="/legal/data-processing">Data Processing</a> addendum. The Controller will be notified 30 days prior to any subprocessor changes.</p>
+          <h3>2. What is not processed</h3>
+          <p>
+            Live-room messages are delivered to connected clients and dropped. They are not written
+            to disk, not logged, and not exported. Optional mesh voice is browser-to-browser.
+            Avelis does not receive audio frames. Avelis does not create a transcript, captions, or
+            an AI summary of the talk.
+          </p>
+          <p>
+            A shared process clock may be set in RAM. When it elapses, the room does not close and
+            no record of speech is written.
+          </p>
+
+          <h3>3. The conflict agent</h3>
+          <p>
+            If inference is configured, a rolling RAM window of live-room text may be sent to Groq
+            while the room is open. That path is disclosed to every party before they speak. The
+            window is not stored by Avelis and is not a transcript. The agent does not write ledger
+            lines.
+          </p>
+
+          <h3>4. Retention</h3>
+          <p>
+            Retention is chosen in draft (0–30 days), locked when the session opens, and enforced.
+            After purge, process bodies are gone. The destruction receipt remains. There is no
+            undelete.
+          </p>
+
+          <h3>5. Subprocessors</h3>
+          <p>
+            See the <Link to="/legal/data-processing">subprocessor list</Link>. Material changes
+            will be noticed 30 days in advance where the relationship is executed.
+          </p>
+
+          <h3>6. What we will not say</h3>
+          <p>
+            Avelis does not claim attorney–client privilege, subpoena immunity, or that a court
+            cannot order a facilitator to testify. We claim this: we cannot produce a transcript we
+            never made.
+          </p>
 
           <div className="legal-document__note">
-            <p style={{ margin: 0 }}><strong>Note for Legal Counsel:</strong> This boilerplate enforces the non-discoverable nature of the platform. By signing, the Controller legally acknowledges that Avelis lacks the technical capacity to produce communication records under subpoena.</p>
+            <p style={{ margin: 0 }}>
+              For counsel: this page is the packet you can send tomorrow. Execute a bilateral DPA
+              before production traffic. Tyler Brasseaux, founder.
+            </p>
           </div>
         </div>
       </div>

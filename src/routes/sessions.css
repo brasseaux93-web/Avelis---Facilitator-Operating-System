@@ -66,3 +66,15 @@
 .room-voice{display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center;margin:0 0 var(--space-3)}
 .room-voice audio{position:absolute;width:0;height:0;opacity:0;pointer-events:none}
 @media (max-width:720px){.room-return{grid-template-columns:1fr}}
+@media (max-width:480px){
+  .sessions-page,.room-page{padding-left:max(var(--space-4),env(safe-area-inset-left));padding-right:max(var(--space-4),env(safe-area-inset-right));padding-bottom:max(var(--space-12),env(safe-area-inset-bottom))}
+  .sessions-page--temporal{padding-top:var(--space-5)}
+  .sessions-field input,.sessions-field select,.sessions-field textarea,.room-compose input,.room-return input{font-size:16px;min-height:44px}
+  .btn,.room-chip{min-height:44px;padding:.65rem .9rem}
+  .room-compose{position:sticky;bottom:0;padding:var(--space-2) 0 max(var(--space-2),env(safe-area-inset-bottom));background:var(--color-bg);z-index:2}
+  .room-feed{max-height:min(52dvh,420px);min-height:12rem}
+  .sessions-table{display:block;overflow-x:auto}
+  .sessions-actions .btn{flex:1 1 auto}
+  .room-clock,.room-voice,.room-presence{gap:var(--space-2)}
+  .sessions-form,.sessions-panel{padding:var(--space-4)}
+}

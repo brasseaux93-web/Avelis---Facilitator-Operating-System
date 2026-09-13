@@ -45,9 +45,9 @@ function EvaluationComponent() {
       <div className="legal-document__surface">
         <div className="legal-document__content">
           <p>
-            Avelis is provisioned for organizations that need live conversation without a stored
-            transcript. Evaluation includes a DPA review and a look at the destruction receipt
-            path — not a self-serve signup.
+            Evaluation includes a <Link to="/legal/dpa">DPA</Link>, the{' '}
+            <Link to="/legal/data-processing">subprocessor list</Link>, and a look at the
+            destruction receipt path — not a self-serve signup.
           </p>
           <p>
             Already provisioned? <Link to="/auth">Sign in as a facilitator</Link>.

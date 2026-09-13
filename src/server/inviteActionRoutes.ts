@@ -203,7 +203,7 @@ export function registerInviteActionRoutes(
           emailDomain: emailDomainOnly(deliveryAddress),
         });
         if (result.ok) {
-          return res.status(200).json({ delivered: true, channel: 'email', joinUrl });
+          return res.status(200).json({ delivered: true, channel: 'email', joinUrl, inviteCode: code });
         }
       } else {
         await db.transaction(async (tx) => {
