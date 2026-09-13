@@ -112,6 +112,9 @@ export function downloadPdfBytes(bytes: Uint8Array, filename: string): void {
   a.href = url;
   a.download = filename;
   a.rel = 'noopener';
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
+  a.remove();
   URL.revokeObjectURL(url);
 }
