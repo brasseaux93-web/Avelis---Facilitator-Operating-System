@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as EvaluationRouteImport } from './routes/evaluation'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as PartyRouteImport } from './routes/party'
 import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as ThreatModelRouteImport } from './routes/threat-model'
 import { Route as LegalDataProcessingRouteImport } from './routes/legal/data-processing'
@@ -32,6 +34,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
@@ -45,6 +52,11 @@ const EvaluationRoute = EvaluationRouteImport.update({
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartyRoute = PartyRouteImport.update({
+  id: '/party',
+  path: '/party',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SessionsRoute = SessionsRouteImport.update({
@@ -86,9 +98,11 @@ const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
   '/join': typeof JoinRoute
+  '/party': typeof PartyRoute
   '/sessions': typeof SessionsRouteWithChildren
   '/threat-model': typeof ThreatModelRoute
   '/legal/data-processing': typeof LegalDataProcessingRoute
@@ -100,9 +114,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
   '/join': typeof JoinRoute
+  '/party': typeof PartyRoute
   '/sessions': typeof SessionsRouteWithChildren
   '/threat-model': typeof ThreatModelRoute
   '/legal/data-processing': typeof LegalDataProcessingRoute
@@ -115,9 +131,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/demo': typeof DemoRoute
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
   '/join': typeof JoinRoute
+  '/party': typeof PartyRoute
   '/sessions': typeof SessionsRouteWithChildren
   '/threat-model': typeof ThreatModelRoute
   '/legal/data-processing': typeof LegalDataProcessingRoute
@@ -131,9 +149,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/demo'
     | '/docs'
     | '/evaluation'
     | '/join'
+    | '/party'
     | '/sessions'
     | '/threat-model'
     | '/legal/data-processing'
@@ -145,9 +165,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/demo'
     | '/docs'
     | '/evaluation'
     | '/join'
+    | '/party'
     | '/sessions'
     | '/threat-model'
     | '/legal/data-processing'
@@ -159,9 +181,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/demo'
     | '/docs'
     | '/evaluation'
     | '/join'
+    | '/party'
     | '/sessions'
     | '/threat-model'
     | '/legal/data-processing'
@@ -174,9 +198,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  DemoRoute: typeof DemoRoute
   DocsRoute: typeof DocsRoute
   EvaluationRoute: typeof EvaluationRoute
   JoinRoute: typeof JoinRoute
+  PartyRoute: typeof PartyRoute
   SessionsRoute: typeof SessionsRouteWithChildren
   ThreatModelRoute: typeof ThreatModelRoute
   LegalDataProcessingRoute: typeof LegalDataProcessingRoute
@@ -201,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs': {
       id: '/docs'
       path: '/docs'
@@ -220,6 +253,13 @@ declare module '@tanstack/react-router' {
       path: '/join'
       fullPath: '/join'
       preLoaderRoute: typeof JoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/party': {
+      id: '/party'
+      path: '/party'
+      fullPath: '/party'
+      preLoaderRoute: typeof PartyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sessions': {
@@ -289,9 +329,11 @@ const SessionsRouteWithChildren = SessionsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  DemoRoute: DemoRoute,
   DocsRoute: DocsRoute,
   EvaluationRoute: EvaluationRoute,
   JoinRoute: JoinRoute,
+  PartyRoute: PartyRoute,
   SessionsRoute: SessionsRouteWithChildren,
   ThreatModelRoute: ThreatModelRoute,
   LegalDataProcessingRoute: LegalDataProcessingRoute,
@@ -301,4 +343,4 @@ const rootRouteChildren: RootRouteChildren = {
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes()
