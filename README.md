@@ -18,36 +18,28 @@ The product object is a **session**. It is not a community, case-management syst
 
 ## Repository status (honest)
 
-**Maturity ~6.5/10** — constitution-grade docs plus working Phase 1–3 foundations. Not yet a finished pilot product surface.
+**Maturity 9/10** - MVP Definition section 3 DoD substantially closed on prod-readiness/maturity-10-onto-main. Residual: remove tracked node_modules/dist via shallow-clone cleanup, optional live-DB E2E under DATABASE_URL, and NAT/VPC endpoints before terraform apply.
 
-**Phases 1–2 are merged to `main`.** Phase 3 (production host + repo cleanup) lands via this PR (`prod-readiness/phase-3-onto-main`). After merge, run from `main`.
-
-| Status | Focus |
-|---|---|
-| Merged #1 | Speech-safe room, transactional ledger append, schema-aligned purge |
-| Merged #2 | Facilitator auth (Argon2 + JWT), invite redeem, session/agenda/minute APIs + UI spine |
-| This PR | KMS factory, health/metrics, Docker api/room, deployment/backup docs, security audit table, terraform expansion |
-
-See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit.
+See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit and residual list.
 
 ### What works here
 
-- Ephemeral WebSocket room (authenticated tokens; no in-memory message history)
-- Session create → open → invite → close → retention purge worker + destruction receipt path
+- Ephemeral WebSocket room (HMAC party tokens only; raw shared secret rejected; no message history)
+- Session create -> open -> invite -> close -> retention purge + verifiable destruction receipt
+- Security audit retention purge (30d default / 90d max)
 - Closed-vocabulary ledger append with transactional sequencing and hash chaining
-- Facilitator sign-in, session console, party join, live room UI routes
-- Agenda + joint minute API surfaces; signed ledger roots (dev/local KMS)
-- `/healthz`, `/readyz`, `/metrics`; content-capture flags refused in production
-- `docker compose` for postgres + api + room
+- Facilitator sign-in, session console (keyboard-complete + factual empty states), party join, live room UI
+- Agenda + joint minute API surfaces; KMS factory (local | wired aws via @aws-sdk/client-kms)
+- /healthz, /readyz, /metrics; content-capture flags refused in production
+- docker compose for postgres + api + room (loopback ports; secrets via env file; migrations on API start)
 
 ### Still outstanding
 
-- Remove tracked `node_modules/` / `dist/` if still present (see `scripts/remove-tracked-node-modules.md`)
-- Apply CI workflow from `docs/ci-workflow-phase3.yml` (needs a token with `workflow` scope)
-- Wire real AWS KMS credentials (stub provider present)
+- Operator shallow-clone: git rm -rf node_modules dist on tip if still tracked
+- Apply CI workflow from docs/ci-workflow-phase3.yml (needs workflow scope) if pending
 - Optional WebRTC audio only after speech-safety suite passes
-- Premium 2026 visual pass (`prod-readiness/premium-2026`)
-- Green Playwright end-to-end path before enabling e2e in CI
+- Premium 2026 visual pass (prod-readiness/premium-2026)
+- NAT gateway or VPC endpoints before private-subnet ECS apply
 
 ## What persists
 
@@ -78,31 +70,25 @@ Avelis does **not** claim legal privilege, subpoena immunity, or confidentiality
 
 ## Quick start
 
-From `main` after this PR merges:
-
 ```bash
-git checkout main
-git pull
-cp .env.example.txt .env   # set JWT_SECRET, ROOM_SHARED_SECRET, DATABASE_URL
+cp .env.compose.example .env   # set JWT_SECRET, ROOM_SHARED_SECRET, LOCAL_DEV_* keys
 docker compose up --build
-# API :3001  Room :3002  Postgres :5432
-
-curl -s localhost:3001/healthz
-curl -s localhost:3001/readyz
+# API 127.0.0.1:3001  Room 127.0.0.1:3002  Postgres 127.0.0.1:5432
 
 npm run test:speech-safety
 npm run test:ledger
 npm run test:retention
+npm run test:room-auth
+npm run test:integration
 ```
 
 Dev without full compose (Postgres required):
 
 ```bash
+cp .env.example.txt .env
 npm install
 npm run dev   # Vite + API + room
 ```
-
-Default local seed facilitator (when enabled): see `.env.example.txt` / `src/server/seedDev.ts`.
 
 ## Stack
 
@@ -111,8 +97,8 @@ Default local seed facilitator (when enabled): see `.env.example.txt` / `src/ser
 - **Room:** separate memory-only WebSocket process
 - **DB:** PostgreSQL 16 + Drizzle ORM
 - **Auth:** Argon2id passwords + HMAC facilitator JWT (party invite codes hashed)
-- **Crypto:** AES-GCM helpers; KMS factory (`local` | `aws` stub)
-- **Tests:** Vitest (speech-safety, ledger, retention); Playwright e2e not yet a release gate
+- **Crypto:** AES-GCM helpers; KMS factory (local | aws with @aws-sdk/client-kms)
+- **Tests:** Vitest (speech-safety, ledger, retention, room-auth, integration); Playwright smoke optional
 
 ## Documentation
 
