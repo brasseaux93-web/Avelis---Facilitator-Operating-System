@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0" />
+      <stop offset="50%" stop-color="#fff" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#fff" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <style>
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      fill: url(#fade);
+      letter-spacing: 0.1em;
+    }
+  </style>
+  <text class="code" x="30%" y="80">0x0001: SYS_INIT [OK] :: allocate_memory_segment(0x4000)</text>
+  <text class="code" x="35%" y="100">0x0002: bind_socket(0.0.0.0, 443) -> ACTIVE</text>
+  <text class="code" x="40%" y="120">0x0003: wait_for_handshake(TLSv1.3)</text>
+  <text class="code" x="32%" y="150">crypto_context = initialize_chacha20_poly1305(key, nonce)</text>
+  <text class="code" x="36%" y="170">if (handshake == VERIFIED) {</text>
+  <text class="code" x="42%" y="190">  establish_secure_channel()</text>
+  <text class="code" x="42%" y="210">  verify_certificate_chain(cert)</text>
+  <text class="code" x="36%" y="230">}</text>
+  <text class="code" x="25%" y="280">0x0010: DISPATCH_WORKER [ID: 9942]</text>
+  <text class="code" x="28%" y="300">start_ephemeral_session(policy=NO_LOG)</text>
+  <text class="code" x="45%" y="320">enforce_privilege_boundary()</text>
+  <text class="code" x="38%" y="360">0x0015: RECEIVE_PAYLOAD (size: 2048 bytes)</text>
+  <text class="code" x="42%" y="380">buffer = process_incoming_stream()</text>
+  <text class="code" x="45%" y="400">write_to_ephemeral_storage(buffer)</text>
+  <text class="code" x="42%" y="420">hash = calculate_sha256(buffer)</text>
+  <text class="code" x="35%" y="460">0x0020: EXECUTE_SHRED_PROTOCOL</text>
+  <text class="code" x="38%" y="480">zeroize_memory_region(0x4000, size=2048)</text>
+  <text class="code" x="45%" y="500">verify_zeroization(0x4000)</text>
+  <text class="code" x="50%" y="520">-> [VERIFIED: 0 bytes retained]</text>
+  <text class="code" x="30%" y="570">0x0030: SESSION_TERMINATED</text>
+  <text class="code" x="33%" y="590">close_socket(443)</text>
+  <text class="code" x="38%" y="610">drop_crypto_context()</text>
+  <text class="code" x="42%" y="630">system_halt()</text>
+</svg>

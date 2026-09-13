@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 250" width="100%" height="100%">
+  <!-- ==============================================================
+       AVELIS HORIZONTAL LOCKUP (DARK UI COMPLIANT // NO SLOGAN)
+       - Background: Transparent
+       - Emblem: Warm Ledger Gold (#CF9E42)
+       - Primary Wordmark: Archival Off-White (#F6F3EC)
+       - Alignment: Cap-height flush with inner chamber height
+       ============================================================== -->
+
+  <!-- Standalone Scribe Emblem (Left) -->
+  <g transform="translate(40, 10)">
+    <!-- Flanking Ledger Margin Rules -->
+    <rect x="0" y="0" width="28" height="230" fill="#CF9E42" />
+    <rect x="192" y="0" width="28" height="230" fill="#CF9E42" />
+
+    <!-- Unsealed Safe-Harbor Chamber (Bottom Centered Breach) -->
+    <path d="
+      M 95,190 
+      L 58,190 
+      L 58,40 
+      L 162,40 
+      L 162,190 
+      L 125,190
+    " fill="none" stroke="#CF9E42" stroke-width="15" stroke-linecap="square" stroke-linejoin="miter"/>
+  </g>
+
+  <!-- Wordmark: AVELIS (Cap-height aligned to chamber top/bottom) -->
+  <text 
+    x="310" 
+    y="188" 
+    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" 
+    font-size="145" 
+    font-weight="700" 
+    letter-spacing="0.14em" 
+    fill="#F6F3EC">AVELIS</text>
+</svg>

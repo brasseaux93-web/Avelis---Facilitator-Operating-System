@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789233585942,
+      "tag": "0000_many_spacker_dave",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789233591777,
+      "tag": "0001_insert_only_ledger_lines",
+      "breakpoints": true
+    }
+  ]
+}
