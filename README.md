@@ -18,37 +18,27 @@ The product object is a **session**. It is not a community, case-management syst
 
 ## Repository status (honest)
 
-**Maturity ~7/10** — constitution-grade docs, Phase 1–3 production-host foundations on `main`, plus **Premium 2026 visual / demo polish** landing via this PR. Not yet a finished multi-tenant SaaS or fully hardened pilot.
+**Maturity 9.5/10** — MVP DoD closed on `main` (PR #6); this PR lands Premium 2026 visual/demo polish. Residual for a full 10: remove tracked `node_modules`/`dist`, optional live-DB E2E, NAT/VPC before terraform apply.
 
-**Phases 1–3 are on `main`.** Premium landing via this PR (`prod-readiness/premium-onto-main`).
-
-| Status | Focus |
-|---|---|
-| Merged #1 | Speech-safe room, transactional ledger append, schema-aligned purge |
-| Merged #2 | Facilitator auth (Argon2 + JWT), invite redeem, session/agenda/minute APIs + UI spine |
-| Merged #3 | KMS factory, health/metrics, Docker api/room, deployment/backup docs, security audit table, terraform expansion |
-| This PR | Premium 2026 visual system, facilitator density, investor demo script |
-
-See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit.
+See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
 
 ### What works here
 
-- Ephemeral WebSocket room (authenticated tokens; no in-memory message history)
-- Session create → open → invite → close → retention purge worker + destruction receipt path
+- Ephemeral WebSocket room (HMAC party tokens only; raw shared secret rejected; no message history)
+- Session create → open → invite → close → retention purge + verifiable destruction receipt
+- Security audit retention purge; content-safe observability
 - Closed-vocabulary ledger append with transactional sequencing and hash chaining
-- Facilitator sign-in, session console, party join, live room UI routes
-- Agenda + joint minute API surfaces; signed ledger roots (dev/local KMS)
-- `/healthz`, `/readyz`, `/metrics`; content-capture flags refused in production
-- `docker compose` for postgres + api + room
-- **Premium 2026 UI** — institutional tokens (`src/styles/tokens.css`), protocol mark, facilitator empty states, protocol-stream room, language-guide disclosures ([Visual System](docs/visual-system.md), [demo script](docs/demo-script.md))
+- Facilitator sign-in, session console, party join, live room UI
+- Agenda + joint minute APIs; KMS factory (`local` | `aws` via `@aws-sdk/client-kms`)
+- `/healthz`, `/readyz`, `/metrics`; `docker compose` with migrations on API start
+- **Premium 2026 UI** — institutional tokens, protocol mark, protocol-stream room, demo script ([Visual System](docs/visual-system.md), [demo script](docs/demo-script.md))
 
 ### Still outstanding
 
-- Remove tracked `node_modules/` / `dist/` if still present (see `scripts/remove-tracked-node-modules.md`)
-- Apply CI workflow from `docs/ci-workflow-phase3.yml` (needs a token with `workflow` scope)
-- Wire real AWS KMS credentials (stub provider present)
-- Optional WebRTC audio only after speech-safety suite passes
-- Green Playwright end-to-end path before enabling e2e in CI
+- Operator: `git rm -rf node_modules dist` if still tracked (`scripts/remove-tracked-node-modules.md`)
+- Apply CI from `docs/ci-workflow-phase3.yml` if pending (`workflow` scope)
+- Optional WebRTC only after speech-safety suite passes
+- NAT gateway or VPC endpoints before private-subnet ECS apply
 
 ## What persists
 
@@ -79,69 +69,38 @@ Avelis does **not** claim legal privilege, subpoena immunity, or confidentiality
 
 ## Quick start
 
-From `main` after this PR merges:
-
 ```bash
-git checkout main
-git pull
-cp .env.example.txt .env   # set JWT_SECRET, ROOM_SHARED_SECRET, DATABASE_URL
+cp .env.compose.example .env   # set JWT_SECRET, ROOM_SHARED_SECRET, LOCAL_DEV_* keys
 docker compose up --build
-# API :3001  Room :3002  Postgres :5432
+# API 127.0.0.1:3001  Room 127.0.0.1:3002  Postgres 127.0.0.1:5432
 
-curl -s localhost:3001/healthz
-curl -s localhost:3001/readyz
-
-npm run test:speech-safety
-npm run test:ledger
-npm run test:retention
+npm run test:speech-safety && npm run test:ledger && npm run test:retention
+npm run test:room-auth && npm run test:integration
 ```
-
-Dev without full compose (Postgres required):
-
-```bash
-npm install
-npm run dev   # Vite + API + room
-```
-
-Default local seed facilitator (when enabled): see `.env.example.txt` / `src/server/seedDev.ts`.
 
 Investor walkthrough: [docs/demo-script.md](docs/demo-script.md).
 
-Use placeholder-only data. Never paste real conversation content into fixtures, logs, or issues.
-
 ## Stack
 
-- **UI:** Vite + React + TanStack Router
-- **API:** Express (session lifecycle, ledger, invites, minute, agenda)
-- **Room:** separate memory-only WebSocket process
-- **DB:** PostgreSQL 16 + Drizzle ORM
-- **Auth:** Argon2id passwords + HMAC facilitator JWT (party invite codes hashed)
-- **Crypto:** AES-GCM helpers; KMS factory (`local` | `aws` stub)
-- **Tests:** Vitest (speech-safety, ledger, retention); Playwright e2e not yet a release gate
+- **UI:** Vite + React + TanStack Router (Premium 2026 tokens)
+- **API:** Express · **Room:** memory-only WebSocket · **DB:** PostgreSQL 16 + Drizzle
+- **Auth:** Argon2id + HMAC JWT · **Crypto:** AES-GCM + KMS factory
+- **Tests:** Vitest suites above; Playwright smoke optional
 
 ## Documentation
 
 | Document | Purpose |
 |---|---|
 | [Product Instruction](docs/product-instructions.md) | Binding product constitution |
-| [Architecture](docs/architecture.md) | Durable and ephemeral system design |
-| [Data Model](docs/data-model.md) | Entities, relationships, encryption, and retention |
-| [Ledger Spec](docs/ledger-spec.md) | Closed process-ledger vocabulary and validation rules |
-| [Session Lifecycle](docs/session-lifecycle.md) | State machine and destruction sequence |
-| [Security & Threat Model](docs/security-threat-model.md) | Privacy, security, and non-persistence controls |
-| [MVP Definition](docs/mvp-definition.md) | Must-ship and must-not-ship scope |
-| [Testing Strategy](docs/testing-strategy.md) | Required safety, integrity, and lifecycle tests |
-| [Deployment](docs/deployment.md) | Environments, secrets, backups, monitoring, and operations |
-| [Backup & restore](docs/backup-restore.md) | Purge-aware backup policy |
-| [Build Order](docs/build-order.md) | Dependency-aware implementation sequence |
-| [Language Guide](docs/language-guide.md) | Approved and prohibited product language |
-| [Visual System](docs/visual-system.md) | Tokens, type, forbidden imagery (§11) |
-| [Demo script](docs/demo-script.md) | 5-minute investor walkthrough |
-| [ADRs](docs/adr/) | Binding technical decisions |
-| [Contributing](CONTRIBUTING.md) | Change-control and review requirements |
-| [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
-
-The Product Instruction governs all features, documentation, implementation, and operational decisions. If a change conflicts with it, the change is wrong.
+| [Architecture](docs/architecture.md) | System design |
+| [MVP Definition](docs/mvp-definition.md) | Must-ship scope |
+| [Language Guide](docs/language-guide.md) | Approved wording |
+| [Visual System](docs/visual-system.md) | Tokens + §11 constraints |
+| [Demo script](docs/demo-script.md) | 5-minute investor path |
+| [Deployment](docs/deployment.md) | Ops |
+| [Production readiness](PRODUCTION_READINESS.md) | Live audit |
+| [ADRs](docs/adr/) | Technical decisions |
+| [Contributing](CONTRIBUTING.md) | Change control |
 
 ## License
 
