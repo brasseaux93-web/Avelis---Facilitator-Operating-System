@@ -67,7 +67,7 @@ function isValidRoomToken(
 }
 
 export function createRoomServer(port = PORT): WebSocketServer {
-  const wss = new WebSocketServer({ port });
+  const wss = new WebSocketServer({ port, maxPayload: MESSAGE_MAX_BYTES });
 
   wss.on('connection', (ws, req) => {
     const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
