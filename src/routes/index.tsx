@@ -233,7 +233,11 @@ function Index() {
               </li>
               <li className="duality__item">
                 <span className="duality__item-mark duality__item-mark--is">+</span>
-                A session containing an ephemeral room, a process ledger, and an optional joint minute
+                A visible conflict agent that runs named mediation moves and never writes the ledger
+              </li>
+              <li className="duality__item">
+                <span className="duality__item-mark duality__item-mark--is">+</span>
+                A session: ephemeral room, process ledger, optional joint minute, destruction receipt
               </li>
               <li className="duality__item">
                 <span className="duality__item-mark duality__item-mark--is">+</span>
@@ -258,7 +262,7 @@ function Index() {
               </li>
               <li className="duality__item duality__item--muted">
                 <span className="duality__item-mark duality__item-mark--is-not">&minus;</span>
-                Not an AI surveillance, sentiment extraction, or transcription vendor
+                Not an AI judge, hidden listener, or sentiment engine
               </li>
               <li className="duality__item duality__item--muted">
                 <span className="duality__item-mark duality__item-mark--is-not">&minus;</span>
@@ -270,6 +274,45 @@ function Index() {
               </li>
             </ul>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section className="principles" id="why" aria-labelledby="why-title" data-reveal>
+      <div className="container">
+        <div className="principles__header">
+          <p className="section-eyebrow">What others will not do</p>
+          <h2 className="section-title" id="why-title">Three facts no competitor will copy.</h2>
+          <p className="section-desc">
+            AI judges keep the file. Consumer bots skip the facilitator. Video suites hide the
+            listener. Avelis is the other product.
+          </p>
+        </div>
+        <div className="principles__list">
+          <article className="principle">
+            <p className="principle__code">01</p>
+            <h3 className="principle__title">The room has no file</h3>
+            <p className="principle__body">
+              Speech lives in RAM while the session is open. Closing destroys the live room. Late
+              joiners have no history. A destruction receipt is the proof.
+            </p>
+          </article>
+          <article className="principle">
+            <p className="principle__code">02</p>
+            <h3 className="principle__title">The third is named</h3>
+            <p className="principle__body">
+              Avelis sits in the room. Everyone can see the current move. There is no hidden
+              listener, no sentiment score, no AI award.
+            </p>
+          </article>
+          <article className="principle">
+            <p className="principle__code">03</p>
+            <h3 className="principle__title">The facilitator writes the record</h3>
+            <p className="principle__body">
+              Named moves from principled negotiation, shuttle, and single-text. The agent never
+              writes a ledger line. Process is confirmed by a human.
+            </p>
+          </article>
         </div>
       </div>
     </section>
@@ -369,10 +412,10 @@ function Index() {
           </div>
           <div className="step">
             <div className="step__number"><span className="step__line"></span></div>
-            <h3 className="step__title">Identity and room</h3>
+            <h3 className="step__title">Live room</h3>
             <p className="step__desc">
-              Each party picks an identity class at join. The live room is ephemeral —
-              text minimum, audio if stable. Room messages are delivered live and are not stored by Avelis.
+              Avelis is a visible agent. It runs a named mediation move. Speech is delivered and
+              dropped. Closing destroys the room.
             </p>
           </div>
           <div className="step">

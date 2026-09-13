@@ -142,8 +142,8 @@ export function createRoomServer(port = PORT): WebSocketServer {
         return;
       }
 
-      if (parsed?.type === 'agent_invoke' && identityClass === 'facilitator') {
-        void invokeAvelis(sessionId, parsed.prompt);
+      if (parsed?.type === 'agent_invoke') {
+        void invokeAvelis(sessionId, parsed.prompt, identityClass === 'facilitator' ? 'facilitator' : 'party');
         return;
       }
 

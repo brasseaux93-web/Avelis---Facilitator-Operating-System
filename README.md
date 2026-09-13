@@ -2,7 +2,15 @@
 
 Private rooms for difficult conversations. Avelis sits in the room as a conflict agent — then the talk is gone.
 
-Avelis is an **AI conflict-resolution operating system** for facilitators: shuttle diplomacy, workplace sessions, ombuds work, the talks that cannot become a file. Parties join a private live room. **Avelis is visible in that room.** It asks process questions, names the problem without the people, and never writes the ledger. Room messages are not stored. When the session closes, the live room is destroyed. Process records die on a deadline you choose. A **destruction receipt** remains as limited proof.
+Avelis is an **AI conflict-resolution operating system** for facilitators: shuttle diplomacy, workplace sessions, ombuds work, the talks that cannot become a file.
+
+Three facts competitors will not copy:
+
+1. **The room has no file.** Speech is RAM. Close destroys the live room.
+2. **The third is named.** Avelis sits in the room on a disclosed mediation move. No hidden listener. No AI award.
+3. **The facilitator writes the record.** Named moves. No model writes a ledger line.
+
+Parties join a private live room. Room messages are not stored. Process records die on a deadline you choose. A **destruction receipt** remains as limited proof.
 
 The product object is a **session**. It is not a community, a case file, a participant directory, or a chat app.
 

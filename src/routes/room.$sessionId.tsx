@@ -4,6 +4,7 @@ import './sessions.css';
 import { RoomProvider, useRoom } from '../room/RoomContext';
 import { identityClassLabel } from '../lib/identityLabels';
 import { TECHNIQUES, type TechniqueId } from '../lib/processCopilot/techniques';
+import { ProtocolMark } from '../components/Logo';
 import { setPartyViewToken } from './party';
 
 export const Route = createFileRoute('/room/$sessionId')({
@@ -18,14 +19,28 @@ type JoinState = {
 };
 
 function RoomInner() {
-  const { messages, whispers, sendMessage, invokeAgent, isConnected, isFacilitator } = useRoom();
+  const {
+    messages,
+    whispers,
+    processMove,
+    sendMessage,
+    invokeAgent,
+    isConnected,
+    isFacilitator,
+    identityClass,
+  } = useRoom();
   const [text, setText] = useState('');
   const feedRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const el = feedRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [isConnected]);
 
   const onSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,17 +49,21 @@ function RoomInner() {
     setText('');
   };
 
+  const moveLabel =
+    processMove?.label ||
+    (processMove?.technique && TECHNIQUES[processMove.technique as TechniqueId]?.label) ||
+    null;
+
   return (
     <div className="room-page room-page--conflict">
       <div className="room-page__main">
-        <p className="sessions-page__eyebrow">Private room · conflict agent in session</p>
-        <h1 className="sessions-page__title">This conversation is not kept</h1>
-
-        <div className="room-banner" role="note">
-          Avelis is in this room. What you type may be sent to the session’s inference provider while
-          the room is open. Avelis does not store the talk. Late joiners have no history. Closing
-          destroys the live room.
-        </div>
+        <header className="room-chamber">
+          <ProtocolMark className="room-chamber__mark" accent="currentColor" width="28" height="28" />
+          <div>
+            <p className="sessions-page__eyebrow">Private room</p>
+            <h1 className="sessions-page__title">This conversation is not kept</h1>
+          </div>
+        </header>
 
         <div className="room-meta-bar" aria-live="polite">
           <span>
@@ -52,18 +71,28 @@ function RoomInner() {
               className={`room-meta-bar__dot ${isConnected ? 'room-meta-bar__dot--live' : ''}`}
               aria-hidden="true"
             />
-            {isConnected ? 'connected' : 'disconnected'}
+            {isConnected ? 'live' : 'disconnected'}
           </span>
-          <span>ephemeral stream · Avelis visible</span>
-          <Link to="/party">Process view</Link>
+          <span>You appear as {identityClassLabel(identityClass)}</span>
+          {isFacilitator && <Link to="/party">Process view</Link>}
         </div>
 
-        <div className="room-feed" ref={feedRef} aria-live="polite" aria-label="Live room message stream">
+        {moveLabel && (
+          <p className="room-move" aria-live="polite">
+            Current move · {moveLabel}
+          </p>
+        )}
+
+        <div className="room-feed" ref={feedRef} aria-live="polite" aria-label="Live room">
           {messages.length === 0 ? (
-            <p className="room-feed__empty">
-              Speak when you are ready. Address Avelis with @avelis if you want the agent to speak
-              to the room. Nothing here is stored after close.
-            </p>
+            <div className="room-feed__empty">
+              <p>Three facts, then the work.</p>
+              <ol>
+                <li>Avelis is in the room and you can see it.</li>
+                <li>This talk is not stored.</li>
+                <li>The facilitator writes the process record.</li>
+              </ol>
+            </div>
           ) : (
             messages.map((m) => (
               <div
@@ -71,7 +100,9 @@ function RoomInner() {
                 className={'room-line' + (m.senderClass === 'avelis' ? ' room-line--avelis' : '')}
               >
                 <div className="room-line__meta">
-                  {m.senderClass === 'avelis' ? 'Avelis · conflict agent' : identityClassLabel(m.senderClass)}
+                  {m.senderClass === 'avelis'
+                    ? `Avelis${m.technique && TECHNIQUES[m.technique as TechniqueId] ? ` · ${TECHNIQUES[m.technique as TechniqueId].label}` : ''}`
+                    : identityClassLabel(m.senderClass)}
                 </div>
                 <div className="room-line__text">{m.text}</div>
               </div>
@@ -81,9 +112,10 @@ function RoomInner() {
 
         <form className="room-compose" onSubmit={onSend}>
           <input
+            ref={inputRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={isFacilitator ? 'Speak to the room, or @avelis' : 'Speak to the room'}
+            placeholder={isFacilitator ? 'Speak to the room' : 'Speak to the room'}
             aria-label="Message"
             disabled={!isConnected}
             autoComplete="off"
@@ -91,25 +123,26 @@ function RoomInner() {
           <button type="submit" className="btn btn--primary" disabled={!isConnected}>
             Send
           </button>
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() => {
+              invokeAgent(text.trim() || undefined);
+              setText('');
+            }}
+            disabled={!isConnected}
+          >
+            Ask Avelis
+          </button>
         </form>
       </div>
 
       <aside className="room-agent" aria-label="Conflict agent">
         <p className="sessions-page__eyebrow">Avelis</p>
         <p className="room-agent__lede">
-          Conflict agent. Not a lawyer. Does not write the ledger. Speaks to the room on a process
-          cadence, or when asked.
+          Visible conflict agent. Named mediation moves. Does not write the ledger. Not a lawyer.
         </p>
-        {isFacilitator && (
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => invokeAgent()}
-            disabled={!isConnected}
-          >
-            Ask Avelis to speak
-          </button>
-        )}
+        {moveLabel && <p className="room-move room-move--rail">{moveLabel}</p>}
         {isFacilitator && whispers.length > 0 && (
           <div className="room-whispers">
             <p className="room-line__meta">Facilitator only</p>
@@ -125,8 +158,8 @@ function RoomInner() {
         )}
         {!isFacilitator && (
           <p className="sessions-page__subtitle">
-            Type <code>@avelis</code> to ask the agent to address the room. The facilitator also
-            sees private process notes you cannot see.
+            Ask Avelis without putting the ask in the talk. The facilitator sees process notes you
+            cannot see.
           </p>
         )}
       </aside>
@@ -150,10 +183,6 @@ function RoomPage() {
         <p className="sessions-error" role="alert">
           This room only opens from an invite redeem or a facilitator session console. There is no
           account to create.
-        </p>
-        <p className="room-banner" role="note">
-          Room messages are delivered live and are not stored by Avelis. Avelis may be present as a
-          visible conflict agent while the room is open.
         </p>
         <p className="sessions-page__subtitle">
           <Link to="/join">Join with an invite</Link>

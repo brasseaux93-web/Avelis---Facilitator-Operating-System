@@ -4,6 +4,7 @@ import './sessions.css';
 import { apiPost } from '../lib/apiClient';
 import { setPartyViewToken } from './party';
 import { IDENTITY_CLASS_OPTIONS } from '../lib/identityLabels';
+import { ProtocolMark } from '../components/Logo';
 
 export const Route = createFileRoute('/join')({
   component: JoinPage,
@@ -58,8 +59,9 @@ function JoinPage() {
 
   return (
     <div className="sessions-page sessions-page--temporal">
+      <ProtocolMark className="room-chamber__mark" accent="currentColor" width="32" height="32" />
       <p className="sessions-page__eyebrow">Temporary session</p>
-      <h1 className="sessions-page__title">Join with an invite</h1>
+      <h1 className="sessions-page__title">Enter a private room</h1>
       <p className="sessions-disclosure sessions-disclosure--persist" role="note">
         You do not create an account. This tab holds credentials in memory only. Avelis is a visible
         conflict agent in the live room. What you type may be sent to the session’s inference

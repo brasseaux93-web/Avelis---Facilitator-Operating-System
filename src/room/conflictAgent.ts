@@ -167,6 +167,13 @@ export function publishAvelis(sessionId: string, text: string, technique?: Techn
   const line = text.trim();
   if (!line) return;
   rememberTurn(sessionId, { speaker: 'avelis', identityClass: 'avelis', text: line });
+  const move = technique ? TECHNIQUES[technique] : null;
+  broadcast(sessionId, {
+    type: 'process_state',
+    technique: technique || null,
+    label: move?.label || null,
+    timestamp: Date.now(),
+  });
   broadcast(sessionId, {
     type: 'message',
     message: {
@@ -212,11 +219,15 @@ async function runCoach(sessionId: string): Promise<void> {
   }
 }
 
-export async function invokeAvelis(sessionId: string, prompt?: string): Promise<void> {
+export async function invokeAvelis(
+  sessionId: string,
+  prompt?: string,
+  speaker: 'facilitator' | 'party' = 'facilitator'
+): Promise<void> {
   if (prompt?.trim()) {
     rememberTurn(sessionId, {
-      speaker: 'facilitator',
-      identityClass: 'facilitator',
+      speaker,
+      identityClass: speaker,
       text: `[ask Avelis] ${prompt.trim().slice(0, MAX_TEXT)}`,
     });
   }
