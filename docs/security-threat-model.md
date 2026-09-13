@@ -1,6 +1,6 @@
 # Security and threat model
 
-> Stub. Privacy controls emphasize non-persistence of speech, least privilege, and separated audit data (ADR-0006).
+> Privacy controls emphasize non-persistence of speech, least privilege, and separated audit data (ADR-0006).
 
 ## Assets
 
@@ -15,9 +15,11 @@
 |---|---|
 | Logging or analytics capturing speech | Startup guards; structured logs without bodies; CI flag check |
 | Room state on disk / swap | No room volume; `ROOM_SWAP_DISABLED`; memory limit |
-| Weak room secret in production | Refuse start if secret missing/default |
+| Weak room secret in production | Refuse start if secret missing/placeholder (including `change-me-room-secret-compose`) or too short |
+| Raw shared secret used as `roomToken` | Rejected always; only HMAC(`sessionId:partyId`, secret) accepted |
 | Backup resurrecting purged bodies | Purge-aware restore; backup retention ≤ session max + recovery window |
-| Mixing security telemetry into party-visible ledger | Separate `security_audit_events` store |
+| Mixing security telemetry into party-visible ledger | Separate `security_audit_events` store with timed purge |
+| Client-controlled `X-Request-ID` carrying emails | `sanitizeRequestId` regenerates when `@` / email-like |
 
 ## Explicit non-claims
 
