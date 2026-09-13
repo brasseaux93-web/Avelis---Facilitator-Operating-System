@@ -70,28 +70,45 @@ function SessionsPage() {
     <div className="sessions-page">
       <div className="sessions-page__header">
         <div>
+          <p className="sessions-page__eyebrow">Facilitator console</p>
           <h1 className="sessions-page__title">Sessions</h1>
           <p className="sessions-page__subtitle">
             {facilitator?.displayName} · {facilitator?.email}
           </p>
         </div>
-        <button type="button" className="btn btn--secondary" onClick={() => { clearSession(); navigate({ to: '/auth' }); }}>
+        <button
+          type="button"
+          className="btn btn--secondary"
+          onClick={() => {
+            clearSession();
+            navigate({ to: '/auth' });
+          }}
+        >
           Sign out
         </button>
       </div>
 
-      <p className="sessions-disclosure" role="note">
-        Room messages are delivered live and are not stored by Avelis. Process records and any joint minute are retained until the selected destruction deadline, then destroyed.
+      <p className="sessions-disclosure sessions-disclosure--persist" role="note">
+        Room messages are delivered live and are not stored by Avelis. Process records and any
+        joint minute are retained until the selected destruction deadline, then destroyed.
       </p>
 
       <form className="sessions-form" onSubmit={createSession}>
-        <h2 style={{ margin: 0, fontSize: '1rem' }}>Create session</h2>
+        <h2 style={{ margin: 0, fontSize: '0.8125rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
+          Create session
+        </h2>
         <div className="sessions-form__row">
           <div className="sessions-field">
             <label htmlFor="session-title">Title</label>
-            <input id="session-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <input
+              id="session-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              autoComplete="off"
+            />
           </div>
-          <div className="sessions-field" style={{ maxWidth: 180 }}>
+          <div className="sessions-field" style={{ maxWidth: 200 }}>
             <label htmlFor="retention">Retain process records for (hours)</label>
             <input
               id="retention"
@@ -103,13 +120,27 @@ function SessionsPage() {
               required
             />
           </div>
-          <button type="submit" className="btn btn--primary">Create session</button>
+          <button type="submit" className="btn btn--primary">
+            Create session
+          </button>
         </div>
-        {error && <p className="sessions-error" role="alert">{error}</p>}
+        {error && (
+          <p className="sessions-error" role="alert">
+            {error}
+          </p>
+        )}
       </form>
 
       {loading ? (
         <p className="sessions-page__subtitle">Loading…</p>
+      ) : sessions.length === 0 ? (
+        <div className="sessions-empty" role="status">
+          <p className="sessions-empty__title">No sessions yet</p>
+          <p className="sessions-empty__body">
+            Create a session above to open a live room and process ledger. Room messages are
+            delivered live and are not stored by Avelis.
+          </p>
+        </div>
       ) : (
         <ul className="sessions-list">
           {sessions.map((s) => (
@@ -118,16 +149,13 @@ function SessionsPage() {
                 <Link to="/sessions/$sessionId" params={{ sessionId: s.id }}>
                   {s.title}
                 </Link>
-                <div className="sessions-list__meta">
-                  Retention {s.retentionHours}h
-                </div>
+                <div className="sessions-list__meta">Retention {s.retentionHours}h</div>
               </div>
-              <span className="sessions-status">{s.status}</span>
+              <span className="sessions-status" data-status={s.status}>
+                {s.status}
+              </span>
             </li>
           ))}
-          {sessions.length === 0 && (
-            <li className="sessions-page__subtitle">No sessions yet.</li>
-          )}
         </ul>
       )}
     </div>
