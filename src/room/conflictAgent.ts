@@ -8,6 +8,13 @@ import crypto from 'node:crypto';
 import { broadcast, broadcastWhere, onRoomTeardown } from './memory';
 import { readModelConfig, type ModelConfig } from '../lib/processCopilot/model';
 import { AGENT_ROOM_RULES } from '../lib/processCopilot/rules';
+import {
+  TECHNIQUE_PROMPT,
+  TECHNIQUES,
+  selectTechnique,
+  type TechniqueId,
+  type TechniqueMove,
+} from '../lib/processCopilot/techniques';
 
 export type AgentTurn = {
   speaker: 'facilitator' | 'party' | 'avelis';
@@ -48,24 +55,8 @@ export function sessionWindow(sessionId: string): AgentTurn[] {
   return [...(windows.get(sessionId) || [])];
 }
 
-function playbookReply(turns: AgentTurn[]): { whisper: string; speak: string } {
-  const n = turns.filter((t) => t.speaker !== 'avelis').length;
-  if (n <= 2) {
-    return {
-      whisper: 'Open with interests, not positions. Ask what a workable outcome has to do.',
-      speak: 'Before positions harden: what does a workable outcome have to do, for each of you?',
-    };
-  }
-  if (n <= 6) {
-    return {
-      whisper: 'Name the shared problem without the people. Table it as a label if they accept it.',
-      speak: 'I am going to name the problem without the people. Confirm or correct it, then we table that label.',
-    };
-  }
-  return {
-    whisper: 'If this is looping, park the blocker and mark one smaller item both can live with. Caucus is available.',
-    speak: 'This is looping. We can park the blocking item, or the facilitator can open a caucus. Which process do you want?',
-  };
+function playbookReply(turns: AgentTurn[]): TechniqueMove {
+  return selectTechnique({ turns });
 }
 
 async function complete(
@@ -84,7 +75,7 @@ async function complete(
       temperature: 0.35,
       max_tokens: 420,
       messages: [
-        { role: 'system', content: AGENT_ROOM_RULES },
+        { role: 'system', content: AGENT_ROOM_RULES + '\n\n' + TECHNIQUE_PROMPT },
         { role: 'user', content: user },
       ],
     }),
@@ -94,20 +85,28 @@ async function complete(
   return json.choices?.[0]?.message?.content ?? null;
 }
 
-export function parseAgentJson(raw: string): { whisper: string; speak: string | null } {
+export function parseAgentJson(raw: string): { whisper: string; speak: string | null; technique: TechniqueId | null } {
   const start = raw.indexOf('{');
   const end = raw.lastIndexOf('}');
   if (start < 0 || end < start) {
-    return { whisper: raw.trim().slice(0, 400), speak: null };
+    return { whisper: raw.trim().slice(0, 400), speak: null, technique: null };
   }
   try {
-    const parsed = JSON.parse(raw.slice(start, end + 1)) as { whisper?: unknown; speak?: unknown };
+    const parsed = JSON.parse(raw.slice(start, end + 1)) as {
+      whisper?: unknown;
+      speak?: unknown;
+      technique?: unknown;
+    };
     const whisper = typeof parsed.whisper === 'string' ? parsed.whisper.trim().slice(0, 500) : '';
     const speak =
       typeof parsed.speak === 'string' && parsed.speak.trim() ? parsed.speak.trim().slice(0, 500) : null;
-    return { whisper: whisper || 'Stay with process. Do not take a side.', speak };
+    const technique =
+      typeof parsed.technique === 'string' && parsed.technique in TECHNIQUES
+        ? (parsed.technique as TechniqueId)
+        : null;
+    return { whisper: whisper || 'Stay with process. Do not take a side.', speak, technique };
   } catch {
-    return { whisper: raw.trim().slice(0, 400), speak: null };
+    return { whisper: raw.trim().slice(0, 400), speak: null, technique: null };
   }
 }
 
@@ -115,37 +114,54 @@ export async function adviseRoom(
   sessionId: string,
   intent: 'coach' | 'speak',
   fetchImpl: typeof fetch = fetch
-): Promise<{ whisper: string; speak: string | null; source: 'model' | 'playbook' }> {
+): Promise<{ whisper: string; speak: string | null; source: 'model' | 'playbook'; technique: TechniqueId }> {
   const turns = sessionWindow(sessionId);
   const fallback = playbookReply(turns);
   const cfg = readModelConfig();
   if (!cfg) {
-    return { ...fallback, speak: intent === 'speak' ? fallback.speak : null, source: 'playbook' };
+    return {
+      whisper: fallback.whisper,
+      speak: intent === 'speak' ? fallback.speak : null,
+      source: 'playbook',
+      technique: fallback.id,
+    };
   }
   try {
     const raw = await complete(
       cfg,
       JSON.stringify({
         intent,
+        suggested: fallback.id,
         turns: turns.map((t) => ({ speaker: t.speaker, identityClass: t.identityClass, text: t.text })),
       }),
       fetchImpl
     );
     if (!raw) {
-      return { ...fallback, speak: intent === 'speak' ? fallback.speak : null, source: 'playbook' };
+      return {
+        whisper: fallback.whisper,
+        speak: intent === 'speak' ? fallback.speak : null,
+        source: 'playbook',
+        technique: fallback.id,
+      };
     }
     const parsed = parseAgentJson(raw);
     return {
       whisper: parsed.whisper,
       speak: intent === 'speak' ? parsed.speak || fallback.speak : parsed.speak,
       source: 'model',
+      technique: parsed.technique || fallback.id,
     };
   } catch {
-    return { ...fallback, speak: intent === 'speak' ? fallback.speak : null, source: 'playbook' };
+    return {
+      whisper: fallback.whisper,
+      speak: intent === 'speak' ? fallback.speak : null,
+      source: 'playbook',
+      technique: fallback.id,
+    };
   }
 }
 
-export function publishAvelis(sessionId: string, text: string): void {
+export function publishAvelis(sessionId: string, text: string, technique?: TechniqueId): void {
   const line = text.trim();
   if (!line) return;
   rememberTurn(sessionId, { speaker: 'avelis', identityClass: 'avelis', text: line });
@@ -156,17 +172,18 @@ export function publishAvelis(sessionId: string, text: string): void {
       partyId: 'avelis',
       identityClass: 'avelis',
       text: line,
+      technique: technique || null,
       timestamp: Date.now(),
     },
   });
 }
 
-export function whisperFacilitator(sessionId: string, text: string): void {
+export function whisperFacilitator(sessionId: string, text: string, technique?: TechniqueId): void {
   const line = text.trim();
   if (!line) return;
   broadcastWhere(
     sessionId,
-    { type: 'agent_whisper', text: line, timestamp: Date.now() },
+    { type: 'agent_whisper', text: line, technique: technique || null, timestamp: Date.now() },
     (meta) => meta.identityClass === 'facilitator'
   );
 }
@@ -187,9 +204,9 @@ async function runCoach(sessionId: string): Promise<void> {
   const humans = humanCounts.get(sessionId) || 0;
   const intent = humans > 0 && humans % AUTO_SPEAK_EVERY === 0 ? 'speak' : 'coach';
   const result = await adviseRoom(sessionId, intent);
-  whisperFacilitator(sessionId, result.whisper);
+  whisperFacilitator(sessionId, result.whisper, result.technique);
   if (intent === 'speak' && result.speak) {
-    publishAvelis(sessionId, result.speak);
+    publishAvelis(sessionId, result.speak, result.technique);
   }
 }
 
@@ -202,8 +219,8 @@ export async function invokeAvelis(sessionId: string, prompt?: string): Promise<
     });
   }
   const result = await adviseRoom(sessionId, 'speak');
-  whisperFacilitator(sessionId, result.whisper);
-  if (result.speak) publishAvelis(sessionId, result.speak);
+  whisperFacilitator(sessionId, result.whisper, result.technique);
+  if (result.speak) publishAvelis(sessionId, result.speak, result.technique);
 }
 
 export function askedForAvelis(text: string): boolean {

@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './sessions.css';
 import { RoomProvider, useRoom } from '../room/RoomContext';
 import { identityClassLabel } from '../lib/identityLabels';
+import { TECHNIQUES, type TechniqueId } from '../lib/processCopilot/techniques';
 import { setPartyViewToken } from './party';
 
 export const Route = createFileRoute('/room/$sessionId')({
@@ -114,7 +115,10 @@ function RoomInner() {
             <p className="room-line__meta">Facilitator only</p>
             {whispers.map((w, i) => (
               <p key={i} className="room-whisper">
-                {w}
+                {w.technique && TECHNIQUES[w.technique as TechniqueId] && (
+                  <span className="room-line__meta">{TECHNIQUES[w.technique as TechniqueId].label}</span>
+                )}
+                {w.text}
               </p>
             ))}
           </div>
