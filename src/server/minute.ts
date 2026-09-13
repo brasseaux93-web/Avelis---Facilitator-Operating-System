@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db/index';
 import { jointMinutes } from '../db/schema';
 import { computePayloadDigest } from '../lib/ledger';
+import { decryptText, encryptText } from '../lib/encryption';
 
 type MinuteStatus = 'draft' | 'published' | 'wiped';
 
@@ -15,6 +16,7 @@ export async function upsertJointMinute(
   status: MinuteStatus = 'draft'
 ) {
   const contentDigest = computePayloadDigest({ content });
+  const stored = await encryptText(content);
   const existing = await db.query.jointMinutes.findFirst({
     where: eq(jointMinutes.sessionId, sessionId),
   });
@@ -23,7 +25,7 @@ export async function upsertJointMinute(
     return await db
       .update(jointMinutes)
       .set({
-        content,
+        content: stored,
         contentDigest,
         status,
         updatedAt: new Date(),
@@ -36,7 +38,7 @@ export async function upsertJointMinute(
     .insert(jointMinutes)
     .values({
       sessionId,
-      content,
+      content: stored,
       contentDigest,
       status,
     })
@@ -48,7 +50,7 @@ export async function getJointMinute(sessionId: string) {
     where: eq(jointMinutes.sessionId, sessionId),
   });
   if (!record) return null;
-  return record;
+  return { ...record, content: await decryptText(record.content || '') };
 }
 
 /** Wipe minute body in place (status wiped); full hard-delete happens in destructionWorker. */

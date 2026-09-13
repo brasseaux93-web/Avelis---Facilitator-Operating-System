@@ -2,6 +2,8 @@ import { eq, desc, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { ledgerLines } from '../db/schema';
 import { computePayloadDigest, computeLineHash } from './ledger';
+import { canonicalizeLedgerPayload } from './ledgerPayload';
+import { encryptJson } from './encryption';
 
 /** Closed vocabulary — must match ledger_line_type enum in src/db/schema.ts */
 export const ALLOWED_LEDGER_LINE_TYPES = [
@@ -90,7 +92,7 @@ export async function appendLedgerLine(txOrDb: LedgerDb, args: AppendLedgerLineA
   if (!parsedPayload.success) {
     throw new Error('payload must be a plain object (Record<string, unknown>)');
   }
-  const payload = parsedPayload.data;
+  const payload = canonicalizeLedgerPayload(args.lineType, parsedPayload.data);
 
   if (args.idempotencyKey) {
     const existing = await txOrDb
@@ -132,6 +134,7 @@ export async function appendLedgerLine(txOrDb: LedgerDb, args: AppendLedgerLineA
   );
   const occurredAt = args.occurredAt ?? new Date();
   const schemaVersion = args.schemaVersion ?? 1;
+  const storedPayload = await encryptJson(payload);
 
   const [inserted] = await txOrDb
     .insert(ledgerLines)
@@ -139,7 +142,7 @@ export async function appendLedgerLine(txOrDb: LedgerDb, args: AppendLedgerLineA
       sessionId: args.sessionId,
       sequenceNumber,
       lineType: args.lineType,
-      payload,
+      payload: storedPayload,
       payloadDigest,
       actorKind: args.actorKind,
       actorRef: args.actorRef ?? null,
@@ -153,5 +156,5 @@ export async function appendLedgerLine(txOrDb: LedgerDb, args: AppendLedgerLineA
     })
     .returning();
 
-  return inserted;
+  return { ...inserted, payload };
 }

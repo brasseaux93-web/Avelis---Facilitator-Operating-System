@@ -257,11 +257,9 @@ function SessionConsolePage() {
       setError('The code was shown once. Resend to issue a new one, then copy.');
       return;
     }
-    const base = joinUrlHint.startsWith('http')
-      ? joinUrlHint
-      : window.location.origin + (joinUrlHint.startsWith('/') ? joinUrlHint : '/' + joinUrlHint);
+    const url = `${window.location.origin}/join?code=${encodeURIComponent(code)}`;
     try {
-      await navigator.clipboard.writeText(base + '  ·  code: ' + code);
+      await navigator.clipboard.writeText(url);
     } catch {
       setError('Could not copy join link.');
     }
@@ -513,6 +511,12 @@ function SessionConsolePage() {
                 Close session
               </button>
             </>
+          ) : s.status === 'closed' || s.status === 'purged' ? (
+            <p className="sessions-page__subtitle">
+              {s.status === 'purged'
+                ? 'Session records were destroyed. The destruction receipt remains.'
+                : 'Session is closed. The live room is gone. Process records remain until the destruction deadline.'}
+            </p>
           ) : (
             <button
               type="button"
@@ -601,7 +605,7 @@ function SessionConsolePage() {
                       <button
                         type="button"
                         className="btn btn--secondary"
-                        onClick={() => void copyJoinLink(codesByParty[p.id] || inviteCode)}
+                        onClick={() => void copyJoinLink(codesByParty[p.id])}
                       >
                         Copy link
                       </button>

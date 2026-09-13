@@ -34,6 +34,8 @@ export function assertSpeechFree(value: unknown, path = 'snapshot'): void {
 
 export function sanitizeAgendaLabel(raw: string): string {
   const trimmed = raw.trim().slice(0, 80);
-  if (FORBIDDEN_SUBSTRING.test(trimmed)) return 'Issue';
+  if (FORBIDDEN_SUBSTRING.test(trimmed) || /\b(said|says|told|quoted)\b/i.test(trimmed) || /['"]/.test(trimmed)) {
+    return 'Issue';
+  }
   return trimmed || 'Issue';
 }

@@ -9,9 +9,10 @@ import type { EnvelopeKey, KmsProvider } from './kms/types';
 export type { EnvelopeKey, KmsProvider };
 export { getKms, resetKmsForTests };
 
+export const ENVELOPE_MARK = '_avelis_enc';
+
 /**
- * @deprecated Prefer getKms() so provider selection (local|aws) is honored.
- * Kept for Phase 2 call sites during transition; delegates to getKms().
+ * @deprecated Prefer getKms() so provider selection (local|aws|vault) is honored.
  */
 export const kms = {
   generateDataKey: (keyId: string) => getKms().generateDataKey(keyId),
@@ -21,9 +22,6 @@ export const kms = {
     getKms().verify(keyId, digest, signature),
 };
 
-/**
- * Encrypts data using AES-256-GCM.
- */
 export function encrypt(
   plaintext: string,
   key: Buffer
@@ -35,12 +33,90 @@ export function encrypt(
   return { ciphertext, iv, authTag };
 }
 
-/**
- * Decrypts data using AES-256-GCM.
- */
 export function decrypt(ciphertext: Buffer, key: Buffer, iv: Buffer, authTag: Buffer): string {
   const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
   decipher.setAuthTag(authTag);
   const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   return plaintext.toString('utf8');
+}
+
+export type BodyEnvelope = {
+  [ENVELOPE_MARK]: 1;
+  alg: 'aes-256-gcm';
+  keyId: string;
+  wrappedKey: string;
+  iv: string;
+  tag: string;
+  ct: string;
+};
+
+export function isBodyEnvelope(value: unknown): value is BodyEnvelope {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      (value as BodyEnvelope)[ENVELOPE_MARK] === 1 &&
+      (value as BodyEnvelope).alg === 'aes-256-gcm'
+  );
+}
+
+function encryptionKeyId(): string {
+  return (
+    process.env.AWS_KMS_KEY_ID ||
+    process.env.VAULT_TRANSIT_KEY ||
+    process.env.LOCAL_DEV_ENCRYPTION_KEY ||
+    'local-dev-encryption'
+  );
+}
+
+/** Envelope-encrypt a JSON value. Digest the plaintext before calling this. */
+export async function encryptJson(value: unknown, keyId = encryptionKeyId()): Promise<BodyEnvelope> {
+  const dk = await getKms().generateDataKey(keyId);
+  try {
+    const { ciphertext, iv, authTag } = encrypt(JSON.stringify(value), dk.plaintext);
+    return {
+      [ENVELOPE_MARK]: 1,
+      alg: 'aes-256-gcm',
+      keyId,
+      wrappedKey: dk.ciphertext.toString('base64'),
+      iv: iv.toString('base64'),
+      tag: authTag.toString('base64'),
+      ct: ciphertext.toString('base64'),
+    };
+  } finally {
+    dk.plaintext.fill(0);
+  }
+}
+
+export async function decryptJson(stored: unknown): Promise<unknown> {
+  if (!isBodyEnvelope(stored)) return stored;
+  const dk = await getKms().decryptDataKey(
+    stored.keyId,
+    Buffer.from(stored.wrappedKey, 'base64')
+  );
+  try {
+    const text = decrypt(
+      Buffer.from(stored.ct, 'base64'),
+      dk,
+      Buffer.from(stored.iv, 'base64'),
+      Buffer.from(stored.tag, 'base64')
+    );
+    return JSON.parse(text) as unknown;
+  } finally {
+    dk.fill(0);
+  }
+}
+
+export async function encryptText(plaintext: string, keyId = encryptionKeyId()): Promise<string> {
+  return JSON.stringify(await encryptJson({ t: plaintext }, keyId));
+}
+
+export async function decryptText(stored: string): Promise<string> {
+  let parsed: unknown = stored;
+  try {
+    parsed = JSON.parse(stored) as unknown;
+  } catch {
+    return stored;
+  }
+  const inner = (await decryptJson(parsed)) as { t?: string };
+  return typeof inner?.t === 'string' ? inner.t : stored;
 }

@@ -52,7 +52,7 @@ export function registerInviteActionRoutes(
         await appendLedgerLine(tx, {
           sessionId,
           lineType: 'invite_created',
-          payload: { partyId, identityClass: row.identityClass, resent: true },
+          payload: { partyId, deliveryChannel: 'copy_link' },
           actorKind: 'facilitator',
           actorRef: facilitatorId,
           source: 'application_server',
@@ -161,7 +161,7 @@ export function registerInviteActionRoutes(
           deliveryAddress: deliveryAddress || party.deliveryAddress,
         })
         .where(eq(parties.id, partyId));
-      const joinUrl = `${publicOrigin(req)}/join`;
+      const joinUrl = `${publicOrigin(req)}/join?code=${encodeURIComponent(code)}`;
       const smtpReady = emailConfigured() && Boolean(deliveryAddress);
       if (smtpReady && deliveryAddress) {
         const result = await sendInviteEmail({

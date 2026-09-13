@@ -5,6 +5,7 @@ import { db } from '../db/index';
 import { sessions, parties, agendaItems, ledgerLines, jointMinutes } from '../db/schema';
 import { advise, ask, copilotStatus } from '../lib/processCopilot';
 import { appendLedgerLine } from '../lib/ledgerAppend';
+import { decryptJson } from '../lib/encryption';
 import { logEvent } from '../lib/observability';
 
 const consultHits = new Map<string, { count: number; resetAt: number }>();
@@ -51,9 +52,11 @@ async function loadAdviseInput(sessionId: string) {
     db.select().from(jointMinutes).where(eq(jointMinutes.sessionId, sessionId)).limit(1),
   ]);
 
-  const processMarkPayloads = lines
-    .filter((l) => l.lineType === 'process_mark_recorded')
-    .map((l) => (l.payload as { mark?: string })?.mark);
+  const processMarkPayloads = [];
+  for (const l of lines) {
+    const payload = (await decryptJson(l.payload)) as { mark?: string };
+    if (l.lineType === 'process_mark_recorded') processMarkPayloads.push(payload.mark);
+  }
 
   return {
     parties: partyRows,

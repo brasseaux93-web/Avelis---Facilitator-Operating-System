@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './sessions.css';
 import { apiPost } from '../lib/apiClient';
 import { setPartyViewToken } from './party';
@@ -7,16 +7,24 @@ import { IDENTITY_CLASS_OPTIONS } from '../lib/identityLabels';
 import { ProtocolMark } from '../components/Logo';
 
 export const Route = createFileRoute('/join')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    code: typeof search.code === 'string' ? search.code : undefined,
+  }),
   component: JoinPage,
 });
 
 function JoinPage() {
   const navigate = useNavigate();
-  const [code, setCode] = useState('');
+  const search = Route.useSearch();
+  const [code, setCode] = useState(search.code || '');
   const [identityClass, setIdentityClass] = useState('role_only');
   const [displayLabel, setDisplayLabel] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (search.code) setCode(search.code);
+  }, [search.code]);
 
   const redeem = async (e: React.FormEvent) => {
     e.preventDefault();

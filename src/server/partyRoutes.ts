@@ -4,6 +4,7 @@ import { db } from '../db/index';
 import { sessions, ledgerLines, jointMinutes } from '../db/schema';
 import { verifyPartySessionToken } from '../lib/auth';
 import { appendLedgerLine } from '../lib/ledgerAppend';
+import { decryptJson } from '../lib/encryption';
 import { getJointMinute } from './minute';
 
 declare global {
@@ -96,10 +97,12 @@ export function registerPartyRoutes(app: express.Express) {
         .where(eq(ledgerLines.sessionId, sessionId))
         .orderBy(asc(ledgerLines.sequenceNumber));
       const visible = computePartyVisibleLines(
-        lines.map((l) => ({
-          ...l,
-          payload: (l.payload || {}) as Record<string, unknown>,
-        }))
+        await Promise.all(
+          lines.map(async (l) => ({
+            ...l,
+            payload: ((await decryptJson(l.payload)) || {}) as Record<string, unknown>,
+          }))
+        )
       );
       res.status(200).json({
         sessionId,

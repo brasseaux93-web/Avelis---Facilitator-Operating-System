@@ -17,7 +17,7 @@
 ### Invitations and identity
 
 - Create invite link and one-time code.
-- Deliver invitation by email or SMS.
+- Deliver invitation by email, or a copy-link when mail is not configured.
 - Store only invite-code hash.
 - Rate-limit code attempts.
 - Allow invite revoke.

@@ -79,7 +79,7 @@ export function registerMinuteRoutes(
         await appendLedgerLine(tx, {
           sessionId,
           lineType: 'joint_minute_published',
-          payload: { minuteId: updated.id },
+          payload: { minuteId: updated.id, contentDigest: updated.contentDigest },
           actorKind: 'facilitator',
           actorRef: facilitatorId,
           source: 'facilitator_ui',
@@ -160,7 +160,11 @@ export function registerMinuteRoutes(
         await appendLedgerLine(tx, {
           sessionId,
           lineType: 'joint_minute_exported',
-          payload: { minuteId: minute.id, format: 'markdown' },
+          payload: {
+            minuteId: minute.id,
+            format: 'markdown',
+            contentDigest: minute.contentDigest,
+          },
           actorKind: 'facilitator',
           actorRef: facilitatorId,
           source: 'facilitator_ui',
@@ -207,7 +211,7 @@ export function registerMinuteRoutes(
         await appendLedgerLine(tx, {
           sessionId,
           lineType: 'joint_minute_exported',
-          payload: { minuteId: minute.id, format: 'pdf' },
+          payload: { minuteId: minute.id, format: 'pdf', contentDigest: minute.contentDigest },
           actorKind: 'facilitator',
           actorRef: facilitatorId,
           source: 'facilitator_ui',
