@@ -37,8 +37,13 @@ function PrivacyComponent() {
             <li><strong>Transient Connection Data:</strong> IP addresses and WebSocket tokens are kept in volatile memory strictly for the duration of the active connection and are purged immediately upon disconnect.</li>
           </ul>
 
-          <h3>3. AI & Machine Learning</h3>
-          <p>Avelis does not use artificial intelligence or machine learning models on any session data. We do not train models on your process ledgers. The platform is designed to guarantee human-authored facilitation without automated surveillance.</p>
+          <h3>3. AI & process copilot</h3>
+          <p>
+            Avelis does not send live-room speech, audio, or transcripts to a model. A facilitator-only
+            process copilot may rank next process actions from the process ledger. Prompts and
+            completions are memory-only. We do not train models on Avelis content. No model writes
+            a ledger line.
+          </p>
         </div>
       </div>
     </div>

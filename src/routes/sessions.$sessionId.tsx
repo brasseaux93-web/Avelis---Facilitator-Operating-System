@@ -64,6 +64,21 @@ function SessionConsolePage() {
   const [receiptValid, setReceiptValid] = useState<boolean | null>(null);
   const [joinUrlHint, setJoinUrlHint] = useState('/join');
   const [enteringRoom, setEnteringRoom] = useState(false);
+  const [copilot, setCopilot] = useState<{
+    stage: string;
+    source: string;
+    disclosure: string;
+    questions: string[];
+    actions: Array<{
+      id: string;
+      kind: string;
+      label: string;
+      rationale: string;
+      payload: Record<string, unknown>;
+    }>;
+    minuteOutline: string | null;
+  } | null>(null);
+  const [copilotBusy, setCopilotBusy] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) navigate({ to: '/auth' });
@@ -287,6 +302,75 @@ function SessionConsolePage() {
     }
   };
 
+  const consultCopilot = async () => {
+    setCopilotBusy(true);
+    setError('');
+    try {
+      const result = (await apiPost('/api/sessions/' + sessionId + '/process-copilot')) as NonNullable<
+        typeof copilot
+      >;
+      setCopilot(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not run process copilot.');
+    } finally {
+      setCopilotBusy(false);
+    }
+  };
+
+  const applyCopilotAction = async (action: NonNullable<typeof copilot>['actions'][number]) => {
+    setError('');
+    try {
+      switch (action.kind) {
+        case 'open_session':
+          await apiPost('/api/sessions/' + sessionId + '/open');
+          break;
+        case 'close_session':
+          await apiPost('/api/sessions/' + sessionId + '/close');
+          break;
+        case 'invite_party':
+          setInviteLabel('Party');
+          break;
+        case 'table_agenda': {
+          const title = typeof action.payload.title === 'string' ? action.payload.title : 'Issue for discussion';
+          await apiPost('/api/sessions/' + sessionId + '/agenda', { title });
+          break;
+        }
+        case 'mark_agenda': {
+          const itemId = String(action.payload.itemId || '');
+          const status = String(action.payload.status || '');
+          if (itemId && status) {
+            await apiPatch('/api/sessions/' + sessionId + '/agenda/' + itemId, { status });
+          }
+          break;
+        }
+        case 'open_caucus':
+          await apiPost('/api/sessions/' + sessionId + '/caucus', { action: 'open' });
+          break;
+        case 'close_caucus':
+          await apiPost('/api/sessions/' + sessionId + '/caucus', { action: 'close' });
+          if (action.payload.mark) {
+            await apiPost('/api/sessions/' + sessionId + '/process-marks', { mark: action.payload.mark });
+          }
+          break;
+        case 'process_mark':
+          await apiPost('/api/sessions/' + sessionId + '/process-marks', { mark: action.payload.mark });
+          break;
+        case 'draft_joint_minute':
+          if (copilot?.minuteOutline) setMinuteContent(copilot.minuteOutline);
+          break;
+        case 'publish_joint_minute':
+          await apiPost('/api/sessions/' + sessionId + '/minute/publish');
+          break;
+        default:
+          break;
+      }
+      await refresh();
+      await consultCopilot();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not apply process action.');
+    }
+  };
+
   if (!isAuthenticated || !detail) {
     return (
       <div className="sessions-page">
@@ -379,6 +463,62 @@ function SessionConsolePage() {
           Parties join at <code>{joinUrlHint}</code> with a one-time invite. They do not create
           accounts.
         </p>
+      </div>
+
+      <div className="sessions-panel">
+        <h3>Process copilot</h3>
+        <p className="sessions-page__subtitle">
+          Ranks the next process step from the ledger. It does not read the live room. It does not
+          write the ledger. You confirm every action.
+        </p>
+        <div className="sessions-actions">
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => void consultCopilot()}
+            disabled={copilotBusy || s.status === 'purged'}
+          >
+            {copilotBusy ? 'Reading process…' : 'Suggest next process step'}
+          </button>
+        </div>
+        {copilot && (
+          <div className="copilot">
+            <p className="copilot__meta">
+              Stage <span className="sessions-status">{copilot.stage}</span>
+              {' · '}
+              Source {copilot.source}
+            </p>
+            <p className="sessions-disclosure" role="note">
+              {copilot.disclosure}
+            </p>
+            {copilot.questions.length > 0 && (
+              <ol className="copilot__questions">
+                {copilot.questions.map((q) => (
+                  <li key={q}>{q}</li>
+                ))}
+              </ol>
+            )}
+            <ul className="copilot__actions">
+              {copilot.actions.map((a) => (
+                <li key={a.id}>
+                  <div>
+                    <p className="copilot__label">{a.label}</p>
+                    <p className="sessions-page__subtitle">{a.rationale}</p>
+                  </div>
+                  <button type="button" className="btn btn--secondary" onClick={() => void applyCopilotAction(a)}>
+                    Confirm
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {copilot.minuteOutline && (
+              <p className="sessions-page__subtitle">
+                A joint-minute outline is ready from marked-agreed items. Confirm “Draft joint
+                minute” to insert it. Edit before you save.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="sessions-panel">

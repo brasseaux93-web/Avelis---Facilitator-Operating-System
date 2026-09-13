@@ -20,7 +20,8 @@ Reject proposals that introduce:
 
 | Proposal | Reason |
 |---|---|
-| AI summary, transcription, classification, or recommendation | AI and speech-derived content are prohibited |
+| AI summary, transcription, classification of *speech*, or a model that writes the ledger | Speech-derived content and unaccountable authorship are prohibited |
+| Process copilot that reads the live room | Only ledger-only snapshots are allowed (ADR-0007) |
 | Persistent chat, scrollback, recording, replay, or export | Speech must remain ephemeral |
 | Participant profile, directory, follower graph, or contacts surface | Identity is session-scoped |
 | Facilitator notes about people or statements | Narrative and inference persistence |
@@ -49,7 +50,7 @@ Every pull request must answer:
 - [ ] No room message body is written to database, filesystem, object storage, logs, queues, analytics, error tracking, or backups.
 - [ ] No audio is recorded or persisted.
 - [ ] No transcript or stored caption is created.
-- [ ] No AI receives or processes session speech.
+- [ ] No AI receives or processes session speech. A process copilot may receive a speech-free ledger snapshot only.
 - [ ] Browser durable-storage paths are absent or cleared and tested.
 - [ ] No session replay or DOM-capture tool receives room or minute content.
 

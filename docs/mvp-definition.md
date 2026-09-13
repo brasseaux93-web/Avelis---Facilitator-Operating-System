@@ -76,7 +76,7 @@
 
 | Forbidden feature | Reason |
 |---|---|
-| AI, transcription, summarization, or sentiment analysis | Speech and inference boundary |
+| Speech-to-model, transcription, summarization, or sentiment analysis | Speech and inference boundary |
 | Persistent party accounts | Session-scoped identity only |
 | Chat history or scrollback after close | Speech must be gone |
 | Audio recording or replay | Audio must not persist |

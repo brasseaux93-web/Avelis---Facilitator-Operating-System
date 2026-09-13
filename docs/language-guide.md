@@ -31,6 +31,7 @@ Use language that:
 | Make a line available to parties | Publish |
 | Remove party visibility | Withdraw from party view |
 | Technical failure | Could not complete [action] |
+| Process aid | Process copilot |
 | Non-persistence disclosure | Room messages are not stored |
 
 ## 3. Forbidden vocabulary
@@ -47,6 +48,8 @@ transcript
 meeting notes
 AI summary
 smart summary
+AI mediator
+insights
 sentiment
 insight
 participant profile

@@ -1,6 +1,6 @@
-import express from 'express';
 import { registerAgendaLedgerRoutes } from './agendaLedgerRoutes';
 import { registerMinuteRoutes } from './minuteRoutes';
+import { registerProcessCopilotRoutes } from './processCopilotRoutes';
 
 export function registerSessionContentRoutes(
   app: express.Express,
@@ -8,4 +8,5 @@ export function registerSessionContentRoutes(
 ) {
   registerAgendaLedgerRoutes(app, requireAuth);
   registerMinuteRoutes(app, requireAuth);
+  registerProcessCopilotRoutes(app, requireAuth);
 }

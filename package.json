@@ -9,7 +9,7 @@
     "test:ledger": "vitest run tests/ledger",
     "test:retention": "vitest run tests/retention",
     "test:integration": "vitest run tests/integration",
-    "test:room-auth": "vitest run tests/room",
+    "test:process-copilot": "vitest run tests/process-copilot",
     "test:e2e": "playwright test",
     "check:observability-flags": "node scripts/check-prod-observability-flags.mjs",
     "lint": "eslint .",

@@ -8,7 +8,7 @@
 2. The process ledger is the only durable session record aside from the optional joint minute and final destruction receipt.
 3. The ledger is append-only, ordered, encrypted, and tamper-evident.
 4. Signaling carries control events, not speech.
-5. No AI is in the product or operational critical path for session content.
+5. No model is in the critical path for session *speech*. A facilitator process copilot may rank next process actions from a speech-free ledger snapshot; it never writes the ledger.
 6. Host organizations are isolated encryption scopes.
 7. Retention and destruction are first-class system behavior, not cleanup.
 
@@ -25,6 +25,7 @@
 | External KMS | Encryption and signing key operations | No |
 | Retention worker | Verifies and destroys eligible session data | No |
 | Restricted security audit store | Minimal operational security events | No |
+| Process copilot | Ranks next closed-vocabulary actions from process facts | No |
 
 ## 3. Topology
 

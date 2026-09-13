@@ -4,7 +4,7 @@ People cannot speak freely if the room becomes evidence.
 
 Avelis is for the conversations that have to happen — shuttle diplomacy, workplace facilitation, an ombuds session — where writing everything down would change what people are willing to say. It gives the facilitator a **process ledger** (who was invited, what was tabled, what was marked agreed) and it **does not keep the talk**.
 
-The live room exists only while the session is open. Messages are delivered and dropped. There is no transcript, no AI summary, no scrollback after close. When the retention window ends, process records are destroyed and a **destruction receipt** remains as the limited proof that destruction happened.
+The live room exists only while the session is open. Messages are delivered and dropped. There is no transcript, no AI summary of the talk, no scrollback after close. When the retention window ends, process records are destroyed and a **destruction receipt** remains as the limited proof that destruction happened.
 
 The product object is a **session**. It is not a community, a case file, a participant directory, or a chat app.
 
@@ -21,7 +21,7 @@ The product object is a **session**. It is not a community, a case file, a parti
 ## Core promise
 
 - Text in the room exists in memory only while the room is open (deliver-and-drop; no server scrollback).
-- Avelis never generates a transcript and does not use AI to interpret or write process records.
+- Avelis never generates a transcript and does not use AI to interpret speech or write process records. A facilitator-only process copilot may rank next process actions from the ledger.
 - The ledger records authorized process facts, not speech.
 - A session’s retained data is destroyed at the configured deadline.
 - A destruction receipt remains as limited evidence that destruction occurred.
@@ -37,6 +37,7 @@ WebRTC / third-party signaling is **not** on the production speech path (see `de
 - Ephemeral WebSocket room (HMAC party tokens only; raw shared secret rejected; no message history)
 - Session create → open → invite → close → retention purge + verifiable destruction receipt
 - Closed-vocabulary ledger with transactional sequencing and hash chaining
+- Facilitator process copilot (ledger-only; playbook always, optional model ranker)
 - Facilitator sign-in, session console, party join, live room
 - Room teardown across API and room processes (loopback control plane)
 - Agenda + joint minute; KMS factory (`local` | `aws`)
@@ -61,7 +62,7 @@ WebRTC / third-party signaling is **not** on the production speech path (see `de
 - A chat app or persistent messaging system
 - A social network or participant directory
 - A therapy product, HR case-management tool, or whistleblowing hotline
-- An AI assistant, transcription, or sentiment product
+- An AI mediator, transcription, or sentiment product
 - A legal-signature, legal-hold, or discovery platform
 
 Avelis does **not** claim legal privilege or subpoena immunity. See the [Language Guide](docs/language-guide.md).

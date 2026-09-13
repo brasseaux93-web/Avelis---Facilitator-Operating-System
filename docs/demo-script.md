@@ -1,6 +1,6 @@
 # Investor demo script (≈5 minutes)
 
-Factual walkthrough of the facilitator operating system. No legal overclaims. No AI features.
+Factual walkthrough of the facilitator operating system. No legal overclaims.
 
 **Prep:** Docker Compose Postgres up; `.env` from `.env.example.txt` with `ENABLE_DEMO_SEED=true`; `npm run dev`; seed facilitator auto-created in development (`facilitator@avelis.local` / `change-me-now` unless overridden).
 
@@ -58,7 +58,7 @@ Factual walkthrough of the facilitator operating system. No legal overclaims. No
 - Product object is the **session**.
 - Speech is ephemeral; process may be retained temporarily.
 - Optional joint minute is separate from the live room.
-- v1 has no AI.
+- The process copilot ranks next process actions from the ledger. It does not read the room.
 - Destruction is a product feature, not an afterthought.
 - Demo helpers: `/demo`, `GET /api/demo/status`, `POST /api/demo/prepare` (dev/demo only).
 
