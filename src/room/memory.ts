@@ -1,7 +1,7 @@
 /**
  * Pure in-memory room registry.
- * Product Law: Speech is memory-only. Rooms MUST NOT retain message history
- * after broadcast. Late joiners get no scrollback. Never log message bodies.
+ * Product Law: Speech is memory-only. The live feed is deliver-and-drop.
+ * Late joiners get no scrollback. Never log bodies.
  */
 
 /** Minimal socket surface so tests can mock without real `ws`. */
@@ -21,10 +21,15 @@ export interface RoomState {
   sessionId: string;
   parties: Map<WebSocketLike, PartyMeta>;
   createdAt: number;
-  // Intentionally NO messages / history buffer.
+  // Intentionally NO messages / history buffer on the room object.
 }
 
 const rooms = new Map<string, RoomState>();
+const teardownHooks: Array<(sessionId: string) => void> = [];
+
+export function onRoomTeardown(hook: (sessionId: string) => void): void {
+  teardownHooks.push(hook);
+}
 
 export function createRoom(sessionId: string): RoomState {
   const room: RoomState = {
@@ -75,12 +80,21 @@ export function removeParty(sessionId: string, socket: WebSocketLike): void {
  * Does NOT store the payload. Buffer is released after delivery.
  */
 export function broadcast(sessionId: string, payload: unknown): number {
+  return broadcastWhere(sessionId, payload, () => true);
+}
+
+export function broadcastWhere(
+  sessionId: string,
+  payload: unknown,
+  predicate: (meta: PartyMeta) => boolean
+): number {
   const room = rooms.get(sessionId);
   if (!room) return 0;
 
   const serialized = JSON.stringify(payload);
   let delivered = 0;
-  for (const [socket] of room.parties) {
+  for (const [socket, meta] of room.parties) {
+    if (!predicate(meta)) continue;
     if (socket.readyState === socket.OPEN) {
       try {
         socket.send(serialized);
@@ -94,11 +108,17 @@ export function broadcast(sessionId: string, payload: unknown): number {
 }
 
 /**
- * Close all sockets, clear party map, delete room entry.
- * @returns true if a room existed and was torn down.
+ * Close all sockets, clear party map, run teardown hooks, delete room entry.
  */
 export function teardownRoom(sessionId: string): boolean {
   const room = rooms.get(sessionId);
+  for (const hook of teardownHooks) {
+    try {
+      hook(sessionId);
+    } catch {
+      // Hooks must not throw through teardown.
+    }
+  }
   if (!room) return false;
 
   for (const [socket] of room.parties) {
@@ -118,5 +138,14 @@ export function teardownRoom(sessionId: string): boolean {
 
 /** Test-only: wipe all rooms (not used in production paths). */
 export function _resetRoomsForTests(): void {
+  for (const id of [...rooms.keys()]) {
+    for (const hook of teardownHooks) {
+      try {
+        hook(id);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   rooms.clear();
 }

@@ -80,13 +80,15 @@ function Index() {
       <div className="container">
         <div className="hero__grid">
           <div className="hero__content">
-            <p className="hero__eyebrow">FACILITATOR OPERATING SYSTEM</p>
+            <p className="hero__eyebrow">AI CONFLICT RESOLUTION · PRIVATE ROOMS</p>
             <h1 className="hero__title" id="hero-title">
-              Ephemeral rooms, a process ledger, and scheduled destruction for facilitated sessions.
+              Private rooms for difficult conversations. Avelis sits in the room — then the talk is gone.
             </h1>
             <p className="hero__body">
-              Avelis is a facilitator operating system for bounded sessions. Room messages are delivered live and are not stored by Avelis.
-              A closed-vocabulary process ledger and an optional joint minute may be retained until the selected destruction deadline.
+              Avelis is an AI conflict-resolution operating system for facilitators. Parties join a
+              private live room. Avelis is a visible conflict agent: it asks process questions, names
+              the problem without the people, and never writes the ledger. Room messages are not stored.
+              A process record is destroyed on a deadline you choose.
             </p>
             <div className="hero__actions">
               <Link to="/evaluation" className="btn btn--primary btn--lg">Request Institutional Evaluation</Link>
@@ -94,14 +96,14 @@ function Index() {
             </div>
 
             <div className="hero__ioa-block">
-              <span className="hero__ioa-header">Process accountability // Speech non-persistence</span>
+              <span className="hero__ioa-header">Conflict agent // Speech non-persistence</span>
               <p className="hero__ioa-text">
-                Designed for facilitators who need live conversation without a stored transcript, plus a durable record of process actions only.
-                The process copilot does not read the room. No model writes ledger lines.
+                Avelis is in the room while it is open. Inference sees a rolling window in RAM, not a
+                file. Closing destroys the live room. The process copilot still cannot write ledger lines.
               </p>
               <div className="hero__ioa-badges">
-                <span className="hero__ioa-badge">L1 Speech is Ephemeral</span>
-                <span className="hero__ioa-badge">L5 Destruction is Feature</span>
+                <span className="hero__ioa-badge">Visible agent</span>
+                <span className="hero__ioa-badge">No stored transcript</span>
               </div>
             </div>
           </div>

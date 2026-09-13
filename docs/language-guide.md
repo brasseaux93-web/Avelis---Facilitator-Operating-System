@@ -31,6 +31,8 @@ Use language that:
 | Make a line available to parties | Publish |
 | Remove party visibility | Withdraw from party view |
 | Technical failure | Could not complete [action] |
+| Product | AI conflict resolution · private rooms |
+| In-room actor | Conflict agent / Avelis |
 | Process aid | Process copilot |
 | Copilot turn | Ask a process question |
 | Non-persistence disclosure | Room messages are not stored |

@@ -61,8 +61,9 @@ function JoinPage() {
       <p className="sessions-page__eyebrow">Temporary session</p>
       <h1 className="sessions-page__title">Join with an invite</h1>
       <p className="sessions-disclosure sessions-disclosure--persist" role="note">
-        You do not create an account. This tab holds credentials in memory only. Room messages are
-        delivered live and are not stored by Avelis.
+        You do not create an account. This tab holds credentials in memory only. Avelis is a visible
+        conflict agent in the live room. What you type may be sent to the session’s inference
+        provider while the room is open. Avelis does not store the talk.
       </p>
       <form className="sessions-form" onSubmit={redeem}>
         <div className="sessions-field">

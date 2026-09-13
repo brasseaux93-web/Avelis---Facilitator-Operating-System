@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
-// Product Law L1: Messages MUST NOT touch durable storage on the client.
 // Tab memory only. Unmount / room_closed clears the live view. No scrollback after close.
 
 interface Message {
@@ -12,8 +11,11 @@ interface Message {
 
 interface RoomContextType {
   messages: Message[];
+  whispers: string[];
   sendMessage: (text: string) => void;
+  invokeAgent: (prompt?: string) => void;
   isConnected: boolean;
+  isFacilitator: boolean;
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
@@ -42,8 +44,10 @@ export function RoomProvider({
   children: ReactNode;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [whispers, setWhispers] = useState<string[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
+  const isFacilitator = identityClass === 'facilitator';
 
   useEffect(() => {
     const params = new URLSearchParams({
@@ -59,16 +63,25 @@ export function RoomProvider({
     socket.onclose = () => {
       setIsConnected(false);
       setMessages([]);
+      setWhispers([]);
     };
 
     socket.onmessage = (event) => {
-      let data: { type?: string; message?: Message & { identityClass?: string } };
+      let data: {
+        type?: string;
+        text?: string;
+        message?: Message & { identityClass?: string };
+      };
       try {
         data = JSON.parse(event.data);
       } catch {
         return;
       }
       if (data.type === 'history') {
+        return;
+      }
+      if (data.type === 'agent_whisper' && typeof data.text === 'string') {
+        setWhispers((prev) => [...prev.slice(-7), data.text!]);
         return;
       }
       if (data.type === 'message' && data.message) {
@@ -84,6 +97,7 @@ export function RoomProvider({
         ]);
       } else if (data.type === 'room_closed') {
         setMessages([]);
+        setWhispers([]);
         socket.close();
       }
     };
@@ -92,6 +106,7 @@ export function RoomProvider({
       socket.close();
       socketRef.current = null;
       setMessages([]);
+      setWhispers([]);
     };
   }, [sessionId, partyId, roomToken, identityClass]);
 
@@ -102,8 +117,15 @@ export function RoomProvider({
     }
   };
 
+  const invokeAgent = (prompt?: string) => {
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'agent_invoke', prompt: prompt || '' }));
+    }
+  };
+
   return (
-    <RoomContext.Provider value={{ messages, sendMessage, isConnected }}>
+    <RoomContext.Provider value={{ messages, whispers, sendMessage, invokeAgent, isConnected, isFacilitator }}>
       {children}
     </RoomContext.Provider>
   );
