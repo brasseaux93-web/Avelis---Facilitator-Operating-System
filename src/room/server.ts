@@ -2,17 +2,13 @@
  * Ephemeral WebSocket room server.
  * All room state lives in memory.ts. This file only wires ws + auth.
  *
- * Auth (document):
+ * Auth:
  * - Require query params: sessionId, partyId, roomToken.
- * - Accept roomToken if it equals process.env.ROOM_SHARED_SECRET (shared secret),
- *   OR if it equals HMAC-SHA256(sessionId + ":" + partyId, ROOM_SHARED_SECRET) hex.
+ * - Accept roomToken ONLY if it equals HMAC-SHA256(sessionId + ":" + partyId, ROOM_SHARED_SECRET) hex.
+ * - NEVER accept the raw ROOM_SHARED_SECRET as roomToken (including in development).
  * Reject with close code 1008 when missing/invalid.
  *
  * Never log room message bodies. Late joiners get no scrollback.
- *
- * Isolation:
- * - ROOM_SWAP_DISABLED=true documents host intent to disable swap for this process.
- * - Production refuses to start if ROOM_SHARED_SECRET is missing or the default placeholder.
  */
 import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'node:crypto';
@@ -39,10 +35,21 @@ export {
 
 const PORT = Number(process.env.ROOM_PORT || 3002);
 const MESSAGE_MAX_BYTES = Number(process.env.ROOM_MESSAGE_MAX_BYTES || 8192);
-const DEFAULT_ROOM_SECRET = 'change-me-room-secret';
 
-function assertRoomProductionSecrets(): void {
-  if (process.env.ROOM_SWAP_DISABLED === 'true') {
+/** Known placeholders that must never be used as ROOM_SHARED_SECRET in production. */
+export const ROOM_SECRET_PLACEHOLDERS = new Set([
+  'change-me-room-secret',
+  'change-me',
+  'change-me-room-secret-compose',
+  'changeme',
+  'secret',
+  'password',
+]);
+
+export function assertRoomProductionSecrets(
+  env: NodeJS.ProcessEnv = process.env
+): void {
+  if (env.ROOM_SWAP_DISABLED === 'true') {
     console.log(
       JSON.stringify({
         level: 'info',
@@ -53,12 +60,12 @@ function assertRoomProductionSecrets(): void {
     );
   }
 
-  if (process.env.NODE_ENV !== 'production') return;
+  if (env.NODE_ENV !== 'production') return;
 
-  const secret = process.env.ROOM_SHARED_SECRET;
-  if (!secret || secret === DEFAULT_ROOM_SECRET || secret === 'change-me') {
+  const secret = env.ROOM_SHARED_SECRET;
+  if (!secret || ROOM_SECRET_PLACEHOLDERS.has(secret) || secret.length < 24) {
     throw new Error(
-      'Room server refused to start in production: ROOM_SHARED_SECRET missing or default. Set a strong secret.'
+      'Room server refused to start in production: ROOM_SHARED_SECRET missing, placeholder, or too short. Set a strong secret via env (never commit it).'
     );
   }
 }
@@ -74,21 +81,26 @@ function timingSafeEqualHex(a: string, b: string): boolean {
   }
 }
 
-function expectedHmac(sessionId: string, partyId: string, secret: string): string {
+export function expectedHmac(sessionId: string, partyId: string, secret: string): string {
   return crypto
     .createHmac('sha256', secret)
-    .update(`${sessionId}:${partyId}`)
+    .update(sessionId + ':' + partyId)
     .digest('hex');
 }
 
-function isValidRoomToken(
+/**
+ * Validate roomToken. Raw shared secret is NEVER accepted as a token.
+ */
+export function isValidRoomToken(
   roomToken: string,
   sessionId: string,
-  partyId: string
+  partyId: string,
+  env: NodeJS.ProcessEnv = process.env
 ): boolean {
-  const secret = process.env.ROOM_SHARED_SECRET;
+  const secret = env.ROOM_SHARED_SECRET;
   if (!secret) return false;
-  if (timingSafeEqualHex(roomToken, secret)) return true;
+  // Explicitly reject raw shared secret (Macroscope P0).
+  if (timingSafeEqualHex(roomToken, secret)) return false;
   const hmac = expectedHmac(sessionId, partyId, secret);
   return timingSafeEqualHex(roomToken, hmac);
 }
@@ -97,7 +109,7 @@ export function createRoomServer(port = PORT): WebSocketServer {
   const wss = new WebSocketServer({ port });
 
   wss.on('connection', (ws, req) => {
-    const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+    const url = new URL(req.url || '', 'http://' + (req.headers.host || 'localhost'));
     const sessionId = url.searchParams.get('sessionId');
     const partyId = url.searchParams.get('partyId');
     const roomToken = url.searchParams.get('roomToken');
