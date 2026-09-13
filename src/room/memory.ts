@@ -83,6 +83,10 @@ export function broadcast(sessionId: string, payload: unknown): number {
   return broadcastWhere(sessionId, payload, () => true);
 }
 
+export function deliverTo(sessionId: string, partyId: string, payload: unknown): number {
+  return broadcastWhere(sessionId, payload, (meta) => meta.partyId === partyId);
+}
+
 export function broadcastWhere(
   sessionId: string,
   payload: unknown,

@@ -18,6 +18,7 @@ import {
   addParty,
   removeParty,
   ensureRoom,
+  deliverTo,
   type WebSocketLike,
 } from './memory';
 import { createRoomControlServer } from './control';
@@ -34,6 +35,7 @@ import {
   sanitizeProcessFact,
 } from './caucus';
 import { TECHNIQUES } from '../lib/processCopilot/techniques';
+import { clearClock, setClock } from './clock';
 
 export {
   teardownRoom,
@@ -150,7 +152,16 @@ export function createRoomServer(port = PORT): WebSocketServer {
     }
 
     ws.on('message', (data) => {
-      let parsed: { type?: string; text?: string; prompt?: string; partyId?: string; processFact?: string };
+      let parsed: {
+        type?: string;
+        text?: string;
+        prompt?: string;
+        partyId?: string;
+        processFact?: string;
+        minutes?: number;
+        to?: string;
+        data?: unknown;
+      };
       try {
         parsed = JSON.parse(data.toString());
       } catch {
@@ -159,6 +170,25 @@ export function createRoomServer(port = PORT): WebSocketServer {
 
       if (parsed?.type === 'agent_invoke') {
         void invokeAvelis(sessionId, parsed.prompt, identityClass === 'facilitator' ? 'facilitator' : 'party');
+        return;
+      }
+
+      if (parsed?.type === 'clock_set' && identityClass === 'facilitator') {
+        if (parsed.minutes == null) {
+          clearClock(sessionId);
+          return;
+        }
+        setClock(sessionId, Number(parsed.minutes));
+        return;
+      }
+
+      if (parsed?.type === 'signal' && typeof parsed.to === 'string') {
+        // Signaling only. Not speech. Not stored. Not given to the agent.
+        deliverTo(sessionId, parsed.to, {
+          type: 'signal',
+          from: partyId,
+          data: parsed.data ?? null,
+        });
         return;
       }
 

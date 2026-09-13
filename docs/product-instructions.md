@@ -148,7 +148,8 @@ The MVP includes:
 - One-time party access
 - Identity-class selection
 - Ephemeral live text room
-- Optional WebRTC mesh audio only if stable
+- Optional WebRTC mesh audio only if stable. Signaling may ride the room socket. Audio frames must not. No SFU. No captions. No model on the microphone.
+- A facilitator may set a shared process clock the parties can see. Elapsing does not close the room.
 - Agenda management
 - Closed-vocabulary facilitator ledger
 - Party-visible ledger publication
@@ -281,6 +282,7 @@ If the answer to any question is uncertain, the change must not proceed until re
 | 2026-09-13 | Agent rules + facilitator process dialogue; Groq as optional inference backend | Accepted |
 | 2026-09-13 | Visible conflict agent in the live room; disclosed RAM window to inference; still no stored transcript | Accepted |
 | 2026-09-13 | RAM caucus: private turn, plenary paused, process facts return, quotes do not | Accepted |
+| 2026-09-13 | Shared process clock (visible, no auto-close); mesh voice signaling only, no SFU | Accepted |
 
 ## 17. Amendment process
 

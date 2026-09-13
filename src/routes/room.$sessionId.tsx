@@ -5,8 +5,10 @@ import { RoomProvider, useRoom } from '../room/RoomContext';
 import { identityClassLabel } from '../lib/identityLabels';
 import { TECHNIQUES, type TechniqueId } from '../lib/processCopilot/techniques';
 import { ProtocolMark } from '../components/Logo';
+import { ProcessClock } from '../components/ProcessClock';
 import { setPartyViewToken } from './party';
 import { apiPost } from '../lib/apiClient';
+import { VoiceMesh } from '../room/VoiceMesh';
 
 export const Route = createFileRoute('/room/$sessionId')({
   component: RoomPage,
@@ -27,10 +29,12 @@ function RoomInner() {
     processMove,
     presence,
     caucus,
+    clock,
     sendMessage,
     invokeAgent,
     openCaucus,
     closeCaucus,
+    setClock,
     isConnected,
     isFacilitator,
     identityClass,
@@ -142,6 +146,16 @@ function RoomInner() {
           <span>You appear as {identityClassLabel(identityClass)}</span>
           {isFacilitator && <Link to="/party">Process view</Link>}
         </div>
+
+        <ProcessClock
+          endsAt={clock?.endsAt ?? null}
+          minutes={clock?.minutes ?? null}
+          elapsed={Boolean(clock?.elapsed)}
+          isFacilitator={isFacilitator}
+          onSet={setClock}
+        />
+
+        <VoiceMesh paused={plenaryPaused || inPrivateTurn} />
 
         {moveLabel && !plenaryPaused && (
           <p className="room-move" aria-live="polite">
