@@ -31,7 +31,8 @@ The product object is a **session**. It is not a community, a case file, a parti
 ### What works
 
 - Ephemeral WebSocket room (HMAC party tokens; no stored message history)
-- Visible conflict agent (`@avelis`, facilitator invoke, process cadence)
+- Visible conflict agent (`@avelis`, facilitator invoke, named mediation techniques)
+- Groq: `llama-3.1-8b-instant` for ranking/whispers, `llama-3.3-70b-versatile` for room speech
 - Facilitator process copilot on the session console (ledger-only ranker + dialogue)
 - Session create → open → invite → close → retention purge + verifiable destruction receipt
 - Closed-vocabulary ledger with transactional sequencing and hash chaining

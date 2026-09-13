@@ -27,7 +27,7 @@ Verified after the post-MVP cut: memory-only room restored, facilitator vs parti
 - Facilitator host room access via `/api/sessions/:id/room-access`
 - Party view restored to real JSX (no token paste)
 - Destruction receipt layout (`receipt-dl`) so headers are not clipped
-- WebRTC/Supabase experiment moved to `deprecated/`
+- WebRTC/Supabase experiment removed (not on the production speech path)
 
 ## Remaining ops (not product blockers)
 

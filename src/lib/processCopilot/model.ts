@@ -18,6 +18,7 @@ export interface ModelConfig {
   baseUrl: string;
   apiKey: string;
   model: string;
+  fastModel: string;
   provider: 'groq' | 'openai-compatible';
 }
 
@@ -31,8 +32,9 @@ export function readModelConfig(env: NodeJS.ProcessEnv = process.env): ModelConf
   );
   const model =
     env.PROCESS_COPILOT_MODEL || env.GROQ_MODEL || (groqDefault ? 'llama-3.3-70b-versatile' : 'grok-3');
+  const fastModel = env.GROQ_MODEL_FAST || (groqDefault ? 'llama-3.1-8b-instant' : model);
   const provider: ModelConfig['provider'] = /groq\.com/i.test(baseUrl) ? 'groq' : 'openai-compatible';
-  return { baseUrl, apiKey, model, provider };
+  return { baseUrl, apiKey, model, fastModel, provider };
 }
 
 export function copilotStatus(env: NodeJS.ProcessEnv = process.env): {
@@ -49,7 +51,8 @@ async function complete(
   config: ModelConfig,
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
   fetchImpl: typeof fetch,
-  temperature = 0.2
+  temperature = 0.2,
+  model = config.model
 ): Promise<string | null> {
   const res = await fetchImpl(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
@@ -58,7 +61,7 @@ async function complete(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: config.model,
+      model,
       temperature,
       max_tokens: 500,
       messages,
@@ -90,7 +93,9 @@ export async function rankWithModel(
         }),
       },
     ],
-    fetchImpl
+    fetchImpl,
+    0.2,
+    config.fastModel
   );
   if (!raw) return playbook;
   return mergeModelOutput(playbook, raw);

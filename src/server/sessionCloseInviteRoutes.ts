@@ -9,6 +9,8 @@ import {
 } from '../db/schema';
 import { appendLedgerLine } from '../lib/ledgerAppend';
 import { generateInviteCode } from '../lib/invite';
+import { teardownRoom } from '../room/memory';
+import { requestRoomTeardown } from '../room/control';
 import { getKms } from '../lib/encryption';
 import { computePayloadDigest } from '../lib/ledger';
 import { incrementMetric, logEvent } from '../lib/observability';
@@ -70,7 +72,9 @@ app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
         initialVisibility: 'facilitator_only',
       });
 
-      const roomExisted = false;
+      const localRoom = teardownRoom(sessionId);
+      const remoteRoom = await requestRoomTeardown(sessionId);
+      const roomExisted = localRoom || remoteRoom;
 
       await appendLedgerLine(tx, {
         sessionId,
