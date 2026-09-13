@@ -1,1 +1,1 @@
-RAW_TEST: <p className="x">{hi}</p> END
+# removed
