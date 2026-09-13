@@ -10,6 +10,7 @@ import {
   assertProductionObservabilityGuards,
   getMetricsSnapshot,
   logEvent,
+  sanitizeRequestId,
 } from '../lib/observability';
 import { db } from '../db/index';
 
@@ -28,9 +29,9 @@ app.use((_req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  const requestId =
-    (typeof req.headers['x-request-id'] === 'string' && req.headers['x-request-id']) ||
-    crypto.randomUUID();
+  const header =
+    typeof req.headers['x-request-id'] === 'string' ? req.headers['x-request-id'] : undefined;
+  const requestId = sanitizeRequestId(header) || crypto.randomUUID();
   res.setHeader('x-request-id', requestId);
   const start = Date.now();
   res.on('finish', () => {
@@ -49,12 +50,12 @@ app.use(express.json());
 
 const PORT = Number(process.env.API_PORT || process.env.PORT || 3001);
 
-/** Liveness — process is up. */
+/** Liveness - process is up. */
 app.get('/healthz', (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
-/** Readiness — database ping. */
+/** Readiness - database ping. */
 app.get('/readyz', async (_req, res) => {
   try {
     await db.execute(sql`select 1`);
@@ -64,7 +65,7 @@ app.get('/readyz', async (_req, res) => {
   }
 });
 
-/** In-memory counters only — no content. */
+/** In-memory counters only - no content. */
 app.get('/metrics', (_req, res) => {
   res.status(200).json(getMetricsSnapshot());
 });

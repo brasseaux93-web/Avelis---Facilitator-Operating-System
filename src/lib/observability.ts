@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 /**
  * Observability without content.
  * Structured logs never include bodies, WS payloads, invite codes, or full emails.
@@ -13,12 +14,13 @@ export interface StructuredLog {
   [key: string]: unknown;
 }
 
-/** In-memory counters — no per-party metrics. */
+/** In-memory counters - no per-party metrics. */
 export const metrics = {
   sessions_opened: 0,
   sessions_closed: 0,
   purge_success: 0,
   purge_failure: 0,
+  security_audit_purged: 0,
 };
 
 export type MetricName = keyof typeof metrics;
@@ -36,7 +38,7 @@ export function emailDomainOnly(email: string | undefined | null): string | unde
   if (!email || typeof email !== 'string') return undefined;
   const at = email.lastIndexOf('@');
   if (at < 0) return '[redacted]';
-  return `*@${email.slice(at + 1)}`;
+  return '*@' + email.slice(at + 1);
 }
 
 const FORBIDDEN_KEYS = new Set([
@@ -55,12 +57,52 @@ const FORBIDDEN_KEYS = new Set([
   'websocketPayload',
 ]);
 
+function looksLikeEmail(v: string): boolean {
+  const at = v.indexOf('@');
+  if (at <= 0) return false;
+  const domain = v.slice(at + 1);
+  return domain.includes('.') && !v.includes(' ') && !v.includes(String.fromCharCode(10));
+}
+
+/**
+ * Sanitize client-supplied request IDs.
+ * Never log emails; strip '@'; reject email-like values (server generates UUID).
+ */
+export function sanitizeRequestId(raw: string | undefined | null): string {
+  if (!raw || typeof raw !== 'string') {
+    return cryptoRandomUuid();
+  }
+  const trimmed = raw.trim().slice(0, 128);
+  if (!trimmed || looksLikeEmail(trimmed) || trimmed.includes('@')) {
+    return cryptoRandomUuid();
+  }
+  const cleaned = Array.from(trimmed).filter((ch) => ch !== '@' && ch.charCodeAt(0) > 31).join('');
+  if (!cleaned || cleaned.length < 8) {
+    return cryptoRandomUuid();
+  }
+  return cleaned;
+}
+
+function cryptoRandomUuid(): string {
+  return crypto.randomUUID();
+}
+
+function sanitizeStringValue(k: string, v: string): string {
+  if (k.toLowerCase().includes('email') || looksLikeEmail(v) || v.includes('@')) {
+    return emailDomainOnly(v) || '[redacted]';
+  }
+  if (k === 'requestId' || k.toLowerCase() === 'requestid') {
+    return sanitizeRequestId(v);
+  }
+  return v;
+}
+
 function sanitizeFields(fields: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(fields)) {
     if (FORBIDDEN_KEYS.has(k)) continue;
-    if (k.toLowerCase().includes('email') && typeof v === 'string') {
-      out[k] = emailDomainOnly(v);
+    if (typeof v === 'string') {
+      out[k] = sanitizeStringValue(k, v);
       continue;
     }
     out[k] = v;
@@ -107,12 +149,13 @@ export function assertProductionObservabilityGuards(): void {
   }
   if (violations.length > 0) {
     throw new Error(
-      `Production refused to start: content-capture flags must be false: ${violations.join(', ')}`
+      'Production refused to start: content-capture flags must be false: ' +
+        violations.join(', ')
     );
   }
 }
 
-/** Used by CI script and tests — check flags without requiring NODE_ENV=production. */
+/** Used by CI script and tests - check flags without requiring NODE_ENV=production. */
 export function listEnabledDangerousObservabilityFlags(
   env: NodeJS.ProcessEnv = process.env
 ): string[] {

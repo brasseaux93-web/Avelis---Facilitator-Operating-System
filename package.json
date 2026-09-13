@@ -8,6 +8,8 @@
     "test:speech-safety": "vitest run tests/speech-safety",
     "test:ledger": "vitest run tests/ledger",
     "test:retention": "vitest run tests/retention",
+    "test:integration": "vitest run tests/integration",
+    "test:room-auth": "vitest run tests/room",
     "test:e2e": "playwright test",
     "check:observability-flags": "node scripts/check-prod-observability-flags.mjs",
     "lint": "eslint .",
@@ -17,7 +19,8 @@
     "preview": "vite preview",
     "start:server": "tsx src/server/index.ts",
     "start:room": "tsx src/room/server.ts",
-    "start": "concurrently \"npm run start:server\" \"npm run start:room\""
+    "start": "concurrently \"npm run start:server\" \"npm run start:room\"",
+    "db:migrate": "drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +36,7 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.1.1",
     "concurrently": "^10.0.5",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^10.10.0",
     "tsx": "^4.23.13",
     "typescript": "^5.6.3",
@@ -41,6 +45,7 @@
     "vitest": "^5.0.0"
   },
   "dependencies": {
+    "@aws-sdk/client-kms": "^3.1131.0",
     "@tanstack/react-router": "^1.170.35",
     "argon2": "^0.45.1",
     "cors": "^2.8.6",
