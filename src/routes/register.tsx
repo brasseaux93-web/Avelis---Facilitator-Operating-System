@@ -42,12 +42,13 @@ function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const data = await apiPost<{
+      const { token, supabaseToken, facilitator } = await apiPost<{
         token: string;
+        supabaseToken: string;
         facilitator: { id: string; email: string; displayName: string; organizationId: string };
       }>('/api/auth/register', { email, password, displayName, organizationName }, { auth: false });
 
-      setSession(data.token, data.facilitator);
+      setSession(token, supabaseToken, facilitator);
       navigate({ to: '/sessions' });
     } catch {
       setFormError('Could not complete registration. Please try again.');

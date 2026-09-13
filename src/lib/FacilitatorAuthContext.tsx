@@ -10,8 +10,9 @@ export type FacilitatorInfo = {
 
 type FacilitatorAuthContextValue = {
   token: string | null;
+  supabaseToken: string | null;
   facilitator: FacilitatorInfo | null;
-  setSession: (token: string, facilitator: FacilitatorInfo) => void;
+  setSession: (token: string, supabaseToken: string, facilitator: FacilitatorInfo) => void;
   clearSession: () => void;
   isAuthenticated: boolean;
 };
@@ -23,16 +24,19 @@ const FacilitatorAuthContext = createContext<FacilitatorAuthContextValue | undef
  */
 export function FacilitatorAuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
+  const [supabaseToken, setSupabaseToken] = useState<string | null>(null);
   const [facilitator, setFacilitator] = useState<FacilitatorInfo | null>(null);
 
-  const setSession = useCallback((nextToken: string, nextFacilitator: FacilitatorInfo) => {
+  const setSession = useCallback((nextToken: string, nextSupabaseToken: string, nextFacilitator: FacilitatorInfo) => {
     setToken(nextToken);
+    setSupabaseToken(nextSupabaseToken);
     setFacilitator(nextFacilitator);
     setApiToken(nextToken);
   }, []);
 
   const clearSession = useCallback(() => {
     setToken(null);
+    setSupabaseToken(null);
     setFacilitator(null);
     setApiToken(null);
   }, []);
@@ -40,12 +44,13 @@ export function FacilitatorAuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       token,
+      supabaseToken,
       facilitator,
       setSession,
       clearSession,
       isAuthenticated: !!token,
     }),
-    [token, facilitator, setSession, clearSession]
+    [token, supabaseToken, facilitator, setSession, clearSession]
   );
 
   return (

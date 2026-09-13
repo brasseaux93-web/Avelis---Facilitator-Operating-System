@@ -47,22 +47,5 @@ services:
       postgres:
         condition: service_healthy
 
-  room:
-    build:
-      context: .
-      dockerfile: Dockerfile.room
-    environment:
-      NODE_ENV: production
-      ROOM_PORT: "3002"
-      ROOM_SHARED_SECRET: ${ROOM_SHARED_SECRET:?required}
-      ROOM_SWAP_DISABLED: "true"
-      ROOM_MESSAGE_MAX_BYTES: "8192"
-      LOG_WEBSOCKET_PAYLOADS: "false"
-    ports:
-      - "127.0.0.1:3002:3002"
-    mem_limit: 512m
-    depends_on:
-      - api
-
 volumes:
   postgres_data:

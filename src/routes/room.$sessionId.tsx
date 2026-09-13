@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouterState } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import './sessions.css';
-import { RoomProvider, useRoom } from '../room/RoomContext';
+import { RoomProvider, useRoom } from '../components/RoomContext';
 
 export const Route = createFileRoute('/room/$sessionId')({
   component: RoomPage,
@@ -10,8 +10,10 @@ export const Route = createFileRoute('/room/$sessionId')({
 type JoinState = {
   partyId?: string;
   roomToken?: string;
+  supabaseToken?: string;
   identityClass?: string;
   partySessionToken?: string;
+  isHost?: boolean;
 };
 
 function RoomInner() {
@@ -85,12 +87,12 @@ function RoomPage() {
   const routerState = useRouterState();
   const joinState = (routerState.location.state || {}) as JoinState;
 
-  if (!joinState.partyId || !joinState.roomToken) {
+  if (!joinState.partyId || !joinState.supabaseToken) {
     return (
       <div className="room-page">
         <h1 className="sessions-page__title">Room</h1>
         <p className="sessions-error" role="alert">
-          Party credentials are missing. Redeem an invite code on the join page first.
+          Party credentials or signaling token missing. Redeem an invite code on the join page first.
         </p>
         <p className="room-banner" role="note">
           Room messages are delivered live and are not stored by Avelis.
@@ -106,8 +108,9 @@ function RoomPage() {
     <RoomProvider
       sessionId={sessionId}
       partyId={joinState.partyId}
-      roomToken={joinState.roomToken}
+      supabaseToken={joinState.supabaseToken}
       identityClass={joinState.identityClass || 'unnamed'}
+      isHost={!!joinState.isHost}
     >
       <RoomInner />
     </RoomProvider>

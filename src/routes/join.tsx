@@ -26,6 +26,7 @@ function JoinPage() {
         sessionId: string;
         partyId: string;
         roomToken: string;
+        supabaseToken: string;
         identityClass: string;
       }>(
         '/api/invites/redeem',
@@ -44,9 +45,11 @@ function JoinPage() {
         state: {
           partyId: res.partyId,
           roomToken: res.roomToken,
+          supabaseToken: res.supabaseToken,
           identityClass: res.identityClass,
           partySessionToken: res.partySessionToken,
-        } as any,
+          isHost: false,
+        } as Record<string, unknown>,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not complete invite redeem.');

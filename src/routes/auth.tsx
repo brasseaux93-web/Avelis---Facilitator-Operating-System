@@ -30,12 +30,13 @@ function AuthPage() {
     setIsLoading(true);
 
     try {
-      const data = await apiPost<{
+      const { token, supabaseToken, facilitator } = await apiPost<{
         token: string;
+        supabaseToken: string;
         facilitator: { id: string; email: string; displayName: string; organizationId: string };
       }>('/api/auth/login', { email, password }, { auth: false });
 
-      setSession(data.token, data.facilitator);
+      setSession(token, supabaseToken, facilitator);
       navigate({ to: '/sessions' });
     } catch {
       setFormError('Sign in did not complete.');
