@@ -76,6 +76,11 @@ function JoinPage() {
             onChange={(e) => setCode(e.target.value)}
             required
             autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            inputMode="text"
+            enterKeyHint="go"
             autoFocus
           />
         </div>

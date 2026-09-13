@@ -1,5 +1,5 @@
 import React from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { BackButton } from '../../components/BackButton';
 
 export const Route = createFileRoute('/legal/data-processing')({
@@ -13,53 +13,73 @@ function DataProcessingComponent() {
         <BackButton />
       </div>
       <p className="section-eyebrow">Legal & Compliance</p>
-      <h1 className="hero__title">Data Processing Addendum</h1>
-      
+      <h1 className="hero__title">Subprocessors & processing description</h1>
+
       <div className="legal-document__surface">
         <div className="legal-document__content">
-          <p><strong>Last Updated: September 2026</strong></p>
-          <p>This Data Processing Addendum establishes the technical security controls, cryptographic guarantees, and subprocessor whitelist governing the Avelis Facilitator Operating System.</p>
-          
-          <h3>1. Cryptographic Zeroization Architecture</h3>
-          <p>Avelis utilizes in-memory volatile routing for all real-time session communications. The platform enforces structural zeroization through the following technical mechanisms:</p>
-          <ul>
-            <li><strong>Memory-Only Processing:</strong> Audio, video, and text payloads are never written to disk, block storage, or database clusters.</li>
-            <li><strong>Session Termination Hook:</strong> Upon the facilitator closing the session, or the expiration of the session timer, all active memory buffers allocated to the session are overwritten and destroyed.</li>
-            <li><strong>Cryptographic Shredding:</strong> All symmetric session keys used to encrypt traffic in-transit are immediately discarded upon session end, rendering any intercepted traffic mathematically unrecoverable.</li>
-          </ul>
+          <p>
+            <strong>Last updated: 13 September 2026</strong>
+          </p>
+          <p>
+            Companion to the <Link to="/legal/dpa">evaluation DPA</Link>. This list is what is true
+            of the product, not a SOC-2 brochure.
+          </p>
 
-          <h3>2. Approved Subprocessors</h3>
-          <p>We restrict our infrastructure dependencies to heavily vetted, SOC 2 Type II certified infrastructure providers to ensure routing stability. Our subprocessors cannot access plaintext session data.</p>
-          
+          <h3>1. Speech</h3>
+          <p>
+            Room text lives in volatile memory on the room process long enough to deliver. Optional
+            voice is a direct WebRTC mesh between browsers. Signaling (session description, ICE) may
+            ride the room socket. Audio frames do not. Avelis does not record, caption, or
+            transcribe.
+          </p>
+
+          <h3>2. Subprocessors</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 'var(--space-4)' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left', color: 'var(--color-text)' }}>
-                <th style={{ padding: 'var(--space-2) 0' }}>Subprocessor</th>
-                <th style={{ padding: 'var(--space-2) 0' }}>Function</th>
-                <th style={{ padding: 'var(--space-2) 0' }}>Location</th>
+              <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                <th style={{ padding: 'var(--space-2) 0' }}>Party</th>
+                <th style={{ padding: 'var(--space-2) 0' }}>Role</th>
+                <th style={{ padding: 'var(--space-2) 0' }}>Sees speech?</th>
               </tr>
             </thead>
             <tbody>
               <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <td style={{ padding: 'var(--space-3) 0' }}>Amazon Web Services (AWS)</td>
-                <td style={{ padding: 'var(--space-3) 0' }}>Volatile Instance Hosting & Routing</td>
-                <td style={{ padding: 'var(--space-3) 0' }}>US East (N. Virginia)</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>Host (you, or Avelis-operated)</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>Compute, Postgres for process records</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>No live-room bodies. Ledger and optional minute, until destruction.</td>
               </tr>
               <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <td style={{ padding: 'var(--space-3) 0' }}>Cloudflare</td>
-                <td style={{ padding: 'var(--space-3) 0' }}>DDoS Protection & DNS</td>
-                <td style={{ padding: 'var(--space-3) 0' }}>Global</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>Groq</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>
+                  Optional inference for the disclosed conflict agent
+                </td>
+                <td style={{ padding: 'var(--space-3) 0' }}>
+                  RAM window of live text while the room is open, if configured. Not stored by Avelis.
+                </td>
               </tr>
               <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                <td style={{ padding: 'var(--space-3) 0' }}>Postmark</td>
-                <td style={{ padding: 'var(--space-3) 0' }}>Transactional Email (Facilitator auth)</td>
-                <td style={{ padding: 'var(--space-3) 0' }}>United States</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>SMTP provider (if configured)</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>One-time invite mail</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>Invite code in the message. Not room talk.</td>
+              </tr>
+              <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <td style={{ padding: 'var(--space-3) 0' }}>STUN (Cloudflare, default)</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>NAT for optional mesh voice</td>
+                <td style={{ padding: 'var(--space-3) 0' }}>Addresses, not audio.</td>
               </tr>
             </tbody>
           </table>
+          <p>
+            AWS, Cloudflare DNS, or a mail vendor appear here only when that host actually uses
+            them. Do not assume a region or a SOC report from this page.
+          </p>
 
-          <h3>3. Incident Response</h3>
-          <p>In the event of an infrastructure compromise, Avelis's architecture ensures that historical session communications cannot be exfiltrated because they do not exist. Facilitator account metadata and process ledgers are encrypted at rest (AES-256). In the event of a breach affecting this metadata, affected institutions will be notified within 72 hours.</p>
+          <h3>3. Incidents</h3>
+          <p>
+            Historical room talk cannot be exfiltrated from Avelis because it is not kept. Process
+            records and facilitator accounts are the remaining surface. Affected hosts will be
+            notified within 72 hours of a confirmed incident affecting that surface.
+          </p>
         </div>
       </div>
     </div>
