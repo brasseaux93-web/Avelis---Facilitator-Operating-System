@@ -9,9 +9,14 @@ interface Message {
   timestamp: number;
 }
 
+interface Whisper {
+  text: string;
+  technique: string | null;
+}
+
 interface RoomContextType {
   messages: Message[];
-  whispers: string[];
+  whispers: Whisper[];
   sendMessage: (text: string) => void;
   invokeAgent: (prompt?: string) => void;
   isConnected: boolean;
@@ -44,7 +49,7 @@ export function RoomProvider({
   children: ReactNode;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [whispers, setWhispers] = useState<string[]>([]);
+  const [whispers, setWhispers] = useState<Whisper[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const isFacilitator = identityClass === 'facilitator';
@@ -70,7 +75,8 @@ export function RoomProvider({
       let data: {
         type?: string;
         text?: string;
-        message?: Message & { identityClass?: string };
+        technique?: string | null;
+        message?: Message & { identityClass?: string; technique?: string };
       };
       try {
         data = JSON.parse(event.data);
@@ -81,7 +87,10 @@ export function RoomProvider({
         return;
       }
       if (data.type === 'agent_whisper' && typeof data.text === 'string') {
-        setWhispers((prev) => [...prev.slice(-7), data.text!]);
+        setWhispers((prev) => [
+          ...prev.slice(-7),
+          { text: data.text!, technique: data.technique || null },
+        ]);
         return;
       }
       if (data.type === 'message' && data.message) {

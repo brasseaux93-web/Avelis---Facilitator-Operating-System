@@ -101,6 +101,7 @@ npm run dev
 | [Data Model](docs/data-model.md) | Entities, encryption, retention |
 | [Language Guide](docs/language-guide.md) | Approved wording |
 | [Agent rules](docs/agent-rules.md) | Legal and tactical conduct for the process copilot |
+| [Mediation techniques](docs/mediation-techniques.md) | Named moves the conflict agent may use |
 | [Visual System](docs/visual-system.md) | Premium 2026 constraints |
 | [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
 | [Contributing](CONTRIBUTING.md) | Change control |

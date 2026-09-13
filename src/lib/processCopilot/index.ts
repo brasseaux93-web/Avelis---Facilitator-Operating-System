@@ -11,7 +11,8 @@ export { buildSnapshot, applyProcessMarkPayloads } from './snapshot';
 export { mergeModelOutput, readModelConfig, copilotStatus, dialogueWithModel } from './model';
 export { AGENT_RULES, AGENT_ROOM_RULES, looksLikeSpeechPaste, SPEECH_REFUSAL, LEGAL_REFUSAL } from './rules';
 export type { CopilotResult, CopilotAction, ProcessSnapshot, ProcessStage } from './types';
-export type { DialogueResult } from './model';
+export { TECHNIQUES, TECHNIQUE_IDS, selectTechnique, detectLooping } from './techniques';
+export type { TechniqueId, TechniqueMove } from './techniques';
 
 export type AdviseInput = SnapshotInput & { processMarkPayloads?: Array<string | undefined> };
 
