@@ -70,6 +70,7 @@ function SessionsPage() {
     <div className="sessions-page">
       <div className="sessions-page__header">
         <div>
+          <p className="sessions-page__eyebrow">Facilitator console</p>
           <h1 className="sessions-page__title">Sessions</h1>
           <p className="sessions-page__subtitle">
             {facilitator?.displayName} · {facilitator?.email}
@@ -87,18 +88,27 @@ function SessionsPage() {
         </button>
       </div>
 
-      <p className="sessions-disclosure" role="note">
-        Room messages are delivered live and are not stored by Avelis. Process records and any joint minute are retained until the selected destruction deadline, then destroyed.
+      <p className="sessions-disclosure sessions-disclosure--persist" role="note">
+        Room messages are delivered live and are not stored by Avelis. Process records and any
+        joint minute are retained until the selected destruction deadline, then destroyed.
       </p>
 
       <form className="sessions-form" onSubmit={createSession}>
-        <h2 style={{ margin: 0, fontSize: '1rem' }}>Create session</h2>
+        <h2 style={{ margin: 0, fontSize: '0.8125rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
+          Create session
+        </h2>
         <div className="sessions-form__row">
           <div className="sessions-field">
             <label htmlFor="session-title">Title</label>
-            <input id="session-title" value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
+            <input
+              id="session-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              autoComplete="off"
+            />
           </div>
-          <div className="sessions-field" style={{ maxWidth: 180 }}>
+          <div className="sessions-field" style={{ maxWidth: 200 }}>
             <label htmlFor="retention">Retain process records for (hours)</label>
             <input
               id="retention"
@@ -122,9 +132,15 @@ function SessionsPage() {
       </form>
 
       {loading ? (
-        <p className="sessions-page__subtitle" role="status">
-          Loading...
-        </p>
+        <p className="sessions-page__subtitle">Loading…</p>
+      ) : sessions.length === 0 ? (
+        <div className="sessions-empty" role="status">
+          <p className="sessions-empty__title">No sessions yet</p>
+          <p className="sessions-empty__body">
+            Create a session above to open a live room and process ledger. Room messages are
+            delivered live and are not stored by Avelis.
+          </p>
+        </div>
       ) : (
         <ul className="sessions-list">
           {sessions.map((s) => (
@@ -135,14 +151,11 @@ function SessionsPage() {
                 </Link>
                 <div className="sessions-list__meta">Retention {s.retentionHours}h</div>
               </div>
-              <span className="sessions-status">{s.status}</span>
+              <span className="sessions-status" data-status={s.status}>
+                {s.status}
+              </span>
             </li>
           ))}
-          {sessions.length === 0 && (
-            <li className="sessions-page__subtitle" role="status">
-              No sessions yet. Create one to begin. Live room speech will not be stored; only process records you choose to retain until the destruction deadline.
-            </li>
-          )}
         </ul>
       )}
     </div>
