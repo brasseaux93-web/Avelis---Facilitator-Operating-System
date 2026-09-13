@@ -52,6 +52,10 @@ function PartnersPage() {
             <a href="/legal/loi-mediator.md" download>
               loi-mediator.md
             </a>
+            . Attach the{' '}
+            <a href="/legal/dpa-packet.md" download>
+              DPA packet
+            </a>
             . Non-binding. Ninety days. Three real sessions. No fee. Intent to convert at practice
             or firm rates if the chamber holds. Not a purchase order, not exclusivity, not privilege.
           </p>

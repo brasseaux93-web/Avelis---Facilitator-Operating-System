@@ -21,8 +21,12 @@ function DpaComponent() {
             <strong>Last updated: 13 September 2026</strong>
           </p>
           <p>
-            This is the evaluation DPA. It is not a signed contract until both sides execute it. It
-            describes what Avelis actually does with data — not what would sound better in a pitch.
+            This is the short form. The signed evaluation packet — Annexes, Groq
+            acknowledgement, signature blocks — is{' '}
+            <a href="/legal/dpa-packet.md" download>
+              dpa-packet.md
+            </a>
+            . Send it with the mediator LOI. It is not a contract until both sides execute it.
           </p>
 
           <h3>1. What is processed</h3>
