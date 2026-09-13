@@ -2,9 +2,12 @@ import crypto from 'node:crypto';
 import express from 'express';
 import { sql } from 'drizzle-orm';
 import { ensureDevFacilitatorSeed } from './seedDev';
+import { ensureDemoSeed, isDemoSeedEnabled } from './seedDemo';
 import { requireAuth } from './middleware';
 import { registerAuthRoutes } from './authRoutes';
 import { registerSessionRoutes } from './sessionRoutes';
+import { registerDemoRoutes } from './demoRoutes';
+import { registerPartyRoutes } from './partyRoutes';
 import { runDestructionCron } from './destructionWorker';
 import {
   assertProductionObservabilityGuards,
@@ -72,6 +75,8 @@ app.get('/metrics', (_req, res) => {
 
 registerAuthRoutes(app);
 registerSessionRoutes(app, requireAuth);
+registerDemoRoutes(app);
+registerPartyRoutes(app);
 
 if (process.env.VITEST !== 'true') {
   try {
@@ -81,7 +86,11 @@ if (process.env.VITEST !== 'true') {
     process.exit(1);
   }
 
-  ensureDevFacilitatorSeed()
+  const seedPromise = isDemoSeedEnabled()
+    ? ensureDemoSeed()
+    : ensureDevFacilitatorSeed().then(() => ({ facilitatorEmail: null, sessionId: null }));
+
+  seedPromise
     .catch((err) => logEvent('error', 'seed_failed', { error: String(err) }))
     .finally(() => {
       app.listen(PORT, () => {
