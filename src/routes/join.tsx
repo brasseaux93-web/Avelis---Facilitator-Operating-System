@@ -1,7 +1,8 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import './sessions.css';
 import { apiPost } from '../lib/apiClient';
+import { setPartyViewToken } from './party';
 
 export const Route = createFileRoute('/join')({
   component: JoinPage,
@@ -36,7 +37,7 @@ function JoinPage() {
         { auth: false }
       );
 
-      // Party credentials stay in memory via navigation state only — not localStorage.
+      setPartyViewToken(res.partySessionToken);
       navigate({
         to: '/room/$sessionId',
         params: { sessionId: res.sessionId },
@@ -105,6 +106,9 @@ function JoinPage() {
           {loading ? 'Joining…' : 'Join'}
         </button>
       </form>
+      <p className="sessions-page__subtitle">
+        After joining, process lines published to parties are on <Link to="/party">/party</Link>.
+      </p>
     </div>
   );
 }
