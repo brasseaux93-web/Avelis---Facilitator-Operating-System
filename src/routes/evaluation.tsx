@@ -45,9 +45,10 @@ function EvaluationComponent() {
       <div className="legal-document__surface">
         <div className="legal-document__content">
           <p>
-            Evaluation includes a <Link to="/legal/dpa">DPA</Link>, the{' '}
-            <Link to="/legal/data-processing">subprocessor list</Link>, and a look at the
-            destruction receipt path — not a self-serve signup.
+            Start with the <Link to="/partners">design-partner kit</Link>. Evaluation includes a{' '}
+            <Link to="/legal/dpa">DPA</Link>, the{' '}
+            <Link to="/legal/data-processing">subprocessor list</Link>, and a destruction receipt
+            walkthrough — not a self-serve signup.
           </p>
           <p>
             Already provisioned? <Link to="/auth">Sign in as a facilitator</Link>.

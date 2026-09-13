@@ -19,6 +19,7 @@ import {
   sanitizeRequestId,
 } from '../lib/observability';
 import { db } from '../db/index';
+import { assertProductionKms } from '../lib/kms';
 
 const app = express();
 
@@ -84,6 +85,7 @@ registerPartyRoutes(app);
 if (process.env.VITEST !== 'true') {
   try {
     assertProductionObservabilityGuards();
+    assertProductionKms();
   } catch (err) {
     console.error(err instanceof Error ? err.message : err);
     process.exit(1);

@@ -1,6 +1,6 @@
 /**
- * Joint-minute PDF in memory. No library, no disk.
- * The bytes leave in the HTTP response. Avelis does not keep the file.
+ * Joint-minute PDF in memory. Works in Node and in the browser.
+ * Avelis does not keep the file.
  */
 
 export type MinutePdfInput = {
@@ -40,6 +40,10 @@ function wrapLine(line: string, width = 86): string[] {
   return out;
 }
 
+function utf8Len(s: string): number {
+  return new TextEncoder().encode(s).length;
+}
+
 function pageStream(lines: string[], header: string[]): string {
   const cmds = ['BT', '/F1 9 Tf', '50 760 Td', `(${pdfEscape(header[0])}) Tj`, '0 -14 Td', '/F1 11 Tf'];
   for (const line of lines) {
@@ -49,7 +53,7 @@ function pageStream(lines: string[], header: string[]): string {
   return cmds.join('\n');
 }
 
-export function renderMinutePdf(input: MinutePdfInput): Buffer {
+export function renderMinutePdfBytes(input: MinutePdfInput): Uint8Array {
   const header = [
     `Avelis joint minute  ·  ${input.status}  ·  ${input.exportedAt}`,
     'The joint minute is not a transcript. This file is not stored by Avelis.',
@@ -76,7 +80,7 @@ export function renderMinutePdf(input: MinutePdfInput): Buffer {
     objects.push(
       `${pageId} 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents ${contentId} 0 R /Resources << /Font << /F1 ${3 + pages.length * 2} 0 R >> >> >> endobj`
     );
-    objects.push(`${contentId} 0 obj << /Length ${Buffer.byteLength(stream)} >> stream\n${stream}\nendstream endobj`);
+    objects.push(`${contentId} 0 obj << /Length ${utf8Len(stream)} >> stream\n${stream}\nendstream endobj`);
   });
   const fontId = 3 + pages.length * 2;
   objects.push(`${fontId} 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj`);
@@ -84,15 +88,30 @@ export function renderMinutePdf(input: MinutePdfInput): Buffer {
   let body = '%PDF-1.4\n';
   const offsets = [0];
   for (const obj of objects) {
-    offsets.push(Buffer.byteLength(body));
+    offsets.push(utf8Len(body));
     body += obj + '\n';
   }
-  const xrefAt = Buffer.byteLength(body);
+  const xrefAt = utf8Len(body);
   body += `xref\n0 ${objects.length + 1}\n`;
   body += '0000000000 65535 f \n';
   for (let i = 1; i < offsets.length; i++) {
     body += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
   }
   body += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefAt}\n%%EOF`;
-  return Buffer.from(body, 'utf8');
+  return new TextEncoder().encode(body);
+}
+
+export function renderMinutePdf(input: MinutePdfInput): Buffer {
+  return Buffer.from(renderMinutePdfBytes(input));
+}
+
+export function downloadPdfBytes(bytes: Uint8Array, filename: string): void {
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  a.click();
+  URL.revokeObjectURL(url);
 }

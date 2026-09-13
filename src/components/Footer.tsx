@@ -27,6 +27,8 @@ export function Footer() {
           <h3 className="footer__col-title">Resources</h3>
           <ul className="footer__col-list" role="list">
             <li><Link to="/docs" className="footer__col-link">Documentation</Link></li>
+            <li><Link to="/partners" className="footer__col-link">Design partners</Link></li>
+            <li><Link to="/materials" className="footer__col-link">Decks</Link></li>
             <li><Link to="/legal/dpa" className="footer__col-link">DPA Template</Link></li>
             <li><Link to="/threat-model" className="footer__col-link">Threat Model</Link></li>
           </ul>

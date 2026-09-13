@@ -230,4 +230,41 @@ export function registerMinuteRoutes(
       res.status(500).json({ error: 'Could not export joint minute.' });
     }
   });
+
+  /** Client already built the file in the tab. Stamp the ledger. Keep no bytes. */
+  app.post('/api/sessions/:id/minute/export-ack', requireAuth, async (req, res) => {
+    const sessionId = req.params.id;
+    const facilitatorId = req.facilitatorId!;
+    const format = req.body?.format === 'pdf' ? 'pdf' : 'markdown';
+    try {
+      const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
+      if (!session) return res.status(404).json({ error: 'Session not found' });
+      if (session.facilitatorId !== facilitatorId) {
+        return res.status(403).json({ error: 'Not authorized for this session.' });
+      }
+      const minute = await getJointMinute(sessionId);
+      if (!minute || !minute.content) {
+        return res.status(404).json({ error: 'Joint minute not found.' });
+      }
+      await db.transaction(async (tx) => {
+        await appendLedgerLine(tx, {
+          sessionId,
+          lineType: 'joint_minute_exported',
+          payload: { minuteId: minute.id, format, client: true },
+          actorKind: 'facilitator',
+          actorRef: facilitatorId,
+          source: 'facilitator_ui',
+          initialVisibility: 'facilitator_only',
+        });
+        await tx
+          .update(jointMinutes)
+          .set({ lastExportedAt: new Date(), updatedAt: new Date() })
+          .where(eq(jointMinutes.id, minute.id));
+      });
+      res.status(200).json({ recorded: true, format });
+    } catch (error) {
+      console.error('[API] Failed to ack minute export', error);
+      res.status(500).json({ error: 'Could not record export.' });
+    }
+  });
 }
