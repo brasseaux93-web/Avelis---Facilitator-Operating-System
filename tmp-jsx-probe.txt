@@ -1,0 +1,4 @@
+line1
+before ANGLE_OPEN p className="x" ANGLE_CLOSE {info} ANGLE_OPEN /p ANGLE_CLOSE
+after
+arrow =GT ok
