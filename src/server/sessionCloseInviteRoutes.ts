@@ -21,7 +21,7 @@ export function registerSessionCloseInviteRoutes(
   requireAuth: express.RequestHandler
 ) {
 app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
-  const sessionId = req.params.id;
+  const sessionId = req.params.id as string;
   const facilitatorId = req.facilitatorId!;
 
   try {
@@ -144,7 +144,7 @@ app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
 });
 
 app.post('/api/sessions/:id/invites', requireAuth, async (req, res) => {
-  const sessionId = req.params.id;
+  const sessionId = req.params.id as string;
   const { identityClass, displayLabel } = req.body;
   const facilitatorId = req.facilitatorId!;
 
