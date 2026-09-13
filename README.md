@@ -18,15 +18,16 @@ The product object is a **session**. It is not a community, case-management syst
 
 ## Repository status (honest)
 
-**Maturity ~6.5/10** — constitution-grade docs plus working Phase 1–3 foundations. Not yet a finished pilot product surface.
+**Maturity ~7/10** — constitution-grade docs, Phase 1–3 production-host foundations on `main`, plus **Premium 2026 visual / demo polish** landing via this PR. Not yet a finished multi-tenant SaaS or fully hardened pilot.
 
-**Phases 1–2 are merged to `main`.** Phase 3 (production host + repo cleanup) lands via this PR (`prod-readiness/phase-3-onto-main`). After merge, run from `main`.
+**Phases 1–3 are on `main`.** Premium landing via this PR (`prod-readiness/premium-onto-main`).
 
 | Status | Focus |
 |---|---|
 | Merged #1 | Speech-safe room, transactional ledger append, schema-aligned purge |
 | Merged #2 | Facilitator auth (Argon2 + JWT), invite redeem, session/agenda/minute APIs + UI spine |
-| This PR | KMS factory, health/metrics, Docker api/room, deployment/backup docs, security audit table, terraform expansion |
+| Merged #3 | KMS factory, health/metrics, Docker api/room, deployment/backup docs, security audit table, terraform expansion |
+| This PR | Premium 2026 visual system, facilitator density, investor demo script |
 
 See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit.
 
@@ -39,6 +40,7 @@ See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit.
 - Agenda + joint minute API surfaces; signed ledger roots (dev/local KMS)
 - `/healthz`, `/readyz`, `/metrics`; content-capture flags refused in production
 - `docker compose` for postgres + api + room
+- **Premium 2026 UI** — institutional tokens (`src/styles/tokens.css`), protocol mark, facilitator empty states, protocol-stream room, language-guide disclosures ([Visual System](docs/visual-system.md), [demo script](docs/demo-script.md))
 
 ### Still outstanding
 
@@ -46,7 +48,6 @@ See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit.
 - Apply CI workflow from `docs/ci-workflow-phase3.yml` (needs a token with `workflow` scope)
 - Wire real AWS KMS credentials (stub provider present)
 - Optional WebRTC audio only after speech-safety suite passes
-- Premium 2026 visual pass (`prod-readiness/premium-2026`)
 - Green Playwright end-to-end path before enabling e2e in CI
 
 ## What persists
@@ -104,6 +105,10 @@ npm run dev   # Vite + API + room
 
 Default local seed facilitator (when enabled): see `.env.example.txt` / `src/server/seedDev.ts`.
 
+Investor walkthrough: [docs/demo-script.md](docs/demo-script.md).
+
+Use placeholder-only data. Never paste real conversation content into fixtures, logs, or issues.
+
 ## Stack
 
 - **UI:** Vite + React + TanStack Router
@@ -130,7 +135,8 @@ Default local seed facilitator (when enabled): see `.env.example.txt` / `src/ser
 | [Backup & restore](docs/backup-restore.md) | Purge-aware backup policy |
 | [Build Order](docs/build-order.md) | Dependency-aware implementation sequence |
 | [Language Guide](docs/language-guide.md) | Approved and prohibited product language |
-| [Visual System](docs/visual-system.md) | Interface principles and visual constraints |
+| [Visual System](docs/visual-system.md) | Tokens, type, forbidden imagery (§11) |
+| [Demo script](docs/demo-script.md) | 5-minute investor walkthrough |
 | [ADRs](docs/adr/) | Binding technical decisions |
 | [Contributing](CONTRIBUTING.md) | Change-control and review requirements |
 | [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
