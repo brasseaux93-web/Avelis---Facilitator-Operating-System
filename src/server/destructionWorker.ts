@@ -1,4 +1,4 @@
-import { eq, lte, and, asc } from 'drizzle-orm';
+import { eq, lte, and, asc, lt } from 'drizzle-orm';
 import { db } from '../db/index';
 import {
   sessions,
@@ -7,22 +7,89 @@ import {
   agendaItems,
   parties,
   destructionReceipts,
+  securityAuditEvents,
 } from '../db/schema';
 import { computeLineHash, computePayloadDigest } from '../lib/ledger';
 import { getKms } from '../lib/encryption';
 import { incrementMetric, logEvent } from '../lib/observability';
+import { resolveSecurityAuditRetentionHours } from '../lib/securityAudit';
 
 /**
  * Product Law L5: Destruction is a feature.
  * Aligns to destructionReceipts schema fields only.
  * Verifies full hash chain before purge when lines exist.
+ * Also purges expired security_audit_events (30d default / 90d max).
  * Do not log session content.
  */
+
+export async function purgeExpiredSecurityAuditEvents(
+  now: Date = new Date()
+): Promise<number> {
+  const hours = resolveSecurityAuditRetentionHours();
+  const cutoff = new Date(now.getTime() - hours * 60 * 60 * 1000);
+  const deleted = await db
+    .delete(securityAuditEvents)
+    .where(lt(securityAuditEvents.createdAt, cutoff))
+    .returning({ id: securityAuditEvents.id });
+  const count = deleted.length;
+  if (count > 0) {
+    incrementMetric('security_audit_purged', count);
+    logEvent('info', 'security_audit_purge', { purgedCount: count, retentionHours: hours });
+  }
+  return count;
+}
+
+/** Rebuild + verify a destruction receipt signature (local or aws KMS). */
+export async function verifyDestructionReceipt(receipt: {
+  sessionId: string;
+  organizationId: string;
+  purgedAt: Date | string;
+  retentionWindow: string;
+  bodiesDestroyed: string[];
+  finalSequenceNumber: number;
+  ledgerRootHash: string;
+  destructionManifestDigest: string;
+  signature: string;
+}): Promise<boolean> {
+  const purgedAtIso =
+    typeof receipt.purgedAt === 'string'
+      ? receipt.purgedAt
+      : receipt.purgedAt.toISOString();
+  const manifest = {
+    sessionId: receipt.sessionId,
+    organizationId: receipt.organizationId,
+    purgedAt: purgedAtIso,
+    retentionWindow: receipt.retentionWindow,
+    bodiesDestroyed: receipt.bodiesDestroyed,
+    finalSequenceNumber: receipt.finalSequenceNumber,
+    ledgerRootHash: receipt.ledgerRootHash,
+  };
+  const digest = computePayloadDigest(manifest);
+  if (digest !== receipt.destructionManifestDigest) return false;
+
+  const kms = getKms();
+  const signingKeyId =
+    process.env.AWS_KMS_SIGNING_KEY_ID ||
+    process.env.LOCAL_DEV_SIGNING_KEY ||
+    'local-dev-signing-key';
+  try {
+    return await kms.verify(
+      signingKeyId,
+      Buffer.from(digest, 'hex'),
+      Buffer.from(receipt.signature, 'hex')
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function runDestructionCron() {
   logEvent('info', 'destruction_sweep_start');
   const now = new Date();
 
   try {
+    await purgeExpiredSecurityAuditEvents(now);
+
     const expiredSessions = await db
       .select()
       .from(sessions)
@@ -73,7 +140,7 @@ export async function runDestructionCron() {
                 previous
               );
               if (expected !== line.lineHash || line.previousLineHash !== previous) {
-                throw new Error(`Ledger integrity check failed for session ${session.id}`);
+                throw new Error('Ledger integrity check failed for session ' + session.id);
               }
               previous = line.lineHash;
             }
@@ -90,7 +157,7 @@ export async function runDestructionCron() {
             'session_content',
           ];
 
-          const retentionWindow = `${session.retentionHours}h`;
+          const retentionWindow = String(session.retentionHours) + 'h';
           const purgedAt = new Date();
 
           const manifest = {
