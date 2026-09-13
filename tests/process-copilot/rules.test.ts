@@ -50,6 +50,7 @@ describe('agent rules', () => {
     expect(cfg?.provider).toBe('groq');
     expect(cfg?.baseUrl).toBe('https://api.groq.com/openai/v1');
     expect(cfg?.model).toBe('llama-3.3-70b-versatile');
+    expect(cfg?.fastModel).toBe('llama-3.1-8b-instant');
     expect(copilotStatus({ GROQ_API_KEY: 'gsk_test' }).configured).toBe(true);
     expect(copilotStatus({}).configured).toBe(false);
   });

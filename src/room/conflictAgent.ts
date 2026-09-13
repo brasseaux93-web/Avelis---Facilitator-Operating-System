@@ -62,7 +62,8 @@ function playbookReply(turns: AgentTurn[]): TechniqueMove {
 async function complete(
   config: ModelConfig,
   user: string,
-  fetchImpl: typeof fetch
+  fetchImpl: typeof fetch,
+  intent: 'coach' | 'speak'
 ): Promise<string | null> {
   const res = await fetchImpl(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
@@ -71,7 +72,7 @@ async function complete(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: config.model,
+      model: intent === 'speak' ? config.model : config.fastModel,
       temperature: 0.35,
       max_tokens: 420,
       messages: [
@@ -134,7 +135,8 @@ export async function adviseRoom(
         suggested: fallback.id,
         turns: turns.map((t) => ({ speaker: t.speaker, identityClass: t.identityClass, text: t.text })),
       }),
-      fetchImpl
+      fetchImpl,
+      intent
     );
     if (!raw) {
       return {

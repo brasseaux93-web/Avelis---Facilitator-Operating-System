@@ -1,22 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 250" width="100%" height="100%">
-  <!-- ==========================================
-       AVELIS STANDALONE EMBLEM (TRANSPARENT)
-       - Palette: Ledger Gold (#CF9E42)
-       - Geometry: Flanking Rules + Unsealed Chamber
-       ========================================== -->
-  <g fill="#CF9E42">
-    <!-- Flanking Ledger Margin Rules -->
-    <rect x="10" y="10" width="28" height="230" rx="1" />
-    <rect x="202" y="10" width="28" height="230" rx="1" />
-  </g>
-
-  <!-- Unsealed Safe-Harbor Chamber (Centered Threshold Opening) -->
-  <path d="
-    M 102,200 
-    L 68,200 
-    L 68,50 
-    L 172,50 
-    L 172,200 
-    L 138,200
-  " fill="none" stroke="#CF9E42" stroke-width="15" stroke-linecap="square" stroke-linejoin="miter"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Unsealed chamber: two ledger bars, open threshold, visible agent -->
+  <rect x="6" y="8" width="8" height="48" fill="#C4A36A"/>
+  <rect x="50" y="8" width="8" height="48" fill="#C4A36A"/>
+  <path d="M22 50 V16 H42 V50" stroke="#C4A36A" stroke-width="5" stroke-linejoin="miter" stroke-linecap="square"/>
+  <rect x="30.5" y="30" width="3.5" height="20" fill="#C4A36A"/>
 </svg>

@@ -1,5 +1,8 @@
 import crypto from 'node:crypto';
 import express from 'express';
+import { loadLocalEnv } from '../lib/loadEnv';
+
+loadLocalEnv();
 import { sql } from 'drizzle-orm';
 import { ensureDevFacilitatorSeed } from './seedDev';
 import { ensureDemoSeed, isDemoSeedEnabled } from './seedDemo';

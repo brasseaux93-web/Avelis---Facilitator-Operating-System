@@ -12,6 +12,8 @@
  */
 import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'node:crypto';
+import { loadLocalEnv } from '../lib/loadEnv';
+import { copilotStatus } from '../lib/processCopilot';
 import {
   addParty,
   removeParty,
@@ -192,17 +194,21 @@ export function createRoomServer(port = PORT): WebSocketServer {
 }
 
 if (process.env.VITEST !== 'true') {
+  loadLocalEnv();
   assertRoomProductionSecrets();
   createRoomServer(PORT);
   const controlPort = Number(process.env.ROOM_CONTROL_PORT || 3003);
   const secret = process.env.ROOM_SHARED_SECRET || '';
   createRoomControlServer(controlPort, secret);
+  const groq = copilotStatus();
   console.log(
     JSON.stringify({
       level: 'info',
       event: 'room_listen',
       port: PORT,
       controlPort,
+      groqConfigured: groq.configured,
+      groqProvider: groq.provider,
       ts: new Date().toISOString(),
     })
   );
