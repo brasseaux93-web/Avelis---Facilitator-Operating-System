@@ -9,6 +9,7 @@
     "test:ledger": "vitest run tests/ledger",
     "test:retention": "vitest run tests/retention",
     "test:e2e": "playwright test",
+    "check:observability-flags": "node scripts/check-prod-observability-flags.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "dev": "concurrently \"vite\" \"tsx watch src/server/index.ts\" \"tsx watch src/room/server.ts\"",
