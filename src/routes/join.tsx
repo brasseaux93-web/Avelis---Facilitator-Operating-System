@@ -26,11 +26,15 @@ function JoinPage() {
         partyId: string;
         roomToken: string;
         identityClass: string;
-      }>('/api/invites/redeem', {
-        code,
-        identityClass,
-        displayLabel: displayLabel || undefined,
-      }, { auth: false });
+      }>(
+        '/api/invites/redeem',
+        {
+          code,
+          identityClass,
+          displayLabel: displayLabel || undefined,
+        },
+        { auth: false }
+      );
 
       // Party credentials stay in memory via navigation state only — not localStorage.
       navigate({
@@ -52,18 +56,31 @@ function JoinPage() {
 
   return (
     <div className="sessions-page">
+      <p className="sessions-page__eyebrow">Party access</p>
       <h1 className="sessions-page__title">Join session</h1>
-      <p className="sessions-disclosure" role="note">
-        Room messages are delivered live and are not stored by Avelis.
+      <p className="sessions-disclosure sessions-disclosure--persist" role="note">
+        Room messages are delivered live and are not stored by Avelis. Credentials for this
+        session stay in memory only for the active browser tab.
       </p>
       <form className="sessions-form" onSubmit={redeem}>
         <div className="sessions-field">
           <label htmlFor="code">Invite code</label>
-          <input id="code" value={code} onChange={(e) => setCode(e.target.value)} required autoComplete="off" />
+          <input
+            id="code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+            autoComplete="off"
+            autoFocus
+          />
         </div>
         <div className="sessions-field">
           <label htmlFor="identity">Identity class</label>
-          <select id="identity" value={identityClass} onChange={(e) => setIdentityClass(e.target.value)}>
+          <select
+            id="identity"
+            value={identityClass}
+            onChange={(e) => setIdentityClass(e.target.value)}
+          >
             <option value="named">named</option>
             <option value="role_only">role_only</option>
             <option value="affiliation_only">affiliation_only</option>
@@ -72,9 +89,18 @@ function JoinPage() {
         </div>
         <div className="sessions-field">
           <label htmlFor="label">Display label (optional)</label>
-          <input id="label" value={displayLabel} onChange={(e) => setDisplayLabel(e.target.value)} />
+          <input
+            id="label"
+            value={displayLabel}
+            onChange={(e) => setDisplayLabel(e.target.value)}
+            autoComplete="off"
+          />
         </div>
-        {error && <p className="sessions-error" role="alert">{error}</p>}
+        {error && (
+          <p className="sessions-error" role="alert">
+            {error}
+          </p>
+        )}
         <button type="submit" className="btn btn--primary" disabled={loading}>
           {loading ? 'Joining…' : 'Join'}
         </button>
