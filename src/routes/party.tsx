@@ -26,6 +26,10 @@ type MinutePayload = {
   emptyState?: string;
 };
 
+/**
+ * Party view after join: visible ledger lines + published minute.
+ * Party token is held in memory (module) only — not localStorage.
+ */
 let memoryPartyToken: string | null = null;
 
 export function setPartyViewToken(token: string | null) {
@@ -54,6 +58,7 @@ function PartyViewPage() {
       setLines(ledger.lines);
       setEmptyLedger(ledger.emptyState);
       setSessionId(ledger.sessionId);
+
       const m = await apiGet<MinutePayload>('/api/party/session/minute', { token: partyToken });
       setMinute(m.minute);
       setEmptyMinute(m.emptyState);
@@ -78,7 +83,11 @@ function PartyViewPage() {
     if (!token || !sessionId || !minute) return;
     setInfo('');
     try {
-      await apiPost(`/api/sessions/${sessionId}/minute/initial`, {}, { token });
+      await apiPost(
+        `/api/sessions/${sessionId}/minute/initial`,
+        {},
+        { token }
+      );
       setInfo('Minute initial recorded.');
       await refresh(token);
     } catch (e) {
@@ -99,7 +108,7 @@ function PartyViewPage() {
         <form className="sessions-form" onSubmit={useToken}>
           <p className="sessions-page__subtitle">
             After redeeming an invite on <Link to="/join">/join</Link>, paste the party session
-            token here (memory only for this tab).
+            token here (memory only for this tab). Prefer navigating from join when wired.
           </p>
           <div className="sessions-field">
             <label htmlFor="party-token">Party session token</label>
