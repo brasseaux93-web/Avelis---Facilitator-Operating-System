@@ -1,115 +1,89 @@
-# Testing Strategy
+# Deployment
 
-> Safety properties are release gates, not aspirational tests.
+> Operational guide for Avelis hosts. Does not claim legal privilege, subpoena resistance, or speech non-recoverability beyond product design.
 
-## 1. Test layers
+## Topology
 
-| Layer | Purpose |
+| Component | Role | Persistence |
+|---|---|---|
+| **api** | Express HTTP API, facilitator auth, ledger, retention cron | Stateless; uses Postgres |
+| **room** | Ephemeral WebSocket process | **Memory only** — no volume |
+| **postgres** | Session metadata, process ledger, minutes, destruction receipts, security audit | Encrypted at rest |
+| **TLS terminator** | HTTPS / WSS edge (ALB, nginx, Caddy, Cloudflare) | Certificates only |
+
+Compose local stack: `docker compose up --build` (services `postgres`, `api`, `room`).
+
+Room isolation: set `ROOM_SWAP_DISABLED=true` and enforce `mem_limit` (see `docker-compose.yml`). Do not attach a volume to room state.
+
+## Secrets
+
+Required in production:
+
+| Variable | Purpose |
 |---|---|
-| Unit | Validation, authorization, hashing, state transitions, retention calculations |
-| Integration | Database permissions, encryption, room lifecycle, invite flow, export cleanup |
-| End-to-end | Full facilitator and party workflows |
-| Security regression | Non-persistence, logging, browser storage, dependency, and access-boundary checks |
-| Operational verification | Retention-worker, backup-policy, KMS-failure, and destruction-receipt behavior |
+| `DATABASE_URL` | Postgres connection |
+| `JWT_SECRET` | Facilitator token HMAC |
+| `ROOM_SHARED_SECRET` | Room token gate (must not be default) |
+| `KMS_PROVIDER=aws` | Production KMS path |
+| `AWS_KMS_KEY_ID` / `AWS_KMS_SIGNING_KEY_ID` | Envelope + signing keys |
+| `TRUST_PROXY=true` | When TLS terminates upstream |
 
-## 2. Speech non-persistence tests
+Never commit real secrets. Prefer AWS Secrets Manager / SSM (see `terraform/`).
 
-These tests are critical and must run on every merge.
+Forbidden in production (startup refuses):
 
-- Send distinctive canary text through a live room.
-- Verify the canary does not appear in PostgreSQL.
-- Verify it does not appear in application logs, room logs, structured logs, error reports, or test artifacts.
-- Verify it does not appear in browser local storage, session storage, IndexedDB, Cache Storage, service-worker caches, or download artifacts.
-- Verify it does not appear in queues, temporary files, object-storage mocks, export buffers, metrics payloads, or analytics events.
-- Close the room and verify no room scrollback endpoint exists.
-- Restart the room server and verify the message cannot be recovered.
-- Verify no transcript or caption persistence path exists.
-- Verify audio test fixtures cannot be stored or exported by server code.
+- `LOG_REQUEST_BODIES=true`
+- `LOG_WEBSOCKET_PAYLOADS=true`
+- `SESSION_REPLAY_ENABLED=true`
+- `PRODUCT_ANALYTICS_ENABLED=true`
+- `KMS_PROVIDER=local`
 
-Use synthetic canary content only. Never use realistic private conversation content in test data.
+## TLS
 
-## 3. Ledger integrity tests
+- Terminate TLS at the edge (load balancer or reverse proxy).
+- Forward to api/room over a private network.
+- Set `TRUST_PROXY=true` on the API so client IPs are correct for rate limits.
+- Prefer modern TLS (1.2+) and HSTS at the terminator.
+- Room clients use `wss://` through the same terminator.
 
-- Reject unknown line types.
-- Reject unknown payload fields.
-- Reject payloads containing forbidden free text where not explicitly permitted.
-- Reject unauthorized actor/type combinations.
-- Reject invalid session-state transitions.
-- Allocate unique increasing sequence numbers under concurrent writes.
-- Reject duplicate idempotency keys.
-- Confirm application database role cannot update or delete a ledger row.
-- Verify hash-chain continuity.
-- Verify payload digest against canonical payload encoding.
-- Verify signed ledger roots at close and pre-purge.
-- Detect a simulated altered, inserted, deleted, or reordered line.
-- Confirm visibility changes append new lines and do not mutate target rows.
-- Confirm parties cannot retrieve facilitator-only lines.
+API also sets baseline headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`.
 
-## 4. Retention and destruction tests
+## Observability (no content)
 
-- Verify `retention_hours = 0` purges immediately after close.
-- Verify configured retention deadline is calculated from `closed_at`.
-- Verify retention cannot change after open.
-- Verify eligible sessions are selected exactly once for purge.
-- Verify all session-scoped entities are deleted.
-- Verify joint-minute content is deleted on wipe and at purge.
-- Verify party records and delivery addresses are deleted at purge.
-- Verify destruction receipt remains.
-- Verify receipt excludes speech, minute content, delivery addresses, invite codes, and ledger payload bodies.
-- Simulate database failure, KMS failure, and deletion failure.
-- Verify `purge_failed` is recorded where possible.
-- Verify the system does not falsely attest successful destruction.
-- Verify backup and restore procedures reapply purge obligations before restored data is accessible.
+- Structured JSON logs: `level`, `event`, `requestId`, `durationMs` — never bodies, WS payloads, invite codes, or full emails.
+- `GET /healthz` — liveness
+- `GET /readyz` — database ping
+- `GET /metrics` — in-memory counters: `sessions_opened`, `sessions_closed`, `purge_success`, `purge_failure`
 
-## 5. Access-control tests
+## KMS
 
-- Party cannot access a session without valid one-time invite authorization.
-- Used invite code cannot be reused.
-- Revoked invite cannot be used.
-- Party cannot access any other session.
-- Party cannot access after close.
-- Party cannot view facilitator-only ledger lines.
-- Party cannot view caucus membership of another party.
-- Facilitator cannot access another organization’s session.
-- Purge role cannot delete an ineligible session.
-- Normal application role cannot delete or update ledger rows.
+- Development: `KMS_PROVIDER=local` → `LocalDevKms`
+- Production: `KMS_PROVIDER=aws` → `AwsKmsProvider` (wire `@aws-sdk/client-kms`; stub throws until credentials configured)
+- Destruction receipts and ledger root signatures call `getKms().sign` / `verify`
 
-## 6. Joint-minute tests
+## Retention cron
 
-- Facilitator may draft and publish a minute.
-- Party may initial the published content digest.
-- Initial must reference the currently published digest.
-- Export PDF and Markdown does not create a durable server artifact.
-- Export failure clears temporary generation buffers.
-- Wipe deletes minute content and changes status.
-- Export after wipe fails factually.
-- Minute body never appears in logs or analytics.
+API starts `runDestructionCron` on an interval from `RETENTION_JOB_INTERVAL_MINUTES` (skipped under `VITEST=true`).
 
-## 7. End-to-end acceptance flow
+## Backups
 
-1. Facilitator creates draft session with 72-hour retention.
-2. Facilitator creates party invite.
-3. Party joins and selects identity class.
-4. Facilitator opens session.
-5. Parties exchange synthetic canary room messages.
-6. Facilitator tables and marks agenda items.
-7. Facilitator opens and closes a caucus.
-8. Facilitator publishes an eligible ledger line.
-9. Facilitator creates, publishes, and exports a joint minute.
-10. Party initials the published minute.
-11. Facilitator closes session.
-12. Test confirms room destruction and access revocation.
-13. Retention worker purges session.
-14. Test verifies no canary, minute content, party delivery address, or ledger payload remains.
-15. Test verifies destruction receipt and final signed ledger-root reference.
+- Retention of backups ≤ **max session retention (720h)** + host **recovery window** (typically ≤ 7 days).
+- Encrypt backups at rest.
+- **No prod→dev copies** of databases that still contain session bodies.
+- Security audit events: default **30 days**, maximum **90 days** (ADR-0006).
 
-## 8. Release gates
+### Purge-aware restore
 
-A release is blocked by:
+1. Restore into an isolated recovery environment.
+2. Before serving traffic, run destruction for all closed sessions past `retention_expires_at`.
+3. Verify destruction receipts and absence of ledger/minute/agenda/party bodies for purged sessions.
+4. Run speech-safety checks with synthetic canaries only.
+5. See `docs/backup-restore.md` and `scripts/purge-aware-restore.sh`.
 
-- Any failed speech non-persistence test
-- Any ledger-integrity failure
-- Any retention/destruction failure
-- Any test showing room content in logs, caches, persistence, backups, or third-party telemetry
-- Any new dependency that can capture session content without an approved review
-- Any mismatch between implementation and Product Instruction
+## Terraform scaffold
+
+See `terraform/` for ECS/Fargate placeholders (api + room), Secrets Manager refs, encrypted RDS, KMS keys, and sticky-session notes for the room service.
+
+## What this guide does not claim
+
+Avelis does not guarantee legal privilege, immunity from compelled disclosure of data that still exists within retention, or that operators cannot misconfigure logging. Hosts must keep content-capture flags false and follow purge-aware backup policy.
