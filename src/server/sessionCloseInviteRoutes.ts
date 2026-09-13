@@ -10,8 +10,9 @@ import {
 import { appendLedgerLine } from '../lib/ledgerAppend';
 import { generateInviteCode } from '../lib/invite';
 import { teardownRoom } from '../room/memory';
-import { kms } from '../lib/encryption';
+import { getKms } from '../lib/encryption';
 import { computePayloadDigest } from '../lib/ledger';
+import { incrementMetric, logEvent } from '../lib/observability';
 import { IDENTITY_CLASSES } from './middleware';
 
 export function registerSessionCloseInviteRoutes(
@@ -98,17 +99,19 @@ app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
           lastLineHash: tip.lineHash,
           reason: 'session_closed',
         });
-        const signatureBuf = await kms.sign(
-          process.env.LOCAL_DEV_SIGNING_KEY || 'local-dev-signing-key',
-          Buffer.from(rootDigest, 'hex')
-        );
+        const kms = getKms();
+        const keyReference =
+          process.env.AWS_KMS_SIGNING_KEY_ID ||
+          process.env.LOCAL_DEV_SIGNING_KEY ||
+          'local-dev-signing';
+        const signatureBuf = await kms.sign(keyReference, Buffer.from(rootDigest, 'hex'));
         await tx.insert(ledgerRoots).values({
           sessionId,
           lastSequenceNumber: tip.sequenceNumber,
           lastLineHash: tip.lineHash,
           reason: 'session_closed',
-          signatureAlgorithm: 'HMAC-SHA256-dev',
-          keyReference: 'local-dev-signing',
+          signatureAlgorithm: kms.name === 'aws' ? 'AWS_KMS_Sign' : 'HMAC-SHA256-local',
+          keyReference: kms.name === 'aws' ? keyReference : 'local-dev-signing',
           signature: signatureBuf.toString('hex'),
         });
       }
@@ -125,14 +128,18 @@ app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
     if ('error' in result && result.error === 'invalid_state') {
       return res.status(409).json({ error: `Session cannot be closed from status ${result.status}` });
     }
+    incrementMetric('sessions_closed');
+    logEvent('info', 'session_closed', { sessionId });
     res.status(200).json(result.session);
   } catch (error) {
-    console.error('[API] Failed to close session', error);
+    logEvent('error', 'session_close_failed', {
+      sessionId,
+      error: error instanceof Error ? error.message : 'unknown',
+    });
     res.status(500).json({ error: 'Failed to close session' });
   }
 });
 
-/** Create party invite; return plaintext code once; store only inviteCodeHash. */
 app.post('/api/sessions/:id/invites', requireAuth, async (req, res) => {
   const sessionId = req.params.id;
   const { identityClass, displayLabel } = req.body;
@@ -200,7 +207,10 @@ app.post('/api/sessions/:id/invites', requireAuth, async (req, res) => {
       inviteCode: code,
     });
   } catch (error) {
-    console.error('[API] Failed to create invite', error);
+    logEvent('error', 'invite_create_failed', {
+      sessionId,
+      error: error instanceof Error ? error.message : 'unknown',
+    });
     res.status(500).json({ error: 'Failed to create invite' });
   }
 });
