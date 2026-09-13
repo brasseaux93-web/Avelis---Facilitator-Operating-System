@@ -1,93 +1,147 @@
+/**
+ * Ephemeral WebSocket room server.
+ * All room state lives in memory.ts. This file only wires ws + auth.
+ *
+ * Auth (document):
+ * - Require query params: sessionId, partyId, roomToken.
+ * - Accept roomToken if it equals process.env.ROOM_SHARED_SECRET (shared secret),
+ *   OR if it equals HMAC-SHA256(sessionId + ":" + partyId, ROOM_SHARED_SECRET) hex.
+ * Reject with close code 1008 when missing/invalid.
+ *
+ * Never log room message bodies. Late joiners get no scrollback.
+ */
 import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'node:crypto';
+import {
+  addParty,
+  removeParty,
+  broadcast,
+  teardownRoom,
+  ensureRoom,
+  type WebSocketLike,
+} from './memory';
 
-// The Room Service maintains state purely in memory.
-// There is NO database connection in this file, fulfilling Product Law L1.
+export {
+  teardownRoom,
+  ensureRoom,
+  hasRoom,
+  activeRoomCount,
+  broadcast,
+  addParty,
+  removeParty,
+  createRoom,
+  getRoom,
+} from './memory';
 
-interface RoomState {
-  id: string;
-  parties: Set<WebSocket>;
-  messages: Array<{
-    id: string;
-    senderClass: string;
-    text: string;
-    timestamp: number;
-  }>;
+const PORT = Number(process.env.ROOM_PORT || 3002);
+const MESSAGE_MAX_BYTES = Number(process.env.ROOM_MESSAGE_MAX_BYTES || 8192);
+
+function timingSafeEqualHex(a: string, b: string): boolean {
+  try {
+    const ba = Buffer.from(a, 'utf8');
+    const bb = Buffer.from(b, 'utf8');
+    if (ba.length !== bb.length) return false;
+    return crypto.timingSafeEqual(ba, bb);
+  } catch {
+    return false;
+  }
 }
 
-const activeRooms = new Map<string, RoomState>();
+function expectedHmac(sessionId: string, partyId: string, secret: string): string {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(`${sessionId}:${partyId}`)
+    .digest('hex');
+}
 
-const wss = new WebSocketServer({ port: 3002 });
+function isValidRoomToken(
+  roomToken: string,
+  sessionId: string,
+  partyId: string
+): boolean {
+  const secret = process.env.ROOM_SHARED_SECRET;
+  if (!secret) return false;
+  if (timingSafeEqualHex(roomToken, secret)) return true;
+  const hmac = expectedHmac(sessionId, partyId, secret);
+  return timingSafeEqualHex(roomToken, hmac);
+}
 
-wss.on('connection', (ws, req) => {
-  // In a real implementation, we would extract the sessionId and party authentication token from the URL/headers.
-  const url = new URL(req.url || '', `http://${req.headers.host}`);
-  const sessionId = url.searchParams.get('sessionId');
-  const partyClass = url.searchParams.get('partyClass') || 'anonymous';
+export function createRoomServer(port = PORT): WebSocketServer {
+  const wss = new WebSocketServer({ port });
 
-  if (!sessionId) {
-    ws.close(1008, 'Session ID required');
-    return;
-  }
+  wss.on('connection', (ws, req) => {
+    const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+    const sessionId = url.searchParams.get('sessionId');
+    const partyId = url.searchParams.get('partyId');
+    const roomToken = url.searchParams.get('roomToken');
+    const identityClass = url.searchParams.get('identityClass') || 'unnamed';
 
-  let room = activeRooms.get(sessionId);
-  if (!room) {
-    room = { id: sessionId, parties: new Set(), messages: [] };
-    activeRooms.set(sessionId, room);
-  }
+    if (!sessionId || !partyId || !roomToken) {
+      ws.close(1008, 'sessionId, partyId, and roomToken required');
+      return;
+    }
 
-  room.parties.add(ws);
+    if (!isValidRoomToken(roomToken, sessionId, partyId)) {
+      ws.close(1008, 'Invalid roomToken');
+      return;
+    }
 
-  // Send ephemeral chat history to the new participant
-  ws.send(JSON.stringify({ type: 'history', messages: room.messages }));
+    const socket = ws as unknown as WebSocketLike;
+    // Ensure OPEN constant is present for WebSocketLike consumers.
+    (socket as WebSocketLike).OPEN = WebSocket.OPEN;
 
-  ws.on('message', (data) => {
-    try {
-      const parsed = JSON.parse(data.toString());
-      if (parsed.type === 'chat') {
-        const message = {
-          id: crypto.randomUUID(),
-          senderClass: partyClass,
-          text: parsed.text, // Text exists only in memory
-          timestamp: Date.now(),
-        };
-        
-        // Append to memory-only array
-        room!.messages.push(message);
+    ensureRoom(sessionId);
+    addParty(sessionId, socket, { partyId, identityClass });
+    // No history replay — late joiners get no scrollback.
 
-        // Broadcast to all parties in the room
-        const broadcastPayload = JSON.stringify({ type: 'message', message });
-        for (const partyWs of room!.parties) {
-          if (partyWs.readyState === WebSocket.OPEN) {
-            partyWs.send(broadcastPayload);
-          }
-        }
+    ws.on('message', (data) => {
+      let parsed: { type?: string; text?: string };
+      try {
+        parsed = JSON.parse(data.toString());
+      } catch {
+        // Parse errors: ignore without logging payload.
+        return;
       }
-    } catch (e) {
-      console.error('Failed to parse message', e);
-    }
+
+      if (parsed?.type !== 'chat' || typeof parsed.text !== 'string') {
+        return;
+      }
+
+      const text = parsed.text;
+      const byteLen = Buffer.byteLength(text, 'utf8');
+      if (byteLen > MESSAGE_MAX_BYTES) {
+        try {
+          ws.close(1009, 'Message too large');
+        } catch {
+          // ignore
+        }
+        return;
+      }
+
+      // Broadcast only — never store, never console.log text.
+      broadcast(sessionId, {
+        type: 'message',
+        message: {
+          id: crypto.randomUUID(),
+          partyId,
+          identityClass,
+          text,
+          timestamp: Date.now(),
+        },
+      });
+    });
+
+    ws.on('close', () => {
+      removeParty(sessionId, socket);
+    });
   });
 
-  ws.on('close', () => {
-    room!.parties.delete(ws);
-    // Note: We deliberately do NOT persist room state when parties leave.
-    // When the room is closed by the facilitator, we must call a teardown function
-    // to instantly delete the Map entry.
-  });
-});
-
-export function teardownRoom(sessionId: string) {
-  const room = activeRooms.get(sessionId);
-  if (room) {
-    for (const partyWs of room.parties) {
-      partyWs.send(JSON.stringify({ type: 'room_closed' }));
-      partyWs.close(1000, 'Session Closed');
-    }
-    // Delete all memory references
-    room.messages = [];
-    room.parties.clear();
-    activeRooms.delete(sessionId);
-  }
+  return wss;
 }
 
-console.log('Memory-only Ephemeral Room Service running on ws://localhost:3002');
+// package.json runs `tsx watch src/room/server.ts` — start on import for that entry.
+// Tests should import from ./memory only (avoid binding the port under Vitest).
+if (process.env.VITEST !== 'true') {
+  createRoomServer(PORT);
+  console.log(`Memory-only Ephemeral Room Service listening on ws://localhost:${PORT}`);
+}
