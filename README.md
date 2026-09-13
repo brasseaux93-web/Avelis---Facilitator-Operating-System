@@ -18,7 +18,7 @@ The product object is a **session**. It is not a community, case-management syst
 
 ## Repository status (honest)
 
-**Maturity 9/10** - MVP Definition section 3 DoD substantially closed on prod-readiness/maturity-10-onto-main. Residual: remove tracked node_modules/dist via shallow-clone cleanup, optional live-DB E2E under DATABASE_URL, and NAT/VPC endpoints before terraform apply.
+**Maturity 9.5/10** - MVP Definition section 3 DoD substantially closed (maturity PR #6). **Premium 2026** visual system shipped onto main (tokens, premium overrides, facilitator/auth/session/room UI, protocol mark, visual-system + demo-script docs). Residual to 10/10: remove tracked node_modules/dist via shallow-clone cleanup, optional live-DB E2E under DATABASE_URL, and NAT/VPC endpoints before terraform apply.
 
 See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit and residual list.
 
@@ -29,6 +29,7 @@ See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit and re
 - Security audit retention purge (30d default / 90d max)
 - Closed-vocabulary ledger append with transactional sequencing and hash chaining
 - Facilitator sign-in, session console (keyboard-complete + factual empty states), party join, live room UI
+- **Premium 2026** institutional UI (warm paper / near-black canvas, desaturated teal accent, Google-free system type, protocol mark — not lock/shield)
 - Agenda + joint minute API surfaces; KMS factory (local | wired aws via @aws-sdk/client-kms)
 - /healthz, /readyz, /metrics; content-capture flags refused in production
 - docker compose for postgres + api + room (loopback ports; secrets via env file; migrations on API start)
@@ -38,7 +39,6 @@ See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit and re
 - Operator shallow-clone: git rm -rf node_modules dist on tip if still tracked
 - Apply CI workflow from docs/ci-workflow-phase3.yml (needs workflow scope) if pending
 - Optional WebRTC audio only after speech-safety suite passes
-- Premium 2026 visual pass (prod-readiness/premium-2026)
 - NAT gateway or VPC endpoints before private-subnet ECS apply
 
 ## What persists
@@ -116,7 +116,8 @@ npm run dev   # Vite + API + room
 | [Backup & restore](docs/backup-restore.md) | Purge-aware backup policy |
 | [Build Order](docs/build-order.md) | Dependency-aware implementation sequence |
 | [Language Guide](docs/language-guide.md) | Approved and prohibited product language |
-| [Visual System](docs/visual-system.md) | Interface principles and visual constraints |
+| [Visual System](docs/visual-system.md) | Interface principles and visual constraints (Premium 2026) |
+| [Demo script](docs/demo-script.md) | Factual investor walkthrough |
 | [ADRs](docs/adr/) | Binding technical decisions |
 | [Contributing](CONTRIBUTING.md) | Change-control and review requirements |
 | [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
