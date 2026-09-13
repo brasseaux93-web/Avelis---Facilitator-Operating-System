@@ -1,63 +1,57 @@
 # Avelis
 
-> A facilitator operating system for dialogues that must not leave a transcript.
+People cannot speak freely if the room becomes evidence.
 
-Avelis keeps a bounded **process ledger** for a facilitated session and destroys live-room speech. The room is ephemeral. The joint minute is optional. No transcript is created.
+Avelis is for the conversations that have to happen — shuttle diplomacy, workplace facilitation, an ombuds session — where writing everything down would change what people are willing to say. It gives the facilitator a **process ledger** (who was invited, what was tabled, what was marked agreed) and it **does not keep the talk**.
 
-The product object is a **session**. It is not a community, case-management system, social graph, participant directory, or general-purpose chat application.
+The live room exists only while the session is open. Messages are delivered and dropped. There is no transcript, no AI summary, no scrollback after close. When the retention window ends, process records are destroyed and a **destruction receipt** remains as the limited proof that destruction happened.
+
+The product object is a **session**. It is not a community, a case file, a participant directory, or a chat app.
+
+---
+
+## Who uses it
+
+**Facilitators** have organization accounts. They run a management console: open a session, invite parties, write process lines, optionally publish a joint minute, close the room, and later verify a destruction receipt.
+
+**Participants** never create an account. They redeem a one-time invite. Their credentials live in the browser tab. When the tab or the room dies, so does their access.
+
+---
 
 ## Core promise
 
-- Text messages exist in memory only while a room is open (deliver-and-drop; no server scrollback).
-- Audio, when enabled, is intended to move peer-to-peer through WebRTC and is never recorded (optional; gated until speech-safety verification).
-- Avelis never generates a transcript.
-- Avelis does not use AI to interpret, summarize, classify, or write process records.
-- The ledger records authorized process facts, not speech or inference.
-- A session's retained data is destroyed at the configured retention deadline.
-- A destruction receipt remains as the limited evidence that destruction occurred.
+- Text in the room exists in memory only while the room is open (deliver-and-drop; no server scrollback).
+- Avelis never generates a transcript and does not use AI to interpret or write process records.
+- The ledger records authorized process facts, not speech.
+- A session’s retained data is destroyed at the configured deadline.
+- A destruction receipt remains as limited evidence that destruction occurred.
 
-## Repository status (honest)
+## Repository status
 
-**Maturity 10/10 against MVP Definition §3 + production-host bar.**
+**Post-MVP on `main`.** Ephemeral WebSocket room restored as the speech path. Facilitator chrome and participant chrome are separate. Public self-serve registration is off in production unless explicitly enabled. Invite delivery addresses are wiped on join/revoke.
 
-Phases 1–3, maturity hardening, Premium 2026 UI, and repo hygiene (`node_modules` / `dist` untracked) are on `main`. See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
+WebRTC / third-party signaling is **not** on the production speech path (see `deprecated/`).
 
-**Pre-test max-value cluster:** demo one-click path (`/demo`), invite resend/revoke/deliver, Playwright lifecycle E2E, destruction receipt + party ledger/minute UI — see branch notes in PRODUCTION_READINESS.
-
-### What works here
+### What works
 
 - Ephemeral WebSocket room (HMAC party tokens only; raw shared secret rejected; no message history)
 - Session create → open → invite → close → retention purge + verifiable destruction receipt
-- Security audit retention purge (30d default / 90d max)
-- Closed-vocabulary ledger append with transactional sequencing and hash chaining
-- Facilitator sign-in, session console (keyboard-complete + factual empty states), party join, live room UI
-- **Premium 2026** institutional UI (near-black canvas, paper panels, teal accent, protocol mark — not lock/shield)
-- Agenda + joint minute APIs; KMS factory (`local` | `aws` via `@aws-sdk/client-kms`)
+- Closed-vocabulary ledger with transactional sequencing and hash chaining
+- Facilitator sign-in, session console, party join, live room
+- Room teardown across API and room processes (loopback control plane)
+- Agenda + joint minute; KMS factory (`local` | `aws`)
 - `/healthz`, `/readyz`, `/metrics`; content-capture flags refused in production
-- `docker compose` for postgres + api + room (loopback ports; secrets via env; migrations on API start)
-- Clean git tree: dependencies and build output are ignored, not tracked
-- **Demo** `/demo` + `ENABLE_DEMO_SEED` prepare API (dev/demo only)
-- Invite deliver/resend/revoke; party `/party` ledger + minute initial
-- Playwright `npm run test:e2e` (see [docs/e2e.md](docs/e2e.md))
-
-### Optional / post-MVP ops (not MVP DoD blockers)
-
-- Live Postgres-backed Playwright E2E under `E2E_BASE_URL` / compose (Vitest suites remain the release gate)
-- Apply CI workflow from `docs/ci-workflow-phase3.yml` if still pending (`workflow` scope)
-- NAT gateway or VPC endpoints before private-subnet ECS apply
-- Optional WebRTC audio only after speech-safety suite passes
+- `docker compose` for postgres + api + room
 
 ## What persists
 
 | Data | Persists? | Retention |
 |---|---:|---|
 | Live room messages | No | Memory-only; released after delivery; destroyed on room teardown |
-| Audio frames | No | Peer-to-peer; never recorded or stored |
 | Transcript | No | Never created |
 | Session metadata | Yes | Destroyed at session retention expiry |
 | Process ledger | Yes | Destroyed at session retention expiry |
-| Agenda process labels | Yes | Destroyed at session retention expiry |
-| Party invite and identity-class records | Yes | Destroyed at session retention expiry |
+| Party invite records | Yes | Destroyed at session retention expiry; delivery email wiped after join |
 | Joint-minute body | Optional | Destroyed at session retention expiry or wiped earlier |
 | Destruction receipt | Yes | Retained indefinitely unless host policy specifies otherwise |
 | Restricted security audit events | Yes, minimally | Default 30 days; maximum 90 days |
@@ -65,14 +59,12 @@ Phases 1–3, maturity hardening, Premium 2026 UI, and repo hygiene (`node_modul
 ## What Avelis is not
 
 - A chat app or persistent messaging system
-- A social network, participant directory, or relationship graph
-- A therapy product, HR case-management tool, whistleblowing hotline, or mediation CRM
-- A surveillance archive, recording system, or compliance archive for speech
-- An AI assistant, transcription, summarization, or sentiment-analysis product
-- A system of record for what participants said
-- A legal-signature, legal-hold, or legal-discovery platform
+- A social network or participant directory
+- A therapy product, HR case-management tool, or whistleblowing hotline
+- An AI assistant, transcription, or sentiment product
+- A legal-signature, legal-hold, or discovery platform
 
-Avelis does **not** claim legal privilege, subpoena immunity, or confidentiality beyond implemented technical controls. See the [Language Guide](docs/language-guide.md).
+Avelis does **not** claim legal privilege or subpoena immunity. See the [Language Guide](docs/language-guide.md).
 
 ## Quick start
 
@@ -92,17 +84,13 @@ Dev without full compose (Postgres required):
 
 ```bash
 cp .env.example.txt .env
-# ENABLE_DEMO_SEED=true  # optional investor path
 npm install
-npm run dev   # Vite + API + room
-# open /demo
+npm run dev
 ```
-
-Investor walkthrough: [docs/demo-script.md](docs/demo-script.md). E2E: [docs/e2e.md](docs/e2e.md).
 
 ## Stack
 
-- **UI:** Vite + React + TanStack Router (Premium 2026)
+- **UI:** Vite + React + TanStack Router (Premium 2026 tokens — not a generic Tailwind kit)
 - **API:** Express · **Room:** memory-only WebSocket · **DB:** PostgreSQL 16 + Drizzle
 - **Auth:** Argon2id + HMAC JWT · **Crypto:** AES-GCM + KMS factory
 - **Tests:** Vitest (speech-safety, ledger, retention, room-auth, integration) · Playwright E2E (optional)
@@ -113,21 +101,11 @@ Investor walkthrough: [docs/demo-script.md](docs/demo-script.md). E2E: [docs/e2e
 |---|---|
 | [Product Instruction](docs/product-instructions.md) | Binding product constitution |
 | [Architecture](docs/architecture.md) | Durable and ephemeral system design |
-| [Data Model](docs/data-model.md) | Entities, relationships, encryption, and retention |
-| [Ledger Spec](docs/ledger-spec.md) | Closed process-ledger vocabulary |
-| [Session Lifecycle](docs/session-lifecycle.md) | State machine and destruction |
-| [Security & Threat Model](docs/security-threat-model.md) | Privacy and non-persistence |
-| [MVP Definition](docs/mvp-definition.md) | Must-ship / must-not-ship |
-| [Testing Strategy](docs/testing-strategy.md) | Safety and integrity tests |
-| [Deployment](docs/deployment.md) | Environments and operations |
-| [Backup & restore](docs/backup-restore.md) | Purge-aware backup policy |
+| [Data Model](docs/data-model.md) | Entities, encryption, retention |
 | [Language Guide](docs/language-guide.md) | Approved wording |
 | [Visual System](docs/visual-system.md) | Premium 2026 constraints |
-| [Demo script](docs/demo-script.md) | Investor walkthrough |
-| [E2E](docs/e2e.md) | Playwright + compose |
-| [ADRs](docs/adr/) | Technical decisions |
-| [Contributing](CONTRIBUTING.md) | Change control |
 | [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
+| [Contributing](CONTRIBUTING.md) | Change control |
 
 ## License
 

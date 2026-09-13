@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 import argon2 from 'argon2';
-import jwt from 'jsonwebtoken';
 
 export interface FacilitatorTokenPayload {
   sub: string;
@@ -163,22 +162,30 @@ export function createRoomToken(sessionId: string, partyId: string): string {
   return crypto.createHmac('sha256', secret).update(`${sessionId}:${partyId}`).digest('hex');
 }
 
-/** Mint a Supabase JWT for Realtime signaling */
-export function signSupabaseRealtimeToken(sessionId: string, partyId: string, role: 'host' | 'guest'): string {
-  const secret = process.env.SUPABASE_JWT_SECRET;
-  if (!secret) {
-    // Return empty string if no secret is set, allowing fallback or error later
-    console.error('SUPABASE_JWT_SECRET is required for WebRTC signaling');
-    return '';
+/**
+ * Org key references for new organizations.
+ * Production refuses local-dev placeholders so a live host cannot mint unusable keys.
+ */
+export function organizationKeyIds(env: NodeJS.ProcessEnv = process.env): {
+  encryptionKeyId: string;
+  signingKeyId: string;
+} {
+  const encryptionKeyId =
+    env.ORG_ENCRYPTION_KEY_ID || env.AWS_KMS_KEY_ID || 'local-dev-encryption';
+  const signingKeyId =
+    env.ORG_SIGNING_KEY_ID || env.AWS_KMS_SIGNING_KEY_ID || 'local-dev-signing';
+  if (env.NODE_ENV === 'production') {
+    if (encryptionKeyId.startsWith('local-dev') || signingKeyId.startsWith('local-dev')) {
+      throw new Error(
+        'Production refused local-dev organization key ids. Set ORG_ENCRYPTION_KEY_ID and ORG_SIGNING_KEY_ID (or AWS_KMS_*).'
+      );
+    }
   }
-  
-  const payload = {
-    role: 'authenticated', // Required for Supabase RLS policies
-    session_id: sessionId,
-    party_id: partyId,
-    avelis_role: role,
-    exp: Math.floor(Date.now() / 1000) + 12 * 3600, // 12 hours
-  };
-  
-  return jwt.sign(payload, secret);
+  return { encryptionKeyId, signingKeyId };
+}
+
+export function isPublicRegisterEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (env.ENABLE_PUBLIC_REGISTER === 'true') return true;
+  if (env.ENABLE_PUBLIC_REGISTER === 'false') return false;
+  return env.NODE_ENV !== 'production';
 }

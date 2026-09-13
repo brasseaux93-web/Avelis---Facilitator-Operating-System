@@ -101,7 +101,7 @@ export function registerInviteActionRoutes(
       const updated = await db.transaction(async (tx) => {
         const [row] = await tx
           .update(parties)
-          .set({ inviteStatus: 'revoked', inviteCodeHash: null })
+          .set({ inviteStatus: 'revoked', inviteCodeHash: null, deliveryAddress: null })
           .where(eq(parties.id, partyId))
           .returning();
         await appendLedgerLine(tx, {

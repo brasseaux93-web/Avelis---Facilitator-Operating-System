@@ -30,13 +30,12 @@ function AuthPage() {
     setIsLoading(true);
 
     try {
-      const { token, supabaseToken, facilitator } = await apiPost<{
+      const { token, facilitator } = await apiPost<{
         token: string;
-        supabaseToken: string;
         facilitator: { id: string; email: string; displayName: string; organizationId: string };
       }>('/api/auth/login', { email, password }, { auth: false });
 
-      setSession(token, supabaseToken, facilitator);
+      setSession(token, facilitator);
       navigate({ to: '/sessions' });
     } catch {
       setFormError('Sign in did not complete.');
@@ -56,7 +55,7 @@ function AuthPage() {
               <ProtocolMark accent="currentColor" />
             </div>
             <h2 className="auth-title">Facilitator sign in</h2>
-            <p className="auth-subtitle">Sign in with your authorized work account.</p>
+            <p className="auth-subtitle">Use the work account your organization provisioned.</p>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
@@ -89,11 +88,9 @@ function AuthPage() {
             </div>
 
             <div className="auth-field">
-              <div className="auth-actions">
-                <label htmlFor="password" className="auth-label">
-                  Password
-                </label>
-              </div>
+              <label htmlFor="password" className="auth-label">
+                Password
+              </label>
               <input
                 id="password"
                 type="password"
@@ -112,19 +109,16 @@ function AuthPage() {
             </button>
           </form>
 
-          <div className="auth-divider">or</div>
-
-          <button type="button" className="auth-btn auth-btn--sso" disabled title="Not available in MVP">
-            Not available in MVP
-          </button>
-
           <div className="auth-trust-note">
             <span>
-              Facilitator access uses organization-scoped accounts. Tokens stay in memory only.
-              Room messages are not stored by Avelis.
+              Facilitator tokens stay in this tab only. Participants never sign in here — they
+              redeem an invite. Room messages are not stored by Avelis.
             </span>
             <div style={{ marginTop: 'var(--space-4)' }}>
-              Need an institutional account? <Link to="/register" className="auth-link">Sign up here</Link>
+              Need access for your institution?{' '}
+              <Link to="/evaluation" className="auth-link">
+                Request evaluation
+              </Link>
             </div>
           </div>
         </div>

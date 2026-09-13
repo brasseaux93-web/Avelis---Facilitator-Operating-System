@@ -31,9 +31,12 @@ services:
       API_PORT: "3001"
       JWT_SECRET: ${JWT_SECRET:?required}
       ROOM_SHARED_SECRET: ${ROOM_SHARED_SECRET:?required}
+      ROOM_CONTROL_HOST: room
+      ROOM_CONTROL_PORT: "3003"
       KMS_PROVIDER: local
       LOCAL_DEV_SIGNING_KEY: ${LOCAL_DEV_SIGNING_KEY:?required}
       LOCAL_DEV_ENCRYPTION_KEY: ${LOCAL_DEV_ENCRYPTION_KEY:?required}
+      ENABLE_PUBLIC_REGISTER: "true"
       RETENTION_JOB_INTERVAL_MINUTES: "15"
       SECURITY_AUDIT_RETENTION_HOURS: "720"
       TRUST_PROXY: "true"
@@ -46,6 +49,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      room:
+        condition: service_started
+
+  room:
+    build:
+      context: .
+      dockerfile: Dockerfile.room
+    environment:
+      NODE_ENV: development
+      ROOM_PORT: "3002"
+      ROOM_CONTROL_PORT: "3003"
+      ROOM_CONTROL_BIND: "0.0.0.0"
+      ROOM_SHARED_SECRET: ${ROOM_SHARED_SECRET:?required}
+      LOG_WEBSOCKET_PAYLOADS: "false"
+    ports:
+      - "127.0.0.1:3002:3002"
+    mem_limit: 512m
 
 volumes:
   postgres_data:

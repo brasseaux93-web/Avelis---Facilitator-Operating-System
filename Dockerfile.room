@@ -1,0 +1,11 @@
+# Memory-only room process. No volume. Loopback control plane for teardown.
+FROM node:20-alpine
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci || npm install
+COPY tsconfig.json ./
+COPY src ./src
+ENV NODE_ENV=production
+ENV LOG_WEBSOCKET_PAYLOADS=false
+EXPOSE 3002
+CMD ["npx", "tsx", "src/room/server.ts"]

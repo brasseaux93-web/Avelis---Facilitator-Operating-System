@@ -2,6 +2,7 @@ import { createRootRoute, Outlet, Link, useLocation } from '@tanstack/react-rout
 import React, { useEffect, useState } from 'react';
 import { LogoLockup } from '../components/Logo';
 import { Footer } from '../components/Footer';
+import { useFacilitatorAuth } from '../lib/FacilitatorAuthContext';
 import '../../base.css';
 import '../../style.css';
 import '../styles/tokens.css';
@@ -11,12 +12,35 @@ export const Route = createRootRoute({
   component: RootLayout,
 });
 
+type ShellKind = 'marketing' | 'facilitator' | 'temporal';
+
+function shellKind(pathname: string): ShellKind {
+  if (
+    pathname.startsWith('/join') ||
+    pathname.startsWith('/party') ||
+    pathname.startsWith('/room')
+  ) {
+    return 'temporal';
+  }
+  if (
+    pathname.startsWith('/sessions') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/demo')
+  ) {
+    return 'facilitator';
+  }
+  return 'marketing';
+}
+
 function RootLayout() {
   const [theme, setTheme] = useState('dark');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const hideFooter = location.pathname.startsWith('/auth') || location.pathname.startsWith('/register') || location.pathname.startsWith('/session');
+  const shell = shellKind(location.pathname);
+  const hideFooter = shell !== 'marketing';
+  const { isAuthenticated, facilitator, clearSession } = useFacilitatorAuth();
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -60,35 +84,53 @@ function RootLayout() {
       <div className="ambient-bg" aria-hidden="true"></div>
       <a href="#main" className="skip-link">Skip to main content</a>
 
-      <header className={`header ${isScrolled ? 'header--scrolled' : ''}`} id="header">
+      <header
+        className={`header ${isScrolled ? 'header--scrolled' : ''} header--${shell}`}
+        id="header"
+      >
         <div className="container header__inner">
-          <Link to="/" className="logo" aria-label="Avelis home" onClick={closeNav}>
+          <Link
+            to={shell === 'facilitator' && isAuthenticated ? '/sessions' : '/'}
+            className="logo"
+            aria-label="Avelis home"
+            onClick={closeNav}
+          >
             <LogoLockup />
           </Link>
 
-          <nav className="nav" aria-label="Primary navigation">
-            <button
-              className="nav-toggle"
-              aria-expanded={isNavOpen}
-              aria-controls="nav-list"
-              aria-label="Toggle navigation menu"
-              onClick={() => setIsNavOpen(!isNavOpen)}
-            >
-              <span className="nav-toggle__bar"></span>
-              <span className="nav-toggle__bar"></span>
-              <span className="nav-toggle__bar"></span>
-            </button>
-            <ul className={`nav__list ${isNavOpen ? 'nav__list--open' : ''}`} id="nav-list">
-              <li><a href="/#principles" className="nav__link" onClick={closeNav}>Principles</a></li>
-              <li><a href="/#how-it-works" className="nav__link" onClick={closeNav}>Session Model</a></li>
-              <li><a href="/#audience" className="nav__link" onClick={closeNav}>Who It's For</a></li>
-              <li><Link to="/auth" className="nav__link" onClick={closeNav}>Sign in</Link></li>
-              <li><Link to="/register" className="nav__link" onClick={closeNav}>Sign up</Link></li>
-            </ul>
-          </nav>
+          {shell === 'marketing' && (
+            <nav className="nav" aria-label="Primary navigation">
+              <button
+                className="nav-toggle"
+                aria-expanded={isNavOpen}
+                aria-controls="nav-list"
+                aria-label="Toggle navigation menu"
+                onClick={() => setIsNavOpen(!isNavOpen)}
+              >
+                <span className="nav-toggle__bar"></span>
+                <span className="nav-toggle__bar"></span>
+                <span className="nav-toggle__bar"></span>
+              </button>
+              <ul className={`nav__list ${isNavOpen ? 'nav__list--open' : ''}`} id="nav-list">
+                <li><a href="/#principles" className="nav__link" onClick={closeNav}>Principles</a></li>
+                <li><a href="/#how-it-works" className="nav__link" onClick={closeNav}>Session Model</a></li>
+                <li><a href="/#audience" className="nav__link" onClick={closeNav}>Who It's For</a></li>
+                <li><Link to="/auth" className="nav__link" onClick={closeNav}>Facilitator sign in</Link></li>
+              </ul>
+            </nav>
+          )}
+
+          {shell === 'temporal' && (
+            <p className="header-temporal-note">This session is temporary. Nothing said here is stored.</p>
+          )}
 
           <div className="header__actions">
-            <button className="theme-toggle" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} type="button" onClick={toggleTheme}>
+            <button
+              className="theme-toggle"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              type="button"
+              onClick={toggleTheme}
+            >
               {theme === 'dark' ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
@@ -100,12 +142,31 @@ function RootLayout() {
                 </svg>
               )}
             </button>
-            <Link to="/register" className="btn btn--nav" onClick={closeNav}>Sign up</Link>
+            {shell === 'marketing' && (
+              <Link to="/evaluation" className="btn btn--nav" onClick={closeNav}>
+                Request evaluation
+              </Link>
+            )}
+            {shell === 'facilitator' && isAuthenticated && (
+              <span className="header-facilitator-meta">
+                {facilitator?.displayName}
+                <button
+                  type="button"
+                  className="btn btn--nav"
+                  onClick={() => {
+                    clearSession();
+                    closeNav();
+                  }}
+                >
+                  Sign out
+                </button>
+              </span>
+            )}
           </div>
         </div>
       </header>
 
-      <main id="main">
+      <main id="main" className={`app-main app-main--${shell}`}>
         <Outlet />
       </main>
       {!hideFooter && <Footer />}

@@ -1,39 +1,40 @@
 # Production Readiness Audit
 
-**Honest maturity score: 10/10 against MVP Definition §3 + production-host bar.**
+**Honest maturity: 10/10 against MVP Definition §3, and past-MVP on identity chrome, ephemeral room contract, and participant PII hygiene.**
 
-Verified on `main` after `chore: remove tracked node_modules and dist` (`cd42d37`). Dependencies and build output are gitignored and no longer present in the tree.
+Verified after the post-MVP cut: memory-only room restored, facilitator vs participant shells split, public register gated in production, invite delivery addresses wiped on join/revoke.
 
-## Closed on main
+## Closed
 
-1. Speech-safety (ephemeral room; no scrollback; content-safe logs)
+1. Speech-safety (ephemeral WS room; no scrollback; content-safe logs)
 2. Ledger integrity (closed vocabulary, transactional sequence, hash chain)
 3. Retention / destruction + security_audit purge + verifiable destruction receipt
-4. Lifecycle path: create → invite (HMAC roomToken) → agenda/minute → close → purge (integration tests)
-5. No production dependency receives session content
-6. Docs/env/compose/migrations match implementation
-7. HMAC-only room tokens; placeholder secrets refused in production
-8. AwsKmsProvider wired to `@aws-sdk/client-kms`
-9. Keyboard-complete critical flows + factual empty states
-10. Premium 2026 visual system (tokens, protocol mark, demo script)
-11. Clean repository hygiene (`node_modules/` / `dist/` untracked)
+4. Lifecycle path: create → invite (HMAC roomToken) → agenda/minute → close → purge
+5. No production speech path through a third-party realtime vendor
+6. HMAC-only room tokens; placeholder secrets refused in production
+7. Room teardown signaled from API to room process (control plane)
+8. Keyboard-complete critical flows + factual empty states
+9. Premium 2026 visual system
+10. Participant chrome has no account creation
+11. Production refuses `local-dev-*` organization key ids
+12. Login/register rate-limited; register off in production by default
 
-## Pre-test max-value cluster (this branch)
+## Post-MVP (this cut)
 
-Investor-ready path and facilitator invite/receipt UX layered on the maturity-10 baseline:
+- Restore `src/room/server.ts` + compose room service
+- Role-aware shell: marketing / facilitator console / temporal session
+- Join is invite-only; human identity labels
+- Facilitator host room access via `/api/sessions/:id/room-access`
+- Party view restored to real JSX (no token paste)
+- Destruction receipt layout (`receipt-dl`) so headers are not clipped
+- WebRTC/Supabase experiment moved to `deprecated/`
 
-1. **Demo path** — `ENABLE_DEMO_SEED=true`, `/demo`, `GET /api/demo/status`, `POST /api/demo/prepare` (dev/demo only; no secrets in logs)
-2. **Invite UX** — resend / revoke / deliver (SMTP optional; copy-link fallback); one-time code modal
-3. **Playwright E2E** — `tests/e2e/session-lifecycle.spec.ts` + `playwright.config.ts`; soft-skip unless `E2E_BASE_URL` set; see `docs/e2e.md`
-4. **Receipt + minute + party ledger** — destruction receipt GET/verify; party ledger + minute initial; facilitator publish/withdraw + receipt panel
-5. Constitution: no AI, no speech persistence, no legal overclaims, language-guide only
+## Remaining ops (not product blockers)
 
-## Post-MVP ops (optional, not DoD blockers)
-
-- Live Postgres Playwright E2E when `DATABASE_URL` is set (compose path documented in `docs/e2e.md`)
-- Apply `docs/ci-workflow-phase3.yml` with a `workflow`-scoped token if still pending
+- Live Postgres Playwright E2E when `E2E_BASE_URL` is set
+- Apply `docs/ci-workflow-phase3.yml` with a `workflow`-scoped token
 - NAT / VPC endpoints before private-subnet ECS terraform apply
-- Optional WebRTC only after speech-safety suite passes
+- Optional WebRTC **audio** only after speech-safety suite covers it
 
 ## How to test
 
@@ -44,8 +45,4 @@ curl -s localhost:3001/healthz
 npm run test:speech-safety && npm run test:ledger && npm run test:retention
 npm run test:room-auth && npm run test:integration
 node scripts/check-prod-observability-flags.mjs
-
-# Demo + E2E (optional)
-# ENABLE_DEMO_SEED=true npm run dev
-# E2E_BASE_URL=http://127.0.0.1:5173 E2E_API_URL=http://127.0.0.1:3001 npm run test:e2e
 ```
