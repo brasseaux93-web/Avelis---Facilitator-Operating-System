@@ -46,14 +46,14 @@ function PartnersPage() {
             <li>If it holds, a letter of intent for a paid year at practice ($14.4k) or firm ($54k) terms.</li>
           </ul>
 
-          <h3>Letter of intent (copy)</h3>
+          <h3>Letter of intent</h3>
           <p>
-            We, [Host], intend to evaluate Avelis for facilitated sessions that must not produce a
-            transcript. For ninety days we will run at least three sessions. Avelis will not store
-            room messages or audio. Process records destroy at the deadline we set. If the chamber
-            holds, we intend to enter a one-year organization-seat agreement at the then-current
-            practice or firm rate. This letter is not a purchase order and does not create
-            exclusivity.
+            Full template for letterhead:{' '}
+            <a href="/legal/loi-mediator.md" download>
+              loi-mediator.md
+            </a>
+            . Non-binding. Ninety days. Three real sessions. No fee. Intent to convert at practice
+            or firm rates if the chamber holds. Not a purchase order, not exclusivity, not privilege.
           </p>
 
           <h3>What we refuse in the trial</h3>

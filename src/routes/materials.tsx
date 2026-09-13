@@ -38,6 +38,11 @@ const FILES = [
     name: 'DPA packet (markdown)',
     note: 'Send to counsel. Groq named as RAM inference. Not a signed contract.',
   },
+  {
+    href: '/legal/loi-mediator.md',
+    name: 'Mediator LOI (markdown)',
+    note: 'Non-binding 90-day design-partner letter. Print to letterhead.',
+  },
 ];
 
 function MaterialsPage() {
