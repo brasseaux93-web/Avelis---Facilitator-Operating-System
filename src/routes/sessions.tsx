@@ -75,7 +75,14 @@ function SessionsPage() {
             {facilitator?.displayName} · {facilitator?.email}
           </p>
         </div>
-        <button type="button" className="btn btn--secondary" onClick={() => { clearSession(); navigate({ to: '/auth' }); }}>
+        <button
+          type="button"
+          className="btn btn--secondary"
+          onClick={() => {
+            clearSession();
+            navigate({ to: '/auth' });
+          }}
+        >
           Sign out
         </button>
       </div>
@@ -89,7 +96,7 @@ function SessionsPage() {
         <div className="sessions-form__row">
           <div className="sessions-field">
             <label htmlFor="session-title">Title</label>
-            <input id="session-title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <input id="session-title" value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
           </div>
           <div className="sessions-field" style={{ maxWidth: 180 }}>
             <label htmlFor="retention">Retain process records for (hours)</label>
@@ -103,13 +110,21 @@ function SessionsPage() {
               required
             />
           </div>
-          <button type="submit" className="btn btn--primary">Create session</button>
+          <button type="submit" className="btn btn--primary">
+            Create session
+          </button>
         </div>
-        {error && <p className="sessions-error" role="alert">{error}</p>}
+        {error && (
+          <p className="sessions-error" role="alert">
+            {error}
+          </p>
+        )}
       </form>
 
       {loading ? (
-        <p className="sessions-page__subtitle">Loading…</p>
+        <p className="sessions-page__subtitle" role="status">
+          Loading...
+        </p>
       ) : (
         <ul className="sessions-list">
           {sessions.map((s) => (
@@ -118,15 +133,15 @@ function SessionsPage() {
                 <Link to="/sessions/$sessionId" params={{ sessionId: s.id }}>
                   {s.title}
                 </Link>
-                <div className="sessions-list__meta">
-                  Retention {s.retentionHours}h
-                </div>
+                <div className="sessions-list__meta">Retention {s.retentionHours}h</div>
               </div>
               <span className="sessions-status">{s.status}</span>
             </li>
           ))}
           {sessions.length === 0 && (
-            <li className="sessions-page__subtitle">No sessions yet.</li>
+            <li className="sessions-page__subtitle" role="status">
+              No sessions yet. Create one to begin. Live room speech will not be stored; only process records you choose to retain until the destruction deadline.
+            </li>
           )}
         </ul>
       )}
