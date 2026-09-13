@@ -40,3 +40,21 @@ export function getKms(): KmsProvider {
 export function resetKmsForTests(): void {
   cached = null;
 }
+
+/**
+ * Production refuses the local stub. Requires AWS key ids before boot.
+ * Does not mint keys — that is your AWS account.
+ */
+export function assertProductionKms(): void {
+  if (process.env.NODE_ENV !== 'production') return;
+  const provider = (process.env.KMS_PROVIDER || '').toLowerCase();
+  if (provider !== 'aws') {
+    throw new Error('Production requires KMS_PROVIDER=aws. The local stub is forbidden.');
+  }
+  if (!process.env.AWS_KMS_KEY_ID) {
+    throw new Error('Production requires AWS_KMS_KEY_ID.');
+  }
+  if (!process.env.AWS_KMS_SIGNING_KEY_ID) {
+    throw new Error('Production requires AWS_KMS_SIGNING_KEY_ID.');
+  }
+}

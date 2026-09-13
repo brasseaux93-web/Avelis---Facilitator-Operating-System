@@ -15,6 +15,8 @@ import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as EvaluationRouteImport } from './routes/evaluation'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as MaterialsRouteImport } from './routes/materials'
+import { Route as PartnersRouteImport } from './routes/partners'
 import { Route as PartyRouteImport } from './routes/party'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SessionsRouteImport } from './routes/sessions'
@@ -53,6 +55,16 @@ const EvaluationRoute = EvaluationRouteImport.update({
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MaterialsRoute = MaterialsRouteImport.update({
+  id: '/materials',
+  path: '/materials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnersRoute = PartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartyRoute = PartyRouteImport.update({
@@ -108,6 +120,8 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
   '/join': typeof JoinRoute
+  '/materials': typeof MaterialsRoute
+  '/partners': typeof PartnersRoute
   '/party': typeof PartyRoute
   '/register': typeof RegisterRoute
   '/sessions': typeof SessionsRouteWithChildren
@@ -125,6 +139,8 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
   '/join': typeof JoinRoute
+  '/materials': typeof MaterialsRoute
+  '/partners': typeof PartnersRoute
   '/party': typeof PartyRoute
   '/register': typeof RegisterRoute
   '/sessions': typeof SessionsRouteWithChildren
@@ -143,6 +159,8 @@ export interface FileRoutesById {
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
   '/join': typeof JoinRoute
+  '/materials': typeof MaterialsRoute
+  '/partners': typeof PartnersRoute
   '/party': typeof PartyRoute
   '/register': typeof RegisterRoute
   '/sessions': typeof SessionsRouteWithChildren
@@ -162,6 +180,8 @@ export interface FileRouteTypes {
     | '/docs'
     | '/evaluation'
     | '/join'
+    | '/materials'
+    | '/partners'
     | '/party'
     | '/register'
     | '/sessions'
@@ -179,6 +199,8 @@ export interface FileRouteTypes {
     | '/docs'
     | '/evaluation'
     | '/join'
+    | '/materials'
+    | '/partners'
     | '/party'
     | '/register'
     | '/sessions'
@@ -196,6 +218,8 @@ export interface FileRouteTypes {
     | '/docs'
     | '/evaluation'
     | '/join'
+    | '/materials'
+    | '/partners'
     | '/party'
     | '/register'
     | '/sessions'
@@ -214,6 +238,8 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRoute
   EvaluationRoute: typeof EvaluationRoute
   JoinRoute: typeof JoinRoute
+  MaterialsRoute: typeof MaterialsRoute
+  PartnersRoute: typeof PartnersRoute
   PartyRoute: typeof PartyRoute
   RegisterRoute: typeof RegisterRoute
   SessionsRoute: typeof SessionsRouteWithChildren
@@ -266,6 +292,20 @@ declare module '@tanstack/react-router' {
       path: '/join'
       fullPath: '/join'
       preLoaderRoute: typeof JoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/materials': {
+      id: '/materials'
+      path: '/materials'
+      fullPath: '/materials'
+      preLoaderRoute: typeof MaterialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partners': {
+      id: '/partners'
+      path: '/partners'
+      fullPath: '/partners'
+      preLoaderRoute: typeof PartnersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/party': {
@@ -353,6 +393,8 @@ const rootRouteChildren: RootRouteChildren = {
   DocsRoute: DocsRoute,
   EvaluationRoute: EvaluationRoute,
   JoinRoute: JoinRoute,
+  MaterialsRoute: MaterialsRoute,
+  PartnersRoute: PartnersRoute,
   PartyRoute: PartyRoute,
   RegisterRoute: RegisterRoute,
   SessionsRoute: SessionsRouteWithChildren,

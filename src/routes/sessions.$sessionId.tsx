@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import './sessions.css';
 import { useFacilitatorAuth } from '../lib/FacilitatorAuthContext';
-import { apiGet, apiPatch, apiPost, getApiToken } from '../lib/apiClient';
+import { downloadPdfBytes, renderMinutePdfBytes } from '../lib/minutePdf';
+import { apiGet, apiPatch, apiPost } from '../lib/apiClient';
 import { IDENTITY_CLASS_OPTIONS, identityClassLabel } from '../lib/identityLabels';
 import { ProcessAgent, type CopilotAction, type CopilotState } from '../components/ProcessAgent';
 
@@ -324,19 +325,19 @@ function SessionConsolePage() {
   };
 
   const exportMinutePdf = async () => {
+    if (!minuteContent.trim()) {
+      setError('Save a draft before exporting.');
+      return;
+    }
     try {
-      const headers: Record<string, string> = { Accept: 'application/pdf' };
-      const token = getApiToken();
-      if (token) headers.Authorization = 'Bearer ' + token;
-      const res = await fetch('/api/sessions/' + sessionId + '/minute/export.pdf', { headers });
-      if (!res.ok) throw new Error('Could not export PDF.');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'avelis-joint-minute.pdf';
-      a.click();
-      URL.revokeObjectURL(url);
+      const bytes = renderMinutePdfBytes({
+        title: detail?.session?.title || 'Joint minute',
+        status: detail?.minute?.status || 'draft',
+        body: minuteContent,
+        exportedAt: new Date().toISOString(),
+      });
+      downloadPdfBytes(bytes, 'avelis-joint-minute.pdf');
+      await apiPost('/api/sessions/' + sessionId + '/minute/export-ack', { format: 'pdf' });
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not export joint minute.');
