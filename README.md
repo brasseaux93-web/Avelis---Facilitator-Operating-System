@@ -66,6 +66,10 @@ WebRTC / third-party signaling is **not** on the production speech path (see `de
 
 Avelis does **not** claim legal privilege or subpoena immunity. See the [Language Guide](docs/language-guide.md).
 
+## Pitch materials
+
+Institutional decks (investor, evaluation, five-year model, one-pager), speaker notes, and sourced market citations live in [`pitch/`](pitch/). They follow this constitution and the language guide. Founder: **Tyler Brasseaux**, systems architect.
+
 ## Quick start
 
 ```bash
