@@ -1,0 +1,31 @@
+/* Premium 2026 overrides — loaded after style.css; tokens already redefine :root */
+::selection {
+  background: rgba(var(--color-accent-rgb), 0.25);
+  color: var(--color-text);
+}
+
+.logo-lockup__wordmark {
+  font-family: var(--font-display) !important;
+  letter-spacing: 0.16em !important;
+  color: var(--color-text) !important;
+}
+
+.section-eyebrow,
+.hero__eyebrow {
+  letter-spacing: var(--tracking-eyebrow, 0.14em);
+}
+
+body {
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, .hero__title, .section-title {
+  font-family: var(--font-display);
+}
+
+.process-ledger-card,
+.ledger-row,
+.sessions-table,
+.sessions-code-once {
+  font-variant-numeric: tabular-nums;
+}
