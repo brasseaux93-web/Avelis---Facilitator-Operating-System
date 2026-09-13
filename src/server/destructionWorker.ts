@@ -1,67 +1,129 @@
-import { db } from '../db/index';
-import { jointMinutes, sessions, ledgerLines, destructionReceipts } from '../db/schema';
-import { eq, lte, and } from 'drizzle-orm';
 import crypto from 'node:crypto';
+import { eq, lte, and, desc } from 'drizzle-orm';
+import { db } from '../db/index';
+import {
+  sessions,
+  ledgerLines,
+  jointMinutes,
+  agendaItems,
+  parties,
+  destructionReceipts,
+} from '../db/schema';
+import { computeLineHash, computePayloadDigest } from '../lib/ledger';
 
-// Product Law L5: Destruction is a feature.
-// This cron runs periodically to purge sessions that have reached their retention_expires_at.
-
+/**
+ * Product Law L5: Destruction is a feature.
+ * Aligns to destructionReceipts schema fields only (no destroyedAt/receiptHash).
+ * Do not log session content.
+ */
 export async function runDestructionCron() {
   console.log('[Destruction Worker] Running chronological deletion sweep...');
   const now = new Date();
 
   try {
-    // 1. Find all closed sessions where retention_expires_at <= now
-    const expiredSessions = await db.query.sessions.findMany({
-      where: and(
-        eq(sessions.status, 'closed'),
-        lte(sessions.retentionExpiresAt, now)
-      )
-    });
+    const expiredSessions = await db
+      .select()
+      .from(sessions)
+      .where(and(eq(sessions.status, 'closed'), lte(sessions.retentionExpiresAt, now)));
 
     if (expiredSessions.length === 0) {
       console.log('[Destruction Worker] No expired sessions found.');
       return;
     }
 
-    // 2. Destroy the ledger lines and joint minutes for those sessions
     for (const session of expiredSessions) {
-      console.log(`[Destruction Worker] Destroying session: ${session.id}`);
+      console.log(`[Destruction Worker] Purging session id=${session.id}`);
 
-      // Transaction: create receipt, then HARD DELETE everything else.
       await db.transaction(async (tx) => {
-        // Compute cryptographic proof of destruction (simplified for MVP)
-        const receiptHash = crypto.createHash('sha256').update(session.id + Date.now().toString()).digest('hex');
+        const lines = await tx
+          .select({
+            sequenceNumber: ledgerLines.sequenceNumber,
+            lineHash: ledgerLines.lineHash,
+            previousLineHash: ledgerLines.previousLineHash,
+            lineType: ledgerLines.lineType,
+            payloadDigest: ledgerLines.payloadDigest,
+          })
+          .from(ledgerLines)
+          .where(eq(ledgerLines.sessionId, session.id))
+          .orderBy(desc(ledgerLines.sequenceNumber));
 
-        // Create the destruction receipt BEFORE deleting to avoid foreign key violations, 
-        // or ensure receipt isn't constrained by session foreign key if the session itself is deleted.
-        // The schema sets destructionReceipts.sessionId which references sessions.id. 
-        // Actually, if we delete the session, the receipt might be cascade deleted or block deletion.
-        // According to the data model: "The DestructionReceipt replaces the session. It MUST outlive the session."
-        // We will insert the receipt. It may be that the schema for receipts allows sessionId to just be a string.
-        // Wait, the schema has `sessionId: text('session_id').references(() => sessions.id, { onDelete: 'set null' })` or similar?
-        // If not, we might need to keep the session row but scrub its metadata, or remove the FK.
-        // Let's assume the session row is retained but marked 'purged', and all its child data is HARD deleted.
-        
+        let finalSequenceNumber = 0;
+        let ledgerRootHash = 'genesis';
+
+        if (lines.length > 0) {
+          // Verify hash chain tip (last line) if lines exist.
+          const tip = lines[0]!;
+          const expected = computeLineHash(
+            session.id,
+            tip.sequenceNumber,
+            tip.lineType,
+            tip.payloadDigest,
+            tip.previousLineHash
+          );
+          if (expected !== tip.lineHash) {
+            throw new Error(`Ledger integrity check failed for session ${session.id}`);
+          }
+          finalSequenceNumber = tip.sequenceNumber;
+          ledgerRootHash = tip.lineHash;
+        }
+
+        const bodiesDestroyed = [
+          'ledger_lines',
+          'joint_minutes',
+          'agenda_items',
+          'parties',
+          'session_content',
+        ];
+
+        const retentionWindow = `${session.retentionHours}h`;
+        const purgedAt = new Date();
+
+        const manifest = {
+          sessionId: session.id,
+          organizationId: session.organizationId,
+          purgedAt: purgedAt.toISOString(),
+          retentionWindow,
+          bodiesDestroyed,
+          finalSequenceNumber,
+          ledgerRootHash,
+        };
+        const destructionManifestDigest = computePayloadDigest(manifest);
+        // Scaffolding signature — Phase 2/3 replaces with KMS-backed attestation.
+        const signature = crypto
+          .createHmac('sha256', process.env.LOCAL_DEV_SIGNING_KEY || 'local-dev-signing-key')
+          .update(destructionManifestDigest, 'utf8')
+          .digest('hex');
+
         await tx.insert(destructionReceipts).values({
           sessionId: session.id,
-          destroyedAt: new Date(),
-          receiptHash: receiptHash,
-          attestationSignedBy: 'system-cron',
-          ledgerLinesDestroyed: true,
-          minuteDestroyed: true
+          organizationId: session.organizationId,
+          purgedAt,
+          retentionWindow,
+          bodiesDestroyed,
+          finalSequenceNumber,
+          ledgerRootHash,
+          destructionManifestDigest,
+          attestedByKind: 'system',
+          signature,
         });
 
-        // Hard Delete ledger lines and joint minutes
         await tx.delete(ledgerLines).where(eq(ledgerLines.sessionId, session.id));
         await tx.delete(jointMinutes).where(eq(jointMinutes.sessionId, session.id));
-        
-        // Update session status to purged
-        await tx.update(sessions)
-          .set({ status: 'purged', title: '[PURGED]', retentionExpiresAt: null })
+        await tx.delete(agendaItems).where(eq(agendaItems.sessionId, session.id));
+        await tx.delete(parties).where(eq(parties.sessionId, session.id));
+
+        await tx
+          .update(sessions)
+          .set({
+            status: 'purged',
+            title: '[PURGED]',
+            retentionExpiresAt: null,
+            purgedAt,
+            updatedAt: purgedAt,
+          })
           .where(eq(sessions.id, session.id));
       });
-      
+
       console.log(`[Destruction Worker] Session ${session.id} purged successfully.`);
     }
   } catch (error) {
