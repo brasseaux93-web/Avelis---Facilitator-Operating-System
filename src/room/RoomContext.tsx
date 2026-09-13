@@ -59,6 +59,7 @@ interface RoomContextType {
   setClock: (minutes: number | null) => void;
   sendSignal: (to: string, data: unknown) => void;
   isConnected: boolean;
+  roomEnded: boolean;
   isFacilitator: boolean;
   identityClass: string;
   partyId: string;
@@ -97,6 +98,7 @@ export function RoomProvider({
   const [clock, setClockView] = useState<ClockView | null>(null);
   const [signals, setSignals] = useState<SignalPacket[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [roomEnded, setRoomEnded] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const isFacilitator = identityClass === 'facilitator';
 
@@ -222,6 +224,7 @@ export function RoomProvider({
         setMessages([]);
         setWhispers([]);
         setProcessMove(null);
+        setRoomEnded(true);
         socket.close();
       }
     };
@@ -296,6 +299,7 @@ export function RoomProvider({
         setClock,
         sendSignal,
         isConnected,
+        roomEnded,
         isFacilitator,
         identityClass,
         partyId,

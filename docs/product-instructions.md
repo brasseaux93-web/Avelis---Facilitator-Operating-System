@@ -144,7 +144,7 @@ The MVP includes:
 
 - Facilitator authentication
 - Session creation, open, close, and destruction
-- Email or SMS invitation delivery
+- Email invitation delivery (copy-link if mail is not configured)
 - One-time party access
 - Identity-class selection
 - Ephemeral live text room
@@ -278,7 +278,7 @@ If the answer to any question is uncertain, the change must not proceed until re
 | 2026-09-12 | Ledger integrity through sequence ordering, hash chaining, and signed roots is MVP scope | Accepted |
 | 2026-09-12 | Identity class becomes immutable at party join; retention becomes immutable at session open | Accepted |
 | 2026-09-12 | Security audit data is separate from the process ledger and minimized by default | Accepted |
-| 2026-09-13 | Facilitator process copilot (ledger-only) accepted; speech-to-model remains forbidden | Accepted |
+| 2026-09-13 | Facilitator process copilot (ledger-only snapshot) accepted; disclosed RAM window is a separate rule | Accepted |
 | 2026-09-13 | Agent rules + facilitator process dialogue; Groq as optional inference backend | Accepted |
 | 2026-09-13 | Visible conflict agent in the live room; disclosed RAM window to inference; still no stored transcript | Accepted |
 | 2026-09-13 | RAM caucus: private turn, plenary paused, process facts return, quotes do not | Accepted |

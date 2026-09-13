@@ -3,6 +3,7 @@ import { eq, and, asc } from 'drizzle-orm';
 import { db } from '../db/index';
 import { sessions, ledgerLines } from '../db/schema';
 import { appendLedgerLine } from '../lib/ledgerAppend';
+import { decryptJson } from '../lib/encryption';
 
 export function registerLedgerRoutes(
   app: express.Express,
@@ -23,65 +24,21 @@ app.get('/api/sessions/:id/ledger', requireAuth, async (req, res) => {
       .where(eq(ledgerLines.sessionId, sessionId))
       .orderBy(asc(ledgerLines.sequenceNumber));
 
-    res.status(200).json(lines);
+    const decrypted = await Promise.all(
+      lines.map(async (line) => ({ ...line, payload: await decryptJson(line.payload) }))
+    );
+    res.status(200).json(decrypted);
   } catch (error) {
     console.error('[API] Failed to list ledger', error);
     res.status(500).json({ error: 'Could not list ledger.' });
   }
 });
 
-/** Append a ledger line transactionally with hash chain. */
-app.post('/api/sessions/:id/ledger', requireAuth, async (req, res) => {
-  const sessionId = req.params.id;
-  const {
-    lineType,
-    payload,
-    actorKind,
-    actorRef,
-    source,
-    initialVisibility,
-    idempotencyKey,
-    schemaVersion,
-  } = req.body;
-
-  if (!lineType || payload == null) {
-    return res.status(400).json({ error: 'lineType and payload are required' });
-  }
-
-  const facilitatorId = req.facilitatorId!;
-
-  try {
-    const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
-    if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-    if (session.facilitatorId !== facilitatorId) {
-      return res.status(403).json({ error: 'Not authorized for this session.' });
-    }
-
-    const line = await db.transaction(async (tx) => {
-      return appendLedgerLine(tx, {
-        sessionId,
-        lineType,
-        payload: typeof payload === 'object' && payload !== null ? payload : { value: payload },
-        actorKind: actorKind || 'facilitator',
-        actorRef: actorRef || facilitatorId,
-        source: source || 'application_server',
-        initialVisibility: initialVisibility || 'facilitator_only',
-        idempotencyKey: idempotencyKey || null,
-        schemaVersion: schemaVersion ?? 1,
-      });
-    });
-
-    res.status(201).json(line);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to append to ledger';
-    if (message.startsWith('Invalid lineType') || message.includes('payload must be')) {
-      return res.status(400).json({ error: message });
-    }
-    console.error('[API] Failed to append ledger line', error);
-    res.status(500).json({ error: 'Failed to append to ledger' });
-  }
+/** Visibility only. Generic append is closed — use the specific session routes. */
+app.post('/api/sessions/:id/ledger', requireAuth, async (_req, res) => {
+  return res.status(405).json({
+    error: 'Direct ledger append is closed. Use the session process routes.',
+  });
 });
 
 /** Publish ledger line to party view. */

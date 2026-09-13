@@ -3,7 +3,7 @@ import { eq, and, desc, asc } from 'drizzle-orm';
 import { db } from '../db/index';
 import { sessions, agendaItems } from '../db/schema';
 import { appendLedgerLine } from '../lib/ledgerAppend';
-import { computePayloadDigest } from '../lib/ledger';
+import { sanitizeAgendaLabel } from '../lib/processCopilot/firewall';
 
 export function registerAgendaRoutes(
   app: express.Express,
@@ -12,10 +12,11 @@ export function registerAgendaRoutes(
   app.post('/api/sessions/:id/agenda', requireAuth, async (req, res) => {
     const sessionId = req.params.id;
     const facilitatorId = req.facilitatorId!;
-    const { title } = req.body || {};
-    if (!title || typeof title !== 'string') {
+    const rawTitle = req.body?.title;
+    if (!rawTitle || typeof rawTitle !== 'string') {
       return res.status(400).json({ error: 'title is required' });
     }
+    const title = sanitizeAgendaLabel(rawTitle);
 
     try {
       const [session] = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
@@ -46,7 +47,7 @@ export function registerAgendaRoutes(
         await appendLedgerLine(tx, {
           sessionId,
           lineType: 'agenda_item_tabled',
-          payload: { agendaItemId: created.id, titleDigest: computePayloadDigest({ title }) },
+          payload: { itemId: created.id },
           actorKind: 'facilitator',
           actorRef: facilitatorId,
           source: 'facilitator_ui',
@@ -105,7 +106,7 @@ export function registerAgendaRoutes(
           await appendLedgerLine(tx, {
             sessionId,
             lineType: 'agenda_item_marked',
-            payload: { agendaItemId: itemId, status },
+            payload: { itemId, mark: status },
             actorKind: 'facilitator',
             actorRef: facilitatorId,
             source: 'facilitator_ui',
@@ -116,7 +117,11 @@ export function registerAgendaRoutes(
           await appendLedgerLine(tx, {
             sessionId,
             lineType: 'agenda_item_reordered',
-            payload: { agendaItemId: itemId, sortOrder },
+            payload: {
+              itemId,
+              fromSortOrder: item.sortOrder,
+              toSortOrder: sortOrder,
+            },
             actorKind: 'facilitator',
             actorRef: facilitatorId,
             source: 'facilitator_ui',

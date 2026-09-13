@@ -44,7 +44,7 @@ async function main() {
     await appendLedgerLine(tx, {
       sessionId: session.id,
       lineType: 'session_opened',
-      payload: { title: TITLE, evaluation: true },
+      payload: {},
       actorKind: 'system',
       source: 'application_server',
       initialVisibility: 'facilitator_only',

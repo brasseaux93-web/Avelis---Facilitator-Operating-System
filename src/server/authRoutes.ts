@@ -245,7 +245,7 @@ export function registerAuthRoutes(app: express.Express) {
         await appendLedgerLine(tx, {
           sessionId: matched.sessionId,
           lineType: 'party_joined',
-          payload: { partyId: matched.id },
+          payload: { partyId: matched.id, identityClass: nextIdentity },
           actorKind: 'party',
           actorRef: matched.id,
           source: 'party_ui',

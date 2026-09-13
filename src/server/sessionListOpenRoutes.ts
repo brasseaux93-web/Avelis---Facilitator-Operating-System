@@ -133,7 +133,7 @@ app.post('/api/sessions/:id/open', requireAuth, async (req, res) => {
       await appendLedgerLine(tx, {
         sessionId,
         lineType: 'session_opened',
-        payload: { openedAt: openedAt.toISOString() },
+        payload: {},
         actorKind: 'facilitator',
         actorRef: facilitatorId,
         source: 'application_server',

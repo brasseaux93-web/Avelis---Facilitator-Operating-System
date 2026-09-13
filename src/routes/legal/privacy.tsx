@@ -39,10 +39,12 @@ function PrivacyComponent() {
 
           <h3>3. AI & process copilot</h3>
           <p>
-            Avelis does not send live-room speech, audio, or transcripts to a model. A facilitator-only
-            process copilot may rank next process actions from the process ledger. Prompts and
-            completions are memory-only. We do not train models on Avelis content. No model writes
-            a ledger line.
+            If inference is configured, a visible conflict agent may send a rolling RAM window of
+            live-room text to Groq while the room is open. That path is disclosed on join, before
+            anyone speaks. Avelis does not store the window, does not create a transcript, and does
+            not train on session speech. The agent does not write ledger lines. A facilitator-only
+            process copilot may rank closed-vocabulary actions from process facts only. Audio is
+            never sent to a model.
           </p>
         </div>
       </div>

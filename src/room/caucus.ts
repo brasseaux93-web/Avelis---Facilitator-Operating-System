@@ -61,11 +61,10 @@ export function closeCaucus(sessionId: string): CaucusState | undefined {
 }
 
 export function sanitizeProcessFact(raw: string): string {
-  const label = sanitizeAgendaLabel(raw);
-  if (!label || /\b(said|says|told|quoted|transcript)\b/i.test(label) || /['"]/.test(label)) {
+  if (/\b(said|says|told|quoted|transcript)\b/i.test(raw) || /['"]/.test(raw)) {
     return 'A constraint was named';
   }
-  return label;
+  return sanitizeAgendaLabel(raw);
 }
 
 export function recipients(sessionId: string, channel: Channel): (meta: PartyMeta) => boolean {

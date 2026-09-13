@@ -63,9 +63,9 @@ No ledger payload may contain:
 
 | Type | Actor | Payload |
 |---|---|---|
-| `invite_created` | facilitator | `{ "party_id": "UUID", "delivery_channel": "email" \| "sms" }` |
-| `invite_sent` | system | `{ "party_id": "UUID", "delivery_channel": "email" \| "sms", "result": "sent" }` |
-| `invite_delivery_failed` | system | `{ "party_id": "UUID", "delivery_channel": "email" \| "sms", "reason_code": "provider_rejected" \| "delivery_unavailable" \| "delivery_timeout" }` |
+| `invite_created` | facilitator | `{ "party_id": "UUID", "delivery_channel": "email" \| "copy_link" }` |
+| `invite_sent` | system | `{ "party_id": "UUID", "delivery_channel": "email" \| "copy_link", "result": "sent" }` |
+| `invite_delivery_failed` | system | `{ "party_id": "UUID", "delivery_channel": "email" \| "copy_link", "reason_code": "provider_rejected" \| "delivery_unavailable" \| "delivery_timeout" }` |
 | `invite_revoked` | facilitator | `{ "party_id": "UUID" }` |
 | `party_joined` | party or system | `{ "party_id": "UUID", "identity_class": "named" \| "role_only" \| "affiliation_only" \| "unnamed" }` |
 | `party_declined` | party or system | `{ "party_id": "UUID" }` |

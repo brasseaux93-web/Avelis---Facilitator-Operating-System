@@ -54,6 +54,12 @@
   --color-accent-rgb: 55, 120, 128;
   --color-accent-solid: #377880;
 
+  --color-btn-primary-bg: var(--color-accent-solid);
+  --color-btn-primary-bg-hover: var(--color-accent-btn-hover);
+  --color-btn-primary-bg-active: var(--color-accent-btn-active);
+  --color-btn-primary-text: var(--color-on-accent);
+  --color-btn-primary-border: color-mix(in oklch, var(--color-accent-solid) 40%, transparent);
+
   --color-success: #3F6B45;
   --color-success-highlight: #D8E8D6;
   --color-eyebrow: oklch(0.45 0.05 195);
@@ -137,6 +143,12 @@
   --color-on-accent: oklch(0.14 0.01 260);
   --color-accent-rgb: 90, 170, 175;
   --color-accent-solid: #5AAAB0;
+
+  --color-btn-primary-bg: var(--color-accent-solid);
+  --color-btn-primary-bg-hover: var(--color-accent-btn-hover);
+  --color-btn-primary-bg-active: var(--color-accent-btn-active);
+  --color-btn-primary-text: var(--color-on-accent);
+  --color-btn-primary-border: color-mix(in oklch, var(--color-accent-solid) 45%, transparent);
 
   --color-success: oklch(0.72 0.08 145);
   --color-success-highlight: oklch(0.26 0.03 145);

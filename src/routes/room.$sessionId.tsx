@@ -36,6 +36,7 @@ function RoomInner() {
     closeCaucus,
     setClock,
     isConnected,
+    roomEnded,
     isFacilitator,
     identityClass,
     partyId,
@@ -144,8 +145,14 @@ function RoomInner() {
             {inPrivateTurn ? ' · caucus' : ''}
           </span>
           <span>You appear as {identityClassLabel(identityClass)}</span>
-          {isFacilitator && <Link to="/party">Process view</Link>}
         </div>
+
+        <p className="room-banner" role="note">
+          Room messages are delivered live and are not stored by Avelis. Avelis is visible. If
+          inference is on, a RAM window of this talk may be sent to the session’s provider while the
+          room is open. Closing ends room access and destroys the live room. Messages cannot be
+          recovered.
+        </p>
 
         <ProcessClock
           endsAt={clock?.endsAt ?? null}
@@ -203,7 +210,12 @@ function RoomInner() {
         )}
 
         <div className="room-feed" ref={feedRef} aria-live="polite" aria-label="Live room">
-          {plenaryPaused ? (
+          {roomEnded ? (
+            <div className="room-feed__empty">
+              <p>This live room was destroyed.</p>
+              <p>Messages cannot be recovered. The process record, if any, is on the session console until its destruction deadline.</p>
+            </div>
+          ) : plenaryPaused ? (
             <div className="room-feed__empty">
               <p>A private turn is underway.</p>
               <p>Plenary will resume. You will not hear that talk. You may hear a process fact.</p>

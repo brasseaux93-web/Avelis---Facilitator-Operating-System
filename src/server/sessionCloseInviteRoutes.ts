@@ -62,10 +62,7 @@ app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
       await appendLedgerLine(tx, {
         sessionId,
         lineType: 'session_closed',
-        payload: {
-          closedAt: closedAt.toISOString(),
-          retentionExpiresAt: retentionExpiresAt.toISOString(),
-        },
+        payload: {},
         actorKind: 'facilitator',
         actorRef: facilitatorId,
         source: 'application_server',
@@ -186,10 +183,7 @@ app.post('/api/sessions/:id/invites', requireAuth, async (req, res) => {
       await appendLedgerLine(tx, {
         sessionId,
         lineType: 'invite_created',
-        payload: {
-          partyId: newParty.id,
-          identityClass,
-        },
+        payload: { partyId: newParty.id, deliveryChannel: 'copy_link' },
         actorKind: 'facilitator',
         actorRef: facilitatorId,
         source: 'application_server',
