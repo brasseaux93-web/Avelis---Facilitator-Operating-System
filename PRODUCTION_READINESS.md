@@ -1,36 +1,41 @@
 # Production Readiness Audit
 
-**Honest maturity score: ~6.5/10** — Phase 1–3 foundations for a production *host*; not yet a polished product surface. Premium visual pass remains next.
+**Honest maturity score: 9/10** - MVP Definition section 3 DoD substantially met on this branch (cut from current `main` after PR #5); residual blockers below prevent an honest 10/10 claim.
 
-## Phase 3 — production host + repo cleanup (this branch)
+## Maturity 10 branch - close MVP DoD + production hardening
 
-### Shipped
+### Shipped on prod-readiness/maturity-10-onto-main
 
-1. **KMS path** — `LocalDevKms` + `AwsKmsProvider` stub; `getKms()` via `KMS_PROVIDER=local|aws`; destruction + ledger root signing use `getKms().sign`.
-2. **Observability without content** — structured JSON logs; `/healthz`, `/readyz`, `/metrics`; production guards on content-capture flags; CI script check.
-3. **Room isolation** — production refuses default/missing `ROOM_SHARED_SECRET`; `ROOM_SWAP_DISABLED` documented; `Dockerfile.api` / `Dockerfile.room`; compose `api` + `room` + postgres (room `mem_limit`, no room volume).
-4. **Backups / purge-aware restore** — real `docs/deployment.md`; `docs/backup-restore.md`; stub `scripts/purge-aware-restore.sh`.
-5. **Security audit store (ADR-0006)** — `security_audit_events` + `recordSecurityEvent` (refuses message bodies); 30d default noted.
-6. **TLS / prod config** — TLS termination documented; `TRUST_PROXY`; nosniff / frameguard deny / referrer-policy.
-7. **CI** — desired workflow in `docs/ci-workflow-phase3.yml` (applying to `.github/workflows/ci.yml` requires a token with `workflow` scope); flag guard script; speech-safety + ledger + retention; **no e2e** until green path.
-8. **Terraform** — ECS/Fargate api+room placeholders, Secrets Manager, encrypted RDS, `aws_kms_key` resources, sticky-session notes.
-9. **Retention cron** — `runDestructionCron` on `RETENTION_JOB_INTERVAL_MINUTES` (not under Vitest).
-10. **Repo cleanup** — demo screenshots/scripts removed when possible; README stubs; `.gitignore` lists `node_modules/`/`dist/`.
+1. **Speech-safety** - ephemeral room memory tests + observability sanitization (no email/@ in requestId).
+2. **Ledger** - existing schema/hash-chain Vitest suite retained.
+3. **Retention / destruction** - session purge + **security_audit_events** retention purge (default 720h / max 2160h); destruction receipt verify helper + tests.
+4. **Lifecycle path** - API-level integration tests for create->invite roomToken (HMAC)->agenda/minute/close->verifiable purge receipt; Playwright smoke kept minimal.
+5. **No production dependency receives session content** - content-capture flags guarded; structured logs scrub bodies/emails.
+6. **Docs/env match** - compose requires secrets via env; `.env.compose.example`; threat model updated for room token rule.
+7. **Macroscope P0s from PR #3**
+   - API entrypoint runs migrations before listen (`scripts/docker-api-entrypoint.sh`).
+   - Raw ROOM_SHARED_SECRET never accepted as roomToken; all placeholders refused in prod (incl. change-me-room-secret-compose); compose binds 127.0.0.1 and requires env secrets.
+   - security_audit_events purge in destructionWorker.
+   - sanitizeRequestId / never log emails in arbitrary fields.
+8. **AwsKmsProvider** wired to @aws-sdk/client-kms when AWS_KMS_KEY_ID / signing key set.
+9. **Keyboard-complete critical flows + factual empty states** on session console / sessions list / room.
+10. **Drizzle journal** registers 0002_security_audit_events.
+11. **Terraform** - ECS execution Secrets Manager policy + managed execution policy; DATABASE_URL secret version; task KMS policy; NAT/VPC-endpoints callout.
 
-### Remaining / next
+### Residual (why not 10/10)
 
-- Wire real `@aws-sdk/client-kms` credentials in `AwsKmsProvider`.
-- Premium 2026 visual redesign (separate PR).
-- Apply CI workflow file with a `workflow`-scoped token if still pending.
-- Remove tracked `node_modules/` + `dist/` from tip if still present (shallow clone + `git rm -rf`).
-- Green Playwright e2e path before enabling e2e in CI.
+- Tracked node_modules/ + dist/ may still be on tip until operator shallow-clone git rm -rf (MCP cannot delete thousands of blobs; executor lacked gh/git push credentials for that cleanup).
+- Live Postgres-backed create->...->purge E2E is optional (DATABASE_URL); pure-path + unit suites are the release gate here.
+- Terraform still needs NAT or VPC endpoints before a real private-subnet apply (documented, not fully provisioned).
+- Premium visual redesign and CI workflow workflow-scope apply remain out of MVP DoD.
 
 ## How to test
 
 ```bash
+cp .env.compose.example .env   # fill secrets
 docker compose up --build
 curl -s localhost:3001/healthz
-curl -s localhost:3001/readyz
 npm run test:speech-safety && npm run test:ledger && npm run test:retention
+npm run test:room-auth && npm run test:integration
 node scripts/check-prod-observability-flags.mjs
 ```
