@@ -4,6 +4,7 @@ import './sessions.css';
 import { useFacilitatorAuth } from '../lib/FacilitatorAuthContext';
 import { apiGet, apiPatch, apiPost } from '../lib/apiClient';
 import { IDENTITY_CLASS_OPTIONS, identityClassLabel } from '../lib/identityLabels';
+import { ProcessAgent, type CopilotAction, type CopilotState } from '../components/ProcessAgent';
 
 export const Route = createFileRoute('/sessions/$sessionId')({
   component: SessionConsolePage,
@@ -64,20 +65,7 @@ function SessionConsolePage() {
   const [receiptValid, setReceiptValid] = useState<boolean | null>(null);
   const [joinUrlHint, setJoinUrlHint] = useState('/join');
   const [enteringRoom, setEnteringRoom] = useState(false);
-  const [copilot, setCopilot] = useState<{
-    stage: string;
-    source: string;
-    disclosure: string;
-    questions: string[];
-    actions: Array<{
-      id: string;
-      kind: string;
-      label: string;
-      rationale: string;
-      payload: Record<string, unknown>;
-    }>;
-    minuteOutline: string | null;
-  } | null>(null);
+  const [copilot, setCopilot] = useState<CopilotState | null>(null);
   const [copilotBusy, setCopilotBusy] = useState(false);
 
   useEffect(() => {
@@ -306,9 +294,7 @@ function SessionConsolePage() {
     setCopilotBusy(true);
     setError('');
     try {
-      const result = (await apiPost('/api/sessions/' + sessionId + '/process-copilot')) as NonNullable<
-        typeof copilot
-      >;
+      const result = (await apiPost('/api/sessions/' + sessionId + '/process-copilot')) as CopilotState;
       setCopilot(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not run process copilot.');
@@ -317,7 +303,7 @@ function SessionConsolePage() {
     }
   };
 
-  const applyCopilotAction = async (action: NonNullable<typeof copilot>['actions'][number]) => {
+  const applyCopilotAction = async (action: CopilotAction) => {
     setError('');
     try {
       switch (action.kind) {
@@ -382,7 +368,8 @@ function SessionConsolePage() {
   const s = detail.session;
 
   return (
-    <div className="sessions-page">
+    <div className="sessions-page sessions-page--console">
+      <div className="sessions-page__main">
       <p className="sessions-page__subtitle">
         <Link to="/sessions">← Sessions</Link>
       </p>
@@ -463,62 +450,6 @@ function SessionConsolePage() {
           Parties join at <code>{joinUrlHint}</code> with a one-time invite. They do not create
           accounts.
         </p>
-      </div>
-
-      <div className="sessions-panel">
-        <h3>Process copilot</h3>
-        <p className="sessions-page__subtitle">
-          Ranks the next process step from the ledger. It does not read the live room. It does not
-          write the ledger. You confirm every action.
-        </p>
-        <div className="sessions-actions">
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => void consultCopilot()}
-            disabled={copilotBusy || s.status === 'purged'}
-          >
-            {copilotBusy ? 'Reading process…' : 'Suggest next process step'}
-          </button>
-        </div>
-        {copilot && (
-          <div className="copilot">
-            <p className="copilot__meta">
-              Stage <span className="sessions-status">{copilot.stage}</span>
-              {' · '}
-              Source {copilot.source}
-            </p>
-            <p className="sessions-disclosure" role="note">
-              {copilot.disclosure}
-            </p>
-            {copilot.questions.length > 0 && (
-              <ol className="copilot__questions">
-                {copilot.questions.map((q) => (
-                  <li key={q}>{q}</li>
-                ))}
-              </ol>
-            )}
-            <ul className="copilot__actions">
-              {copilot.actions.map((a) => (
-                <li key={a.id}>
-                  <div>
-                    <p className="copilot__label">{a.label}</p>
-                    <p className="sessions-page__subtitle">{a.rationale}</p>
-                  </div>
-                  <button type="button" className="btn btn--secondary" onClick={() => void applyCopilotAction(a)}>
-                    Confirm
-                  </button>
-                </li>
-              ))}
-            </ul>
-            {copilot.minuteOutline && (
-              <p className="sessions-page__subtitle">
-                A joint-minute outline is ready from marked-agreed items. Confirm “Draft joint
-                minute” to insert it. Edit before you save.
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="sessions-panel">
@@ -800,6 +731,15 @@ function SessionConsolePage() {
           )}
         </div>
       )}
+      </div>
+      <ProcessAgent
+        sessionId={sessionId}
+        disabled={s.status === 'purged'}
+        copilot={copilot}
+        busy={copilotBusy}
+        onConsult={consultCopilot}
+        onApply={applyCopilotAction}
+      />
     </div>
   );
 }

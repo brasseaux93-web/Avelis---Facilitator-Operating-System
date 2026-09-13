@@ -1,5 +1,5 @@
 import { assertSpeechFree } from './firewall';
-import { rankWithModel, readModelConfig } from './model';
+import { copilotStatus, dialogueWithModel, rankWithModel, readModelConfig } from './model';
 import { applyProcessMarkPayloads, buildSnapshot, type SnapshotInput } from './snapshot';
 import { runPlaybook } from './playbook';
 import type { CopilotResult } from './types';
@@ -8,17 +8,24 @@ export { COPILOT_DISCLOSURE } from './types';
 export { assertSpeechFree } from './firewall';
 export { runPlaybook, inferStage, buildMinuteOutline } from './playbook';
 export { buildSnapshot, applyProcessMarkPayloads } from './snapshot';
-export { mergeModelOutput, readModelConfig } from './model';
+export { mergeModelOutput, readModelConfig, copilotStatus, dialogueWithModel } from './model';
+export { AGENT_RULES, looksLikeSpeechPaste, SPEECH_REFUSAL, LEGAL_REFUSAL } from './rules';
 export type { CopilotResult, CopilotAction, ProcessSnapshot, ProcessStage } from './types';
+export type { DialogueResult } from './model';
 
-export async function advise(
-  input: SnapshotInput & { processMarkPayloads?: Array<string | undefined> }
-): Promise<CopilotResult> {
+export type AdviseInput = SnapshotInput & { processMarkPayloads?: Array<string | undefined> };
+
+export function snapshotFromInput(input: AdviseInput) {
   let snapshot = buildSnapshot(input);
   if (input.processMarkPayloads) {
     snapshot = applyProcessMarkPayloads(snapshot, input.processMarkPayloads);
   }
   assertSpeechFree(snapshot);
+  return snapshot;
+}
+
+export async function advise(input: AdviseInput): Promise<CopilotResult> {
+  const snapshot = snapshotFromInput(input);
   const playbook = runPlaybook(snapshot);
   const cfg = readModelConfig();
   if (!cfg) return playbook;
@@ -26,5 +33,14 @@ export async function advise(
     return await rankWithModel(snapshot, playbook, cfg);
   } catch {
     return playbook;
+  }
+}
+
+export async function ask(input: AdviseInput, question: string) {
+  const snapshot = snapshotFromInput(input);
+  try {
+    return await dialogueWithModel(snapshot, question, readModelConfig());
+  } catch {
+    return dialogueWithModel(snapshot, question, null);
   }
 }

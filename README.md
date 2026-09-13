@@ -77,7 +77,7 @@ docker compose up --build
 npm run test:speech-safety
 npm run test:ledger
 npm run test:retention
-npm run test:room-auth
+npm run test:process-copilot
 npm run test:integration
 ```
 
@@ -94,7 +94,7 @@ npm run dev
 - **UI:** Vite + React + TanStack Router (Premium 2026 tokens — not a generic Tailwind kit)
 - **API:** Express · **Room:** memory-only WebSocket · **DB:** PostgreSQL 16 + Drizzle
 - **Auth:** Argon2id + HMAC JWT · **Crypto:** AES-GCM + KMS factory
-- **Tests:** Vitest (speech-safety, ledger, retention, room-auth, integration) · Playwright E2E (optional)
+- **Tests:** Vitest (speech-safety, ledger, retention, process-copilot, room-auth, integration) · Playwright E2E (optional)
 
 ## Documentation
 
@@ -104,6 +104,7 @@ npm run dev
 | [Architecture](docs/architecture.md) | Durable and ephemeral system design |
 | [Data Model](docs/data-model.md) | Entities, encryption, retention |
 | [Language Guide](docs/language-guide.md) | Approved wording |
+| [Agent rules](docs/agent-rules.md) | Legal and tactical conduct for the process copilot |
 | [Visual System](docs/visual-system.md) | Premium 2026 constraints |
 | [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
 | [Contributing](CONTRIBUTING.md) | Change control |
