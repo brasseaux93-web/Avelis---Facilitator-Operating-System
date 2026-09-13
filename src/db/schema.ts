@@ -23,7 +23,7 @@ export const sourceEnum = pgEnum('source', ['facilitator_ui', 'party_ui', 'appli
 export const visibilityEnum = pgEnum('initial_visibility', ['facilitator_only', 'party_visible']);
 export const ledgerRootReasonEnum = pgEnum('ledger_root_reason', ['session_closed', 'pre_purge', 'destruction_attestation', 'integrity_checkpoint']);
 export const jointMinuteStatusEnum = pgEnum('joint_minute_status', ['draft', 'published', 'wiped']);
-export const attestedByKindEnum = pgEnum('attested_by_kind', ['system', 'facilitator']); // The doc says 'Normally system'
+export const attestedByKindEnum = pgEnum('attested_by_kind', ['system', 'facilitator']);
 
 export const organizations = pgTable('organizations', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -38,9 +38,9 @@ export const organizations = pgTable('organizations', {
 export const facilitatorAccounts = pgTable('facilitator_accounts', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
-  email: text('email').notNull().unique(), // encrypted text
-  displayName: text('display_name').notNull(), // encrypted text
-  passwordHash: text('password_hash').notNull(), // Argon2id
+  email: text('email').notNull().unique(),
+  displayName: text('display_name').notNull(),
+  passwordHash: text('password_hash').notNull(),
   status: facilitatorStatusEnum('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -50,9 +50,9 @@ export const sessions = pgTable('sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
   facilitatorId: uuid('facilitator_id').references(() => facilitatorAccounts.id).notNull(),
-  title: text('title').notNull(), // encrypted text
+  title: text('title').notNull(),
   status: sessionStatusEnum('status').notNull().default('draft'),
-  retentionHours: integer('retention_hours').notNull(), // 0-720
+  retentionHours: integer('retention_hours').notNull(),
   retentionExpiresAt: timestamp('retention_expires_at', { withTimezone: true }),
   openedAt: timestamp('opened_at', { withTimezone: true }),
   closedAt: timestamp('closed_at', { withTimezone: true }),
@@ -69,8 +69,8 @@ export const parties = pgTable('parties', {
   id: uuid('id').primaryKey().defaultRandom(),
   sessionId: uuid('session_id').references(() => sessions.id).notNull(),
   identityClass: identityClassEnum('identity_class').notNull(),
-  displayLabel: text('display_label').notNull(), // encrypted text
-  deliveryAddress: text('delivery_address'), // encrypted text
+  displayLabel: text('display_label').notNull(),
+  deliveryAddress: text('delivery_address'),
   inviteCodeHash: text('invite_code_hash'),
   inviteStatus: inviteStatusEnum('invite_status').notNull().default('pending'),
   joinedAt: timestamp('joined_at', { withTimezone: true }),
@@ -83,7 +83,7 @@ export const parties = pgTable('parties', {
 export const agendaItems = pgTable('agenda_items', {
   id: uuid('id').primaryKey().defaultRandom(),
   sessionId: uuid('session_id').references(() => sessions.id).notNull(),
-  title: text('title').notNull(), // encrypted text
+  title: text('title').notNull(),
   sortOrder: integer('sort_order').notNull(),
   status: agendaItemStatusEnum('status').notNull().default('tabled'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -92,7 +92,6 @@ export const agendaItems = pgTable('agenda_items', {
   idxAgendaSessionOrder: index('idx_agenda_session_order').on(table.sessionId, table.sortOrder),
 }));
 
-// Closed vocabulary enum (will be handled by Zod at app level, but could also be a pgEnum)
 export const ledgerLineTypeEnum = pgEnum('ledger_line_type', [
   'session_opened', 'session_closed', 'session_close_failed', 'room_destroyed',
   'invite_created', 'invite_sent', 'invite_delivery_failed', 'invite_revoked',
@@ -111,7 +110,7 @@ export const ledgerLines = pgTable('ledger_lines', {
   sessionId: uuid('session_id').references(() => sessions.id).notNull(),
   sequenceNumber: bigint('sequence_number', { mode: 'number' }).notNull(),
   lineType: ledgerLineTypeEnum('line_type').notNull(),
-  payload: jsonb('payload').notNull(), // encrypted JSONB
+  payload: jsonb('payload').notNull(),
   payloadDigest: text('payload_digest').notNull(),
   actorKind: actorKindEnum('actor_kind').notNull(),
   actorRef: uuid('actor_ref'),
@@ -146,7 +145,7 @@ export const ledgerRoots = pgTable('ledger_roots', {
 export const jointMinutes = pgTable('joint_minutes', {
   id: uuid('id').primaryKey().defaultRandom(),
   sessionId: uuid('session_id').references(() => sessions.id).notNull(),
-  content: text('content'), // encrypted text
+  content: text('content'),
   contentDigest: text('content_digest'),
   status: jointMinuteStatusEnum('status').notNull().default('draft'),
   initialedBy: uuid('initialed_by').array(),
@@ -171,4 +170,16 @@ export const destructionReceipts = pgTable('destruction_receipts', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
   uqDestructionReceiptSession: uniqueIndex('uq_destruction_receipt_session').on(table.sessionId),
+}));
+
+/** Restricted security audit store (ADR-0006). Retention default 30d / max 90d. */
+export const securityAuditEvents = pgTable('security_audit_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id'),
+  eventType: text('event_type').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  metadata: jsonb('metadata').notNull().default({}),
+}, (table) => ({
+  idxSecurityAuditOrgCreated: index('idx_security_audit_org_created').on(table.organizationId, table.createdAt),
+  idxSecurityAuditCreated: index('idx_security_audit_created').on(table.createdAt),
 }));

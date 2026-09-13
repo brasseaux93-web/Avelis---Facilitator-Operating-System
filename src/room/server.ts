@@ -9,6 +9,10 @@
  * Reject with close code 1008 when missing/invalid.
  *
  * Never log room message bodies. Late joiners get no scrollback.
+ *
+ * Isolation:
+ * - ROOM_SWAP_DISABLED=true documents host intent to disable swap for this process.
+ * - Production refuses to start if ROOM_SHARED_SECRET is missing or the default placeholder.
  */
 import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'node:crypto';
@@ -35,6 +39,29 @@ export {
 
 const PORT = Number(process.env.ROOM_PORT || 3002);
 const MESSAGE_MAX_BYTES = Number(process.env.ROOM_MESSAGE_MAX_BYTES || 8192);
+const DEFAULT_ROOM_SECRET = 'change-me-room-secret';
+
+function assertRoomProductionSecrets(): void {
+  if (process.env.ROOM_SWAP_DISABLED === 'true') {
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        event: 'room_swap_disabled_documented',
+        note: 'Host should disable swap for the room process (mem_limit / cgroup).',
+        ts: new Date().toISOString(),
+      })
+    );
+  }
+
+  if (process.env.NODE_ENV !== 'production') return;
+
+  const secret = process.env.ROOM_SHARED_SECRET;
+  if (!secret || secret === DEFAULT_ROOM_SECRET || secret === 'change-me') {
+    throw new Error(
+      'Room server refused to start in production: ROOM_SHARED_SECRET missing or default. Set a strong secret.'
+    );
+  }
+}
 
 function timingSafeEqualHex(a: string, b: string): boolean {
   try {
@@ -67,7 +94,7 @@ function isValidRoomToken(
 }
 
 export function createRoomServer(port = PORT): WebSocketServer {
-  const wss = new WebSocketServer({ port, maxPayload: MESSAGE_MAX_BYTES });
+  const wss = new WebSocketServer({ port });
 
   wss.on('connection', (ws, req) => {
     const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
@@ -87,19 +114,16 @@ export function createRoomServer(port = PORT): WebSocketServer {
     }
 
     const socket = ws as unknown as WebSocketLike;
-    // Ensure OPEN constant is present for WebSocketLike consumers.
     (socket as WebSocketLike).OPEN = WebSocket.OPEN;
 
     ensureRoom(sessionId);
     addParty(sessionId, socket, { partyId, identityClass });
-    // No history replay — late joiners get no scrollback.
 
     ws.on('message', (data) => {
       let parsed: { type?: string; text?: string };
       try {
         parsed = JSON.parse(data.toString());
       } catch {
-        // Parse errors: ignore without logging payload.
         return;
       }
 
@@ -118,7 +142,6 @@ export function createRoomServer(port = PORT): WebSocketServer {
         return;
       }
 
-      // Broadcast only — never store, never console.log text.
       broadcast(sessionId, {
         type: 'message',
         message: {
@@ -139,9 +162,15 @@ export function createRoomServer(port = PORT): WebSocketServer {
   return wss;
 }
 
-// package.json runs `tsx watch src/room/server.ts` — start on import for that entry.
-// Tests should import from ./memory only (avoid binding the port under Vitest).
 if (process.env.VITEST !== 'true') {
+  assertRoomProductionSecrets();
   createRoomServer(PORT);
-  console.log(`Memory-only Ephemeral Room Service listening on ws://localhost:${PORT}`);
+  console.log(
+    JSON.stringify({
+      level: 'info',
+      event: 'room_listen',
+      port: PORT,
+      ts: new Date().toISOString(),
+    })
+  );
 }
