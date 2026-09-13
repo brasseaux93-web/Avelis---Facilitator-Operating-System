@@ -13,14 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as EvaluationRouteImport } from './routes/evaluation'
-import { Route as ThreatModelRouteImport } from './routes/threat-model'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as SessionsRouteImport } from './routes/sessions'
-import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
-import { Route as RoomSessionIdRouteImport } from './routes/room.$sessionId'
+import { Route as ThreatModelRouteImport } from './routes/threat-model'
 import { Route as LegalDataProcessingRouteImport } from './routes/legal/data-processing'
 import { Route as LegalDpaRouteImport } from './routes/legal/dpa'
 import { Route as LegalPrivacyRouteImport } from './routes/legal/privacy'
+import { Route as RoomSessionIdRouteImport } from './routes/room.$sessionId'
+import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -42,11 +42,6 @@ const EvaluationRoute = EvaluationRouteImport.update({
   path: '/evaluation',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ThreatModelRoute = ThreatModelRouteImport.update({
-  id: '/threat-model',
-  path: '/threat-model',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
@@ -57,14 +52,9 @@ const SessionsRoute = SessionsRouteImport.update({
   path: '/sessions',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
-  id: '/sessions/$sessionId',
-  path: '/sessions/$sessionId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RoomSessionIdRoute = RoomSessionIdRouteImport.update({
-  id: '/room/$sessionId',
-  path: '/room/$sessionId',
+const ThreatModelRoute = ThreatModelRouteImport.update({
+  id: '/threat-model',
+  path: '/threat-model',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalDataProcessingRoute = LegalDataProcessingRouteImport.update({
@@ -82,34 +72,44 @@ const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
   path: '/legal/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RoomSessionIdRoute = RoomSessionIdRouteImport.update({
+  id: '/room/$sessionId',
+  path: '/room/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
+  id: '/$sessionId',
+  path: '/$sessionId',
+  getParentRoute: () => SessionsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
-  '/threat-model': typeof ThreatModelRoute
   '/join': typeof JoinRoute
-  '/sessions': typeof SessionsRoute
-  '/sessions/$sessionId': typeof SessionsSessionIdRoute
-  '/room/$sessionId': typeof RoomSessionIdRoute
+  '/sessions': typeof SessionsRouteWithChildren
+  '/threat-model': typeof ThreatModelRoute
   '/legal/data-processing': typeof LegalDataProcessingRoute
   '/legal/dpa': typeof LegalDpaRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/room/$sessionId': typeof RoomSessionIdRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
-  '/threat-model': typeof ThreatModelRoute
   '/join': typeof JoinRoute
-  '/sessions': typeof SessionsRoute
-  '/sessions/$sessionId': typeof SessionsSessionIdRoute
-  '/room/$sessionId': typeof RoomSessionIdRoute
+  '/sessions': typeof SessionsRouteWithChildren
+  '/threat-model': typeof ThreatModelRoute
   '/legal/data-processing': typeof LegalDataProcessingRoute
   '/legal/dpa': typeof LegalDpaRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/room/$sessionId': typeof RoomSessionIdRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,14 +117,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/docs': typeof DocsRoute
   '/evaluation': typeof EvaluationRoute
-  '/threat-model': typeof ThreatModelRoute
   '/join': typeof JoinRoute
-  '/sessions': typeof SessionsRoute
-  '/sessions/$sessionId': typeof SessionsSessionIdRoute
-  '/room/$sessionId': typeof RoomSessionIdRoute
+  '/sessions': typeof SessionsRouteWithChildren
+  '/threat-model': typeof ThreatModelRoute
   '/legal/data-processing': typeof LegalDataProcessingRoute
   '/legal/dpa': typeof LegalDpaRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/room/$sessionId': typeof RoomSessionIdRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -133,42 +133,42 @@ export interface FileRouteTypes {
     | '/auth'
     | '/docs'
     | '/evaluation'
-    | '/threat-model'
     | '/join'
     | '/sessions'
-    | '/sessions/$sessionId'
-    | '/room/$sessionId'
+    | '/threat-model'
     | '/legal/data-processing'
     | '/legal/dpa'
     | '/legal/privacy'
+    | '/room/$sessionId'
+    | '/sessions/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/docs'
     | '/evaluation'
-    | '/threat-model'
     | '/join'
     | '/sessions'
-    | '/sessions/$sessionId'
-    | '/room/$sessionId'
+    | '/threat-model'
     | '/legal/data-processing'
     | '/legal/dpa'
     | '/legal/privacy'
+    | '/room/$sessionId'
+    | '/sessions/$sessionId'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/docs'
     | '/evaluation'
-    | '/threat-model'
     | '/join'
     | '/sessions'
-    | '/sessions/$sessionId'
-    | '/room/$sessionId'
+    | '/threat-model'
     | '/legal/data-processing'
     | '/legal/dpa'
     | '/legal/privacy'
+    | '/room/$sessionId'
+    | '/sessions/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -176,14 +176,13 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DocsRoute: typeof DocsRoute
   EvaluationRoute: typeof EvaluationRoute
-  ThreatModelRoute: typeof ThreatModelRoute
   JoinRoute: typeof JoinRoute
-  SessionsRoute: typeof SessionsRoute
-  SessionsSessionIdRoute: typeof SessionsSessionIdRoute
-  RoomSessionIdRoute: typeof RoomSessionIdRoute
+  SessionsRoute: typeof SessionsRouteWithChildren
+  ThreatModelRoute: typeof ThreatModelRoute
   LegalDataProcessingRoute: typeof LegalDataProcessingRoute
   LegalDpaRoute: typeof LegalDpaRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
+  RoomSessionIdRoute: typeof RoomSessionIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -216,13 +215,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EvaluationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/threat-model': {
-      id: '/threat-model'
-      path: '/threat-model'
-      fullPath: '/threat-model'
-      preLoaderRoute: typeof ThreatModelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/join': {
       id: '/join'
       path: '/join'
@@ -237,18 +229,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SessionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sessions/$sessionId': {
-      id: '/sessions/$sessionId'
-      path: '/sessions/$sessionId'
-      fullPath: '/sessions/$sessionId'
-      preLoaderRoute: typeof SessionsSessionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/room/$sessionId': {
-      id: '/room/$sessionId'
-      path: '/room/$sessionId'
-      fullPath: '/room/$sessionId'
-      preLoaderRoute: typeof RoomSessionIdRouteImport
+    '/threat-model': {
+      id: '/threat-model'
+      path: '/threat-model'
+      fullPath: '/threat-model'
+      preLoaderRoute: typeof ThreatModelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal/data-processing': {
@@ -272,22 +257,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/room/$sessionId': {
+      id: '/room/$sessionId'
+      path: '/room/$sessionId'
+      fullPath: '/room/$sessionId'
+      preLoaderRoute: typeof RoomSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sessions/$sessionId': {
+      id: '/sessions/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/sessions/$sessionId'
+      preLoaderRoute: typeof SessionsSessionIdRouteImport
+      parentRoute: typeof SessionsRoute
+    }
   }
 }
+
+interface SessionsRouteChildren {
+  SessionsSessionIdRoute: typeof SessionsSessionIdRoute
+}
+
+const SessionsRouteChildren: SessionsRouteChildren = {
+  SessionsSessionIdRoute: SessionsSessionIdRoute,
+}
+
+const SessionsRouteWithChildren = SessionsRoute._addFileChildren(
+  SessionsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DocsRoute: DocsRoute,
   EvaluationRoute: EvaluationRoute,
-  ThreatModelRoute: ThreatModelRoute,
   JoinRoute: JoinRoute,
-  SessionsRoute: SessionsRoute,
-  SessionsSessionIdRoute: SessionsSessionIdRoute,
-  RoomSessionIdRoute: RoomSessionIdRoute,
+  SessionsRoute: SessionsRouteWithChildren,
+  ThreatModelRoute: ThreatModelRoute,
   LegalDataProcessingRoute: LegalDataProcessingRoute,
   LegalDpaRoute: LegalDpaRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
+  RoomSessionIdRoute: RoomSessionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
