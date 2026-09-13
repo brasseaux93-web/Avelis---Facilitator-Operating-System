@@ -4,14 +4,20 @@ import React from "react";
 function ProtocolMark({
   className = "",
   accent = "currentColor",
+  width,
+  height,
 }: {
   className?: string;
   accent?: string;
+  width?: number | string;
+  height?: number | string;
 }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 64 64"
+      width={width}
+      height={height}
       className={className}
       aria-hidden="true"
       fill="none"
@@ -74,7 +80,7 @@ export function VerificationStamp({ className = "" }: { className?: string }) {
       />
 
       <g transform="translate(48, 48) scale(1.7)">
-        <ProtocolMark accent={accent} />
+        <ProtocolMark accent={accent} width="64" height="64" />
       </g>
 
       <g fontFamily="system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif">

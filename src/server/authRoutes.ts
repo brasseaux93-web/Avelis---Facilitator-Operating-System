@@ -12,6 +12,7 @@ import {
   signFacilitatorToken,
   signPartySessionToken,
   createRoomToken,
+  signSupabaseRealtimeToken,
 } from '../lib/auth';
 import {
   IDENTITY_CLASSES,
@@ -82,8 +83,14 @@ export function registerAuthRoutes(app: express.Express) {
         email: account.email,
       });
 
+      // We only mint a supabase token when a session starts or they join a room, but they can get a generic one here or per-session.
+      // Wait, in Avelis, Facilitators load the session and THEN connect. We can just mint a host token here that doesn't bind to a specific session, or they mint it later.
+      // Actually, Supabase Realtime channel access can just check the role if we bind it. But for ease, let's let them have a generic token.
+      const supabaseToken = signSupabaseRealtimeToken('any', account.id, 'host');
+
       res.status(200).json({
         token,
+        supabaseToken,
         facilitator: {
           id: account.id,
           email: account.email,
@@ -97,11 +104,8 @@ export function registerAuthRoutes(app: express.Express) {
     }
   });
 
-  /** POST /api/auth/register — dev-only when ALLOW_FACILITATOR_REGISTER=true. */
+  /** POST /api/auth/register — Public sign up. */
   app.post('/api/auth/register', async (req, res) => {
-    if (process.env.ALLOW_FACILITATOR_REGISTER !== 'true') {
-      return res.status(403).json({ error: 'Registration is not available.' });
-    }
 
     const { email, password, displayName, organizationName, region } = req.body || {};
     if (!email || !password || !displayName) {
@@ -141,8 +145,11 @@ export function registerAuthRoutes(app: express.Express) {
         email: created.facilitator.email,
       });
 
+      const supabaseToken = signSupabaseRealtimeToken('any', created.facilitator.id, 'host');
+
       res.status(201).json({
         token,
+        supabaseToken,
         facilitator: {
           id: created.facilitator.id,
           email: created.facilitator.email,
@@ -254,12 +261,14 @@ export function registerAuthRoutes(app: express.Express) {
         partyId: updated.id,
       });
       const roomToken = createRoomToken(updated.sessionId, updated.id);
+      const supabaseToken = signSupabaseRealtimeToken(updated.sessionId, updated.id, 'guest');
 
       res.status(200).json({
         partySessionToken,
         sessionId: updated.sessionId,
         partyId: updated.id,
         roomToken,
+        supabaseToken,
         identityClass: updated.identityClass,
         displayLabel: updated.displayLabel,
       });

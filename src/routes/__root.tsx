@@ -16,7 +16,7 @@ function RootLayout() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const hideFooter = location.pathname.startsWith('/auth') || location.pathname.startsWith('/session');
+  const hideFooter = location.pathname.startsWith('/auth') || location.pathname.startsWith('/register') || location.pathname.startsWith('/session');
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -83,6 +83,7 @@ function RootLayout() {
               <li><a href="/#how-it-works" className="nav__link" onClick={closeNav}>Session Model</a></li>
               <li><a href="/#audience" className="nav__link" onClick={closeNav}>Who It's For</a></li>
               <li><Link to="/auth" className="nav__link" onClick={closeNav}>Sign in</Link></li>
+              <li><Link to="/register" className="nav__link" onClick={closeNav}>Sign up</Link></li>
             </ul>
           </nav>
 
@@ -99,7 +100,7 @@ function RootLayout() {
                 </svg>
               )}
             </button>
-            <Link to="/auth" className="btn btn--nav" onClick={closeNav}>Sign in</Link>
+            <Link to="/register" className="btn btn--nav" onClick={closeNav}>Sign up</Link>
           </div>
         </div>
       </header>

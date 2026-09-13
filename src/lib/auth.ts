@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import argon2 from 'argon2';
+import jwt from 'jsonwebtoken';
 
 export interface FacilitatorTokenPayload {
   sub: string;
@@ -160,4 +161,24 @@ export function createRoomToken(sessionId: string, partyId: string): string {
     throw new Error('ROOM_SHARED_SECRET is required');
   }
   return crypto.createHmac('sha256', secret).update(`${sessionId}:${partyId}`).digest('hex');
+}
+
+/** Mint a Supabase JWT for Realtime signaling */
+export function signSupabaseRealtimeToken(sessionId: string, partyId: string, role: 'host' | 'guest'): string {
+  const secret = process.env.SUPABASE_JWT_SECRET;
+  if (!secret) {
+    // Return empty string if no secret is set, allowing fallback or error later
+    console.error('SUPABASE_JWT_SECRET is required for WebRTC signaling');
+    return '';
+  }
+  
+  const payload = {
+    role: 'authenticated', // Required for Supabase RLS policies
+    session_id: sessionId,
+    party_id: partyId,
+    avelis_role: role,
+    exp: Math.floor(Date.now() / 1000) + 12 * 3600, // 12 hours
+  };
+  
+  return jwt.sign(payload, secret);
 }

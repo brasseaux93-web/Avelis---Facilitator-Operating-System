@@ -5,13 +5,16 @@ import { useFacilitatorAuth } from '../lib/FacilitatorAuthContext';
 import { ProtocolMark } from '../components/Logo';
 import { apiPost } from '../lib/apiClient';
 
-export const Route = createFileRoute('/auth')({
-  component: AuthPage,
+export const Route = createFileRoute('/register')({
+  component: RegisterPage,
 });
 
-function AuthPage() {
+function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
+  
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [formError, setFormError] = useState('');
@@ -26,6 +29,15 @@ function AuthPage() {
       setEmailError('Enter a valid work email.');
       return;
     }
+    if (password.length < 8) {
+      setFormError('Password must be at least 8 characters.');
+      return;
+    }
+    if (!displayName || !organizationName) {
+      setFormError('Name and Organization are required.');
+      return;
+    }
+    
     setEmailError('');
     setIsLoading(true);
 
@@ -33,12 +45,12 @@ function AuthPage() {
       const data = await apiPost<{
         token: string;
         facilitator: { id: string; email: string; displayName: string; organizationId: string };
-      }>('/api/auth/login', { email, password }, { auth: false });
+      }>('/api/auth/register', { email, password, displayName, organizationName }, { auth: false });
 
       setSession(data.token, data.facilitator);
       navigate({ to: '/sessions' });
     } catch {
-      setFormError('Sign in did not complete.');
+      setFormError('Could not complete registration. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -54,8 +66,8 @@ function AuthPage() {
             <div className="auth-brand-logo" aria-hidden="true">
               <ProtocolMark accent="currentColor" />
             </div>
-            <h2 className="auth-title">Facilitator sign in</h2>
-            <p className="auth-subtitle">Sign in with your authorized work account.</p>
+            <h2 className="auth-title">Create an Account</h2>
+            <p className="auth-subtitle">Register your organization to facilitate secure sessions.</p>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
@@ -64,9 +76,42 @@ function AuthPage() {
                 {formError}
               </span>
             )}
+            
+            <div className="auth-field">
+              <label htmlFor="displayName" className="auth-label">
+                Full Name
+              </label>
+              <input
+                id="displayName"
+                type="text"
+                className="auth-input"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                autoComplete="name"
+                required
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div className="auth-field">
+              <label htmlFor="organizationName" className="auth-label">
+                Organization Name
+              </label>
+              <input
+                id="organizationName"
+                type="text"
+                className="auth-input"
+                value={organizationName}
+                onChange={(e) => setOrganizationName(e.target.value)}
+                autoComplete="organization"
+                required
+                disabled={isLoading}
+              />
+            </div>
+
             <div className="auth-field">
               <label htmlFor="email" className="auth-label">
-                Work email
+                Work Email
               </label>
               <input
                 id="email"
@@ -90,7 +135,7 @@ function AuthPage() {
             <div className="auth-field">
               <div className="auth-actions">
                 <label htmlFor="password" className="auth-label">
-                  Password
+                  Password (8+ characters)
                 </label>
               </div>
               <input
@@ -99,7 +144,7 @@ function AuthPage() {
                 className="auth-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 disabled={isLoading}
               />
@@ -107,24 +152,14 @@ function AuthPage() {
 
             <button type="submit" className="auth-btn auth-btn--primary" disabled={isLoading}>
               {isLoading && <span className="auth-spinner" aria-hidden="true"></span>}
-              {isLoading ? 'Signing in…' : 'Sign in'}
+              {isLoading ? 'Registering…' : 'Create Account'}
             </button>
           </form>
 
           <div className="auth-divider">or</div>
 
-          <button type="button" className="auth-btn auth-btn--sso" disabled title="Not available in MVP">
-            Not available in MVP
-          </button>
-
-          <div className="auth-trust-note">
-            <span>
-              Facilitator access uses organization-scoped accounts. Tokens stay in memory only.
-              Room messages are not stored by Avelis.
-            </span>
-            <div style={{ marginTop: 'var(--space-4)' }}>
-              Need an institutional account? <Link to="/register" className="auth-link">Sign up here</Link>
-            </div>
+          <div className="auth-trust-note" style={{ marginTop: 'var(--space-4)' }}>
+            Already have an account? <Link to="/auth" className="auth-link">Sign in here</Link>
           </div>
         </div>
       </div>
