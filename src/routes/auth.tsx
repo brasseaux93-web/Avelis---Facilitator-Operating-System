@@ -1,6 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import './auth.css';
+import { useFacilitatorAuth } from '../lib/FacilitatorAuthContext';
+import { apiPost } from '../lib/apiClient';
 
 export const Route = createFileRoute('/auth')({
   component: AuthPage,
@@ -11,33 +13,34 @@ function AuthPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [formError, setFormError] = useState('');
+  const { setSession } = useFacilitatorAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Basic validation
+    setFormError('');
+
     if (!email || !email.includes('@')) {
       setEmailError('Enter a valid work email.');
       return;
     }
     setEmailError('');
-    
     setIsLoading(true);
-    
-    // Simulate API integration and loading state
-    setTimeout(() => {
-      setIsLoading(false);
-      // Mock successful login redirection or state update
-      console.log('Logged in with', email);
-    }, 1200);
-  };
 
-  const handleSso = () => {
-    setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const data = await apiPost<{
+        token: string;
+        facilitator: { id: string; email: string; displayName: string; organizationId: string };
+      }>('/api/auth/login', { email, password }, { auth: false });
+
+      setSession(data.token, data.facilitator);
+      navigate({ to: '/sessions' });
+    } catch {
+      setFormError('Sign in did not complete.');
+    } finally {
       setIsLoading(false);
-      console.log('SSO login triggered');
-    }, 1200);
+    }
   };
 
   return (
@@ -54,11 +57,14 @@ function AuthPage() {
                 <path d="M13 19V14L16 11L19 14V19" />
               </svg>
             </div>
-            <h2 className="auth-title">Secure access</h2>
+            <h2 className="auth-title">Facilitator sign in</h2>
             <p className="auth-subtitle">Sign in with your authorized work account.</p>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            {formError && (
+              <span className="auth-error" role="alert">{formError}</span>
+            )}
             <div className="auth-field">
               <label htmlFor="email" className="auth-label">Work email</label>
               <input
@@ -81,7 +87,6 @@ function AuthPage() {
             <div className="auth-field">
               <div className="auth-actions">
                 <label htmlFor="password" className="auth-label">Password</label>
-                <a href="#" className="auth-link">Forgot password?</a>
               </div>
               <input
                 id="password"
@@ -101,7 +106,7 @@ function AuthPage() {
               disabled={isLoading}
             >
               {isLoading && <span className="auth-spinner" aria-hidden="true"></span>}
-              {isLoading ? 'Signing in...' : 'Sign in securely'}
+              {isLoading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
@@ -110,18 +115,14 @@ function AuthPage() {
           <button 
             type="button" 
             className="auth-btn auth-btn--sso" 
-            onClick={handleSso}
-            disabled={isLoading}
+            disabled
+            title="Not available in MVP"
           >
-            Continue with organization SSO
+            Not available in MVP
           </button>
 
           <div className="auth-trust-note">
-            <svg className="auth-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0110 0v4"></path>
-            </svg>
-            <span>Access is protected with encrypted, role-based controls.</span>
+            <span>Facilitator access uses organization-scoped accounts. Tokens stay in memory only.</span>
           </div>
         </div>
       </div>

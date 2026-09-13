@@ -80,23 +80,24 @@ function Index() {
       <div className="container">
         <div className="hero__grid">
           <div className="hero__content">
-            <p className="hero__eyebrow">INSTITUTIONAL DISPUTE INFRASTRUCTURE</p>
+            <p className="hero__eyebrow">FACILITATOR OPERATING SYSTEM</p>
             <h1 className="hero__title" id="hero-title">
-              The institutional safe harbor for talks that cannot risk discovery.
+              Ephemeral rooms, a process ledger, and scheduled destruction for facilitated sessions.
             </h1>
             <p className="hero__body">
-              Avelis provides an ephemeral operating system for dispute resolution, ombuds shuttle diplomacy, and sensitive negotiations. Total evidentiary immunity for what was said. Complete process accountability for how it was conducted.
+              Avelis is a facilitator operating system for bounded sessions. Room messages are delivered live and are not stored by Avelis.
+              A closed-vocabulary process ledger and an optional joint minute may be retained until the selected destruction deadline.
             </p>
             <div className="hero__actions">
               <Link to="/evaluation" className="btn btn--primary btn--lg">Request Institutional Evaluation</Link>
-              <Link to="/threat-model" className="btn btn--secondary btn--lg">Review Threat &amp; Privilege Architecture</Link>
+              <Link to="/threat-model" className="btn btn--secondary btn--lg">Review Threat Model</Link>
             </div>
 
-            {/* IOA Assurance block */}
             <div className="hero__ioa-block">
-              <span className="hero__ioa-header">IOA Standards Compliant // Privilege Preservation</span>
+              <span className="hero__ioa-header">Process accountability // Speech non-persistence</span>
               <p className="hero__ioa-text">
-                Engineered to satisfy International Ombuds Association standards of neutrality, informality, and absolute confidentiality. Memory zeroization prevents discovery spoliation claims.
+                Designed for facilitators who need live conversation without a stored transcript, plus a durable record of process actions only.
+                v1 has no AI and no model writes ledger lines.
               </p>
               <div className="hero__ioa-badges">
                 <span className="hero__ioa-badge">L1 Speech is Ephemeral</span>
@@ -105,7 +106,6 @@ function Index() {
             </div>
           </div>
 
-          {/* Ledger mockup — centered in right column */}
           <div className="hero__visual-wrap">
             <div className="hero__visual" aria-label="Example facilitator process ledger showing closed vocabulary lines">
               <div className="process-ledger-card">
@@ -118,7 +118,6 @@ function Index() {
               </div>
               <div className="process-ledger-card__body">
 
-                {/* SESSION OPENED */}
                 <div className="ledger-row">
                   <div className="ledger-ts-col">09:14</div>
                   <div className="ledger-content-col">
@@ -127,7 +126,6 @@ function Index() {
                   </div>
                 </div>
 
-                {/* PARTY INVITED */}
                 <div className="ledger-row">
                   <div className="ledger-ts-col">09:15</div>
                   <div className="ledger-content-col">
@@ -136,7 +134,6 @@ function Index() {
                   </div>
                 </div>
 
-                {/* PARTY JOINED */}
                 <div className="ledger-row">
                   <div className="ledger-ts-col">09:17</div>
                   <div className="ledger-content-col">
@@ -144,7 +141,6 @@ function Index() {
                   </div>
                 </div>
 
-                {/* ITEM TABLED */}
                 <div className="ledger-row">
                   <div className="ledger-ts-col">09:22</div>
                   <div className="ledger-content-col">
@@ -152,7 +148,6 @@ function Index() {
                   </div>
                 </div>
 
-                {/* CAUCUS CREATED */}
                 <div className="ledger-row">
                   <div className="ledger-ts-col">09:28</div>
                   <div className="ledger-content-col">
@@ -160,7 +155,6 @@ function Index() {
                   </div>
                 </div>
 
-                {/* MARKED AGREED */}
                 <div className="ledger-row">
                   <div className="ledger-ts-col">09:45</div>
                   <div className="ledger-content-col">
@@ -168,7 +162,6 @@ function Index() {
                   </div>
                 </div>
 
-                {/* MINUTE DRAFTED */}
                 <div className="ledger-row">
                   <div className="ledger-ts-col">10:02</div>
                   <div className="ledger-content-col">
@@ -176,7 +169,6 @@ function Index() {
                   </div>
                 </div>
 
-                {/* SESSION CLOSED */}
                 <div className="ledger-row">
                   <div className="ledger-ts-col">10:14</div>
                   <div className="ledger-content-col">
@@ -184,13 +176,12 @@ function Index() {
                   </div>
                 </div>
 
-                {/* DESTRUCTION ATTESTED — dashed divider row */}
                 <div className="ledger-row ledger-row--destroy">
                   <div className="ledger-ts-col">10:14</div>
                   <div className="ledger-content-col">
                     <span className="ledger-action ledger-action--stamped">Destruction Attested</span>
                     <span className="ledger-detail ledger-detail--attest">
-                      SHA-256 Memory Zeroization Receipt generated<br/>Architectural Inability to Comply Certificate generated<br/>Speech Purge: Verified at Memory Level (0 Bytes Persisted)
+                      Destruction receipt generated. Room messages were not stored.
                     </span>
                     <div className="destruction-seal" aria-hidden="true">
                       <VerificationStamp />
@@ -203,32 +194,27 @@ function Index() {
           </div>
         </div>
 
-        {/* Primary Buyers Grid (replaces Audience section) */}
         <div className="hero-buyers" id="audience">
           <div className="hero-buyer-card">
-            <h3 className="hero-buyer-title">University &amp; IO Ombuds Offices</h3>
-            <p className="hero-buyer-desc">Statutory Privilege &amp; Discovery Protection. Built to defend IOA standards against subpoena exposure.</p>
+            <h3 className="hero-buyer-title">University &amp; institutional ombuds offices</h3>
+            <p className="hero-buyer-desc">Facilitated shuttle talks with an ephemeral room and a process ledger retained only for the selected window.</p>
           </div>
           <div className="hero-buyer-card">
-            <h3 className="hero-buyer-title">Enterprise HR &amp; Employee Relations</h3>
-            <p className="hero-buyer-desc">Early Intervention Triage. Eliminates unencrypted chat vulnerability during sensitive workplace dispute resolution.</p>
+            <h3 className="hero-buyer-title">Enterprise HR &amp; employee relations</h3>
+            <p className="hero-buyer-desc">Early workplace dispute facilitation without storing room messages or creating a transcript.</p>
           </div>
           <div className="hero-buyer-card">
-            <h3 className="hero-buyer-title">Sovereign &amp; Track 1.5/II Conclaves</h3>
-            <p className="hero-buyer-desc">Pre-Treaty Bilateral Sanctuaries. Securing back-channel credibility through cryptographic destruction.</p>
+            <h3 className="hero-buyer-title">Track 1.5 / Track II facilitation</h3>
+            <p className="hero-buyer-desc">Bounded sessions for sensitive negotiation with live delivery and scheduled destruction of process records.</p>
           </div>
           <div className="hero-buyer-card">
-            <h3 className="hero-buyer-title">Corporate Governance, ADR &amp; Boards</h3>
-            <p className="hero-buyer-desc">High-Stakes Severance &amp; Caucus Bargaining. For C-suite disputes and executive sidebars where Slack discovery triggers liability.</p>
+            <h3 className="hero-buyer-title">Corporate governance, ADR &amp; boards</h3>
+            <p className="hero-buyer-desc">Facilitator-controlled sessions for high-stakes discussions where process accountability matters and speech is not retained.</p>
           </div>
         </div>
       </div>
     </section>
 
-    {/* Who It's For */}
-
-
-    {/* What it is / is not */}
     <section className="duality" aria-labelledby="duality-title" data-reveal>
       <div className="container">
         <h2 className="sr-only" id="duality-title">What Avelis is and is not</h2>
@@ -238,19 +224,19 @@ function Index() {
             <ul className="duality__list" role="list">
               <li className="duality__item">
                 <span className="duality__item-mark duality__item-mark--is">+</span>
-                An evidentiary firewall for multi-track negotiation
+                A facilitator operating system for bounded sessions
               </li>
               <li className="duality__item">
                 <span className="duality__item-mark duality__item-mark--is">+</span>
-                A session containing an ephemeral room, a process ledger, an optional joint minute, and an optional issue map
+                A session containing an ephemeral room, a process ledger, and an optional joint minute
               </li>
               <li className="duality__item">
                 <span className="duality__item-mark duality__item-mark--is">+</span>
-                A cryptographic, party-verified process ledger (invitations, identity classes, tabled agenda items, mutual initialing)
+                A closed-vocabulary process ledger (invitations, identity classes, agenda marks, joint-minute lifecycle)
               </li>
               <li className="duality__item">
                 <span className="duality__item-mark duality__item-mark--is">+</span>
-                An immutable proof of procedural fairness with absolute speech zeroization
+                A system that retains process records only until the selected destruction deadline
               </li>
             </ul>
           </div>
@@ -259,11 +245,11 @@ function Index() {
             <ul className="duality__list" role="list">
               <li className="duality__item duality__item--muted">
                 <span className="duality__item-mark duality__item-mark--is-not">&minus;</span>
-                Not a subpoena-compliant communication archive
+                Not a conversation archive or transcript system
               </li>
               <li className="duality__item duality__item--muted">
                 <span className="duality__item-mark duality__item-mark--is-not">&minus;</span>
-                Not a discovery liability
+                Not a recording, replay, or scrollback product
               </li>
               <li className="duality__item duality__item--muted">
                 <span className="duality__item-mark duality__item-mark--is-not">&minus;</span>
@@ -283,12 +269,11 @@ function Index() {
       </div>
     </section>
 
-    {/* Core Principles (Product Laws) */}
     <section className="principles" id="principles" aria-labelledby="principles-title" data-reveal>
       <div className="container">
         <div className="principles__header">
           <p className="section-eyebrow">Product Laws</p>
-          <h2 className="section-title" id="principles-title">Confidentiality applies to content. Accountability applies to process.</h2>
+          <h2 className="section-title" id="principles-title">Speech is not retained. Process may be, until destruction.</h2>
           <p className="section-desc">
             Avelis exists on that seam. These laws are non-negotiable. If a feature conflicts with them, the feature is wrong.
           </p>
@@ -299,8 +284,8 @@ function Index() {
             <p className="principle__code"><span>L1 — Speech is ephemeral</span></p>
             <h3 className="principle__title">The room does not persist</h3>
             <p className="principle__desc">
-              Room messages and live media are memory-only for the session. When the session closes,
-              speech is gone. No scrollback after close. No recording. No transcript. No save.
+              Room messages are delivered live and are not stored by Avelis.
+              When the session closes, the live room ends. No scrollback after close. No recording. No transcript. No save.
             </p>
           </article>
 
@@ -316,10 +301,10 @@ function Index() {
 
           <article className="principle">
             <p className="principle__code">L3 — The facilitator authors the ledger</p>
-            <h3 className="principle__title">No model writes a ledger line unattended</h3>
+            <h3 className="principle__title">No model writes a ledger line</h3>
             <p className="principle__desc">
-              If assistive text exists later, it may only propose a line the facilitator edits
-              and accepts. Default is no generation. v1 has no AI.
+              v1 has no AI. No model writes, summarizes, interprets, or proposes ledger lines.
+              The facilitator authors every process line.
             </p>
           </article>
 
@@ -328,7 +313,7 @@ function Index() {
             <h3 className="principle__title">Named, role-only, affiliation-only, or unnamed</h3>
             <p className="principle__desc">
               No standing social profile. No follower graph. No cross-session participant
-              directory visible to other parties. The facilitator's address book is private.
+              directory visible to other parties. The facilitator&apos;s address book is private.
             </p>
           </article>
 
@@ -346,7 +331,7 @@ function Index() {
             <p className="principle__code">L6 — The Facilitator Controls the Boundary</p>
             <h3 className="principle__title">No one joins uninvited</h3>
             <p className="principle__desc">
-              The room is a secure boundary. The facilitator controls invitations, room locks, and party ejections. No one can lurk or join silently.
+              The facilitator controls invitations and party access. Room messages are delivered only to connected parties for the active session.
             </p>
           </article>
 
@@ -362,12 +347,11 @@ function Index() {
       </div>
     </section>
 
-    {/* How It Works */}
     <section className="how-it-works" id="how-it-works" aria-labelledby="hiw-title" data-reveal>
       <div className="container">
         <div className="how-it-works__header">
           <p className="section-eyebrow">Session Model</p>
-          <h2 className="section-title" id="hiw-title">From session open to destruction attestation</h2>
+          <h2 className="section-title" id="hiw-title">From session open to destruction receipt</h2>
         </div>
         <div className="steps">
           <div className="step">
@@ -383,7 +367,7 @@ function Index() {
             <h3 className="step__title">Identity and room</h3>
             <p className="step__desc">
               Each party picks an identity class at join. The live room is ephemeral —
-              text minimum, audio if stable.
+              text minimum, audio if stable. Room messages are delivered live and are not stored by Avelis.
             </p>
           </div>
           <div className="step">
@@ -396,24 +380,25 @@ function Index() {
           </div>
           <div className="step">
             <div className="step__number"><span className="step__line"></span></div>
-            <h3 className="step__title">Bilateral Attestation &amp; Redline Lock</h3>
+            <h3 className="step__title">Joint minute initialing and export</h3>
             <p className="step__desc">
-              Mutual digital initialing via ephemeral session keys, generating a joint PDF that self-destructs from servers upon dual party download. Generates an exportable, counsel-ready Subpoena Affidavit Kit certifying statutory confidentiality.
+              The joint minute is optional. It is separate from the live room and may be exported or wiped.
+              Parties may initial it as a process action. Exports are returned in response memory only; Avelis does not retain export files.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    {/* Threat Model (social proof) */}
     <section className="threat-model" id="threat-model" aria-labelledby="tm-title" data-reveal>
       <div className="container">
         <div className="threat-model__grid">
           <div>
             <p className="section-eyebrow">Threat Model</p>
-            <h2 className="section-title" id="tm-title">Engineered specifically to defeat discovery, breaches, and compelled testimony.</h2>
+            <h2 className="section-title" id="tm-title">Built so room speech is not available to recover.</h2>
             <p className="section-desc">
-              The technological zero-retention architecture transforms the legal question from <em>“Will you hand over the transcripts?”</em> to <em>“The records physically do not exist to produce.”</em>
+              Closing ends room access and destroys the live room. Messages cannot be recovered.
+              Process records and any joint minute are retained until the selected deadline, then destroyed.
             </p>
           </div>
           <ul className="threat-model__commitments" role="list">
@@ -421,7 +406,7 @@ function Index() {
               <svg className="commitment__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" />
               </svg>
-              <p className="commitment__text"><strong>Speech never written to disk or object storage.</strong> Room messages exist in memory only for the duration of the session.</p>
+              <p className="commitment__text"><strong>Room messages are not stored by Avelis.</strong> They exist in memory only long enough to deliver.</p>
             </li>
             <li className="commitment">
               <svg className="commitment__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -433,20 +418,19 @@ function Index() {
               <svg className="commitment__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" />
               </svg>
-              <p className="commitment__text"><strong>No training of models on any Avelis content, ever.</strong> No AI in v1. If assistance appears later, it cannot write what people said or what they meant.</p>
+              <p className="commitment__text"><strong>v1 has no AI.</strong> No model training on Avelis content. No model writes ledger lines.</p>
             </li>
             <li className="commitment">
               <svg className="commitment__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" />
               </svg>
-              <p className="commitment__text"><strong>No subpoena-friendly recovery.</strong> The truthful answer to "can you recover the chat?" is: speech was not retained.</p>
+              <p className="commitment__text"><strong>Closed-room content cannot be recovered.</strong> Speech was not retained.</p>
             </li>
           </ul>
         </div>
       </div>
     </section>
 
-    {/* Privacy-First Contact Form */}
     <section className="section" id="contact" aria-labelledby="contact-title" data-reveal>
       <div className="container">
         <div className="cta-form">
@@ -489,7 +473,6 @@ function Index() {
                     </div>
                   )}
                   
-                  {/* Honeypot field - hidden from real users */}
                   <input type="text" name="bot_field" tabIndex={-1} autoComplete="off" style={{ display: 'none' }} aria-hidden="true" />
                   
                   <div className="form__field">
@@ -553,7 +536,7 @@ function Index() {
                   </div>
 
                   <button type="submit" className="btn btn--primary btn--lg" style={{ width: '100%' }} disabled={isSubmitting}>
-                    {isSubmitting ? 'Verifying Institution...' : 'Request access'}
+                    {isSubmitting ? 'Submitting…' : 'Request access'}
                   </button>
                 </form>
               ) : (
@@ -573,7 +556,6 @@ function Index() {
       </div>
     </section>
 
-  {/* Footer */}
   <footer className="footer">
     <div className="container">
       <div className="footer__grid">
@@ -591,7 +573,7 @@ function Index() {
           <ul className="footer__col-list" role="list">
             <li><a href="#principles" className="footer__col-link">Principles</a></li>
             <li><a href="#how-it-works" className="footer__col-link">Session Model</a></li>
-            <li><a href="#audience" className="footer__col-link">Who It's For</a></li>
+            <li><a href="#audience" className="footer__col-link">Who It&apos;s For</a></li>
           </ul>
         </div>
         <div className="footer__col">

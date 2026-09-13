@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { eq, lte, and, desc } from 'drizzle-orm';
+import { eq, lte, and, asc } from 'drizzle-orm';
 import { db } from '../db/index';
 import {
   sessions,
@@ -13,7 +13,8 @@ import { computeLineHash, computePayloadDigest } from '../lib/ledger';
 
 /**
  * Product Law L5: Destruction is a feature.
- * Aligns to destructionReceipts schema fields only (no destroyedAt/receiptHash).
+ * Aligns to destructionReceipts schema fields only.
+ * Verifies full hash chain before purge when lines exist.
  * Do not log session content.
  */
 export async function runDestructionCron() {
@@ -45,24 +46,27 @@ export async function runDestructionCron() {
           })
           .from(ledgerLines)
           .where(eq(ledgerLines.sessionId, session.id))
-          .orderBy(desc(ledgerLines.sequenceNumber));
+          .orderBy(asc(ledgerLines.sequenceNumber));
 
         let finalSequenceNumber = 0;
         let ledgerRootHash = 'genesis';
 
         if (lines.length > 0) {
-          // Verify hash chain tip (last line) if lines exist.
-          const tip = lines[0]!;
-          const expected = computeLineHash(
-            session.id,
-            tip.sequenceNumber,
-            tip.lineType,
-            tip.payloadDigest,
-            tip.previousLineHash
-          );
-          if (expected !== tip.lineHash) {
-            throw new Error(`Ledger integrity check failed for session ${session.id}`);
+          let previous: string | null = null;
+          for (const line of lines) {
+            const expected = computeLineHash(
+              session.id,
+              line.sequenceNumber,
+              line.lineType,
+              line.payloadDigest,
+              previous
+            );
+            if (expected !== line.lineHash || line.previousLineHash !== previous) {
+              throw new Error(`Ledger integrity check failed for session ${session.id}`);
+            }
+            previous = line.lineHash;
           }
+          const tip = lines[lines.length - 1]!;
           finalSequenceNumber = tip.sequenceNumber;
           ledgerRootHash = tip.lineHash;
         }
@@ -88,7 +92,6 @@ export async function runDestructionCron() {
           ledgerRootHash,
         };
         const destructionManifestDigest = computePayloadDigest(manifest);
-        // Scaffolding signature — Phase 2/3 replaces with KMS-backed attestation.
         const signature = crypto
           .createHmac('sha256', process.env.LOCAL_DEV_SIGNING_KEY || 'local-dev-signing-key')
           .update(destructionManifestDigest, 'utf8')
