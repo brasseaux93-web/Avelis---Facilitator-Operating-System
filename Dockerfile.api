@@ -25,7 +25,7 @@ COPY package.json ./
 COPY src ./src
 COPY drizzle ./drizzle
 COPY drizzle.config.ts ./
-COPY scripts/docker-api-entrypoint.sh ./scripts/docker-api-entrypoint.sh
+COPY scripts ./scripts
 RUN chmod +x ./scripts/docker-api-entrypoint.sh
 EXPOSE 3001
 ENTRYPOINT ["sh", "./scripts/docker-api-entrypoint.sh"]
