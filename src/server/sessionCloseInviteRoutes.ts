@@ -9,8 +9,6 @@ import {
 } from '../db/schema';
 import { appendLedgerLine } from '../lib/ledgerAppend';
 import { generateInviteCode } from '../lib/invite';
-import { teardownRoom } from '../room/memory';
-import { requestRoomTeardown } from '../room/control';
 import { getKms } from '../lib/encryption';
 import { computePayloadDigest } from '../lib/ledger';
 import { incrementMetric, logEvent } from '../lib/observability';
@@ -21,7 +19,7 @@ export function registerSessionCloseInviteRoutes(
   requireAuth: express.RequestHandler
 ) {
 app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
-  const sessionId = req.params.id;
+  const sessionId = req.params.id as string;
   const facilitatorId = req.facilitatorId!;
 
   try {
@@ -72,9 +70,7 @@ app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
         initialVisibility: 'facilitator_only',
       });
 
-      const localRoom = teardownRoom(sessionId);
-      const remoteRoom = await requestRoomTeardown(sessionId);
-      const roomExisted = localRoom || remoteRoom;
+      const roomExisted = false;
 
       await appendLedgerLine(tx, {
         sessionId,
@@ -144,7 +140,7 @@ app.post('/api/sessions/:id/close', requireAuth, async (req, res) => {
 });
 
 app.post('/api/sessions/:id/invites', requireAuth, async (req, res) => {
-  const sessionId = req.params.id;
+  const sessionId = req.params.id as string;
   const { identityClass, displayLabel } = req.body;
   const facilitatorId = req.facilitatorId!;
 
