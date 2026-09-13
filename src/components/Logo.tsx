@@ -1,6 +1,6 @@
 import React from "react";
 
-/** Geometric protocol mark — flanking rules + open A. Not a lock or shield. */
+/** Geometric protocol mark — Hourglass / Ledger Seal representing ephemeral speech and scheduled destruction */
 function ProtocolMark({
   className = "",
   accent = "currentColor",
@@ -16,23 +16,17 @@ function ProtocolMark({
       aria-hidden="true"
       fill="none"
     >
-      {/* Flanking ledger rules */}
-      <rect x="4" y="8" width="5" height="48" rx="0.5" fill={accent} />
-      <rect x="55" y="8" width="5" height="48" rx="0.5" fill={accent} />
-      {/* Geometric A — open aperture, not a vault */}
+      {/* Outer bounds / ledger frame */}
+      <rect x="6" y="6" width="52" height="52" rx="10" stroke={accent} strokeWidth="4.5" />
+      {/* Hourglass geometry */}
       <path
-        d="M20 52 L32 12 L44 52"
-        stroke={accent}
-        strokeWidth="4.5"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
-      />
-      <path
-        d="M25 36 H39"
+        d="M18 16 L46 16 L32 32 L46 48 L18 48 L32 32 Z"
         stroke={accent}
         strokeWidth="4"
-        strokeLinecap="square"
+        strokeLinejoin="miter"
       />
+      {/* Center focal point */}
+      <circle cx="32" cy="32" r="3" fill={accent} />
     </svg>
   );
 }
@@ -40,15 +34,15 @@ function ProtocolMark({
 export function LogoLockup({ className = "" }: { className?: string }) {
   return (
     <div className={`logo-lockup ${className}`}>
-      <ProtocolMark className="logo-lockup__emblem" accent="var(--color-accent-solid, #5AAAB0)" />
+      <ProtocolMark className="logo-lockup__emblem" accent="currentColor" />
       <span className="logo-lockup__wordmark">AVELIS</span>
     </div>
   );
 }
 
 export function VerificationStamp({ className = "" }: { className?: string }) {
-  const accent = "var(--color-accent-solid, #5AAAB0)";
-  const ink = "var(--color-text, #F4F0E8)";
+  const accent = "var(--color-accent)";
+  const ink = "var(--color-text)";
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

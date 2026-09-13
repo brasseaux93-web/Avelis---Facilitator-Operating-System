@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import './auth.css';
 import { useFacilitatorAuth } from '../lib/FacilitatorAuthContext';
+import { ProtocolMark } from '../components/Logo';
 import { apiPost } from '../lib/apiClient';
 
 export const Route = createFileRoute('/auth')({
@@ -51,19 +52,7 @@ function AuthPage() {
         <div className="auth-form-container">
           <div className="auth-header">
             <div className="auth-brand-logo" aria-hidden="true">
-              {/* Geometric protocol A — not a lock */}
-              <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
-                <rect x="4" y="8" width="5" height="48" rx="0.5" fill="currentColor" />
-                <rect x="55" y="8" width="5" height="48" rx="0.5" fill="currentColor" />
-                <path
-                  d="M20 52 L32 12 L44 52"
-                  stroke="currentColor"
-                  strokeWidth="4.5"
-                  strokeLinecap="square"
-                  strokeLinejoin="miter"
-                />
-                <path d="M25 36 H39" stroke="currentColor" strokeWidth="4" strokeLinecap="square" />
-              </svg>
+              <ProtocolMark accent="currentColor" />
             </div>
             <h2 className="auth-title">Facilitator sign in</h2>
             <p className="auth-subtitle">Sign in with your authorized work account.</p>

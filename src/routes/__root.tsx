@@ -1,6 +1,7 @@
-import { createRootRoute, Outlet, Link } from '@tanstack/react-router';
+import { createRootRoute, Outlet, Link, useLocation } from '@tanstack/react-router';
 import React, { useEffect, useState } from 'react';
 import { LogoLockup } from '../components/Logo';
+import { Footer } from '../components/Footer';
 import '../../base.css';
 import '../../style.css';
 import '../styles/tokens.css';
@@ -14,6 +15,8 @@ function RootLayout() {
   const [theme, setTheme] = useState('dark');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
+  const hideFooter = location.pathname.startsWith('/auth') || location.pathname.startsWith('/session');
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -104,6 +107,7 @@ function RootLayout() {
       <main id="main">
         <Outlet />
       </main>
+      {!hideFooter && <Footer />}
     </>
   );
 }

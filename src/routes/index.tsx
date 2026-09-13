@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LogoLockup, VerificationStamp } from '../components/Logo';
+import { LogoLockup, VerificationStamp, ProtocolMark } from '../components/Logo';
 
 import { createFileRoute, Link } from '@tanstack/react-router';
 
@@ -110,7 +110,10 @@ function Index() {
             <div className="hero__visual" aria-label="Example facilitator process ledger showing closed vocabulary lines">
               <div className="process-ledger-card">
               <div className="process-ledger-card__header">
-                <span className="process-ledger-card__title">Session · Process Ledger</span>
+                <span className="process-ledger-card__title">
+                  <ProtocolMark className="process-ledger-card__logo" accent="currentColor" />
+                  Session · Process Ledger
+                </span>
                 <span className="process-ledger-card__status">
                   <span className="process-ledger-card__status-dot"></span>
                   Closed
@@ -555,49 +558,6 @@ function Index() {
         </div>
       </div>
     </section>
-
-  <footer className="footer">
-    <div className="container">
-      <div className="footer__grid">
-        <div className="footer__brand">
-          <a href="#" className="logo" aria-label="Avelis home">
-            <LogoLockup />
-          </a>
-          <p className="footer__desc">
-            A facilitator operating system. It keeps a process ledger for talks that
-            must not leave a transcript.
-          </p>
-        </div>
-        <div className="footer__col">
-          <h3 className="footer__col-title">Product</h3>
-          <ul className="footer__col-list" role="list">
-            <li><a href="#principles" className="footer__col-link">Principles</a></li>
-            <li><a href="#how-it-works" className="footer__col-link">Session Model</a></li>
-            <li><a href="#audience" className="footer__col-link">Who It&apos;s For</a></li>
-          </ul>
-        </div>
-        <div className="footer__col">
-          <h3 className="footer__col-title">Resources</h3>
-          <ul className="footer__col-list" role="list">
-            <li><Link to="/docs" className="footer__col-link">Documentation</Link></li>
-            <li><Link to="/legal/dpa" className="footer__col-link">DPA Template</Link></li>
-            <li><Link to="/threat-model" className="footer__col-link">Threat Model</Link></li>
-          </ul>
-        </div>
-        <div className="footer__col">
-          <h3 className="footer__col-title">Legal</h3>
-          <ul className="footer__col-list" role="list">
-            <li><Link to="/evaluation" className="footer__col-link">Contact</Link></li>
-            <li><Link to="/legal/privacy" className="footer__col-link">Privacy Policy</Link></li>
-            <li><Link to="/legal/data-processing" className="footer__col-link">Data Processing</Link></li>
-          </ul>
-        </div>
-      </div>
-      <div className="footer__bottom">
-        <p className="footer__copyright">&copy; 2026 Avelis. All rights reserved.</p>
-      </div>
-    </div>    
-  </footer>
   </>
   );
 }
