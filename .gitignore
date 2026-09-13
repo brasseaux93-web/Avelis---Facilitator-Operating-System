@@ -27,7 +27,8 @@ npm-debug.log*
 .vscode/
 *.swp
 
-# Local artifacts
+# Local artifacts / demo screenshots (do not track)
 screenshot*.png
+screenshot*.js
 check_console.js
 check_html.js

@@ -20,19 +20,17 @@ The product object is a **session**. It is not a community, case-management syst
 
 **Maturity ~6.5/10** — constitution-grade docs plus working Phase 1–3 foundations. Not yet a finished pilot product surface.
 
-Open production-readiness PRs (merge in order):
+**Phases 1–2 are merged to `main`.** Phase 3 (production host + repo cleanup) lands via this PR (`prod-readiness/phase-3-onto-main`). After merge, run from `main`.
 
-| PR | Branch | Focus |
-|---|---|---|
-| [#1](https://github.com/brasseaux93-web/Avelis---Facilitator-Operating-System/pull/1) | `prod-readiness/phase-1` | Speech-safe room, transactional ledger append, schema-aligned purge |
-| [#2](https://github.com/brasseaux93-web/Avelis---Facilitator-Operating-System/pull/2) | `prod-readiness/phase-2` | Facilitator auth (Argon2 + JWT), invite redeem, session/agenda/minute APIs + UI spine, language-guide landing |
-| [#3](https://github.com/brasseaux93-web/Avelis---Facilitator-Operating-System/pull/3) | `prod-readiness/phase-3` | KMS factory, health/metrics, Docker api/room, deployment/backup docs, security audit table, terraform expansion |
+| Status | Focus |
+|---|---|
+| Merged #1 | Speech-safe room, transactional ledger append, schema-aligned purge |
+| Merged #2 | Facilitator auth (Argon2 + JWT), invite redeem, session/agenda/minute APIs + UI spine |
+| This PR | KMS factory, health/metrics, Docker api/room, deployment/backup docs, security audit table, terraform expansion |
 
-`main` still reflects the earlier pre-MVP tree until those PRs merge. Prefer reviewing/running from `prod-readiness/phase-3` (or later) for current code.
+See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit.
 
-See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) on the phase-3 branch for the live audit.
-
-### What works on the phase branches
+### What works here
 
 - Ephemeral WebSocket room (authenticated tokens; no in-memory message history)
 - Session create → open → invite → close → retention purge worker + destruction receipt path
@@ -44,12 +42,11 @@ See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) on the phase-3 branch for
 
 ### Still outstanding
 
-- Merge PRs #1–#3 into `main`
-- Remove tracked `node_modules/` / `dist/` from git history (see `scripts/remove-tracked-node-modules.md` on phase-3)
+- Remove tracked `node_modules/` / `dist/` if still present (see `scripts/remove-tracked-node-modules.md`)
 - Apply CI workflow from `docs/ci-workflow-phase3.yml` (needs a token with `workflow` scope)
 - Wire real AWS KMS credentials (stub provider present)
 - Optional WebRTC audio only after speech-safety suite passes
-- Premium 2026 visual pass (in progress on `prod-readiness/premium-2026`)
+- Premium 2026 visual pass (`prod-readiness/premium-2026`)
 - Green Playwright end-to-end path before enabling e2e in CI
 
 ## What persists
@@ -79,21 +76,26 @@ See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) on the phase-3 branch for
 
 Avelis does **not** claim legal privilege, subpoena immunity, or confidentiality beyond implemented technical controls. See the [Language Guide](docs/language-guide.md).
 
-## Quick start (phase-3 branch)
+## Quick start
+
+From `main` after this PR merges:
 
 ```bash
-git fetch origin
-git checkout prod-readiness/phase-3
+git checkout main
+git pull
 cp .env.example.txt .env   # set JWT_SECRET, ROOM_SHARED_SECRET, DATABASE_URL
 docker compose up --build
 # API :3001  Room :3002  Postgres :5432
+
+curl -s localhost:3001/healthz
+curl -s localhost:3001/readyz
 
 npm run test:speech-safety
 npm run test:ledger
 npm run test:retention
 ```
 
-Dev without Docker (Postgres required):
+Dev without full compose (Postgres required):
 
 ```bash
 npm install
@@ -131,7 +133,7 @@ Default local seed facilitator (when enabled): see `.env.example.txt` / `src/ser
 | [Visual System](docs/visual-system.md) | Interface principles and visual constraints |
 | [ADRs](docs/adr/) | Binding technical decisions |
 | [Contributing](CONTRIBUTING.md) | Change-control and review requirements |
-| [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit (on phase branches) |
+| [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
 
 The Product Instruction governs all features, documentation, implementation, and operational decisions. If a change conflicts with it, the change is wrong.
 

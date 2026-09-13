@@ -1,0 +1,58 @@
+name: CI
+
+# Desired Phase 3 CI workflow.
+# Copy over `.github/workflows/ci.yml` with a GitHub token that has the `workflow` scope.
+
+on:
+  push:
+    branches: [ main, 'prod-readiness/**' ]
+  pull_request:
+    branches: [ main, 'prod-readiness/**' ]
+
+jobs:
+  compliance-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: avelis
+          POSTGRES_PASSWORD: avelis
+          POSTGRES_DB: avelis
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U avelis -d avelis"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://avelis:avelis@localhost:5432/avelis
+      LOG_REQUEST_BODIES: 'false'
+      LOG_WEBSOCKET_PAYLOADS: 'false'
+      SESSION_REPLAY_ENABLED: 'false'
+      PRODUCT_ANALYTICS_ENABLED: 'false'
+      KMS_PROVIDER: local
+      JWT_SECRET: ci-jwt-secret
+      ROOM_SHARED_SECRET: ci-room-secret
+      LOCAL_DEV_SIGNING_KEY: local-dev-signing-key-not-for-production-use
+      LOCAL_DEV_ENCRYPTION_KEY: local-dev-key-not-for-production-use
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - run: npm ci || npm install
+      - name: Guard content-capture flags
+        run: node scripts/check-prod-observability-flags.mjs
+      - run: npm run lint
+      - name: Apply drizzle migrations if present
+        run: |
+          if [ -d drizzle ] && ls drizzle/*.sql >/dev/null 2>&1; then
+            npx drizzle-kit migrate || npx drizzle-kit push || echo "Migration tooling skipped"
+          else
+            echo "No drizzle SQL migrations found"
+          fi
+      - run: npm run test:speech-safety
+      - run: npm run test:ledger
+      - run: npm run test:retention

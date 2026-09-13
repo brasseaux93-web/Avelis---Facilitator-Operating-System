@@ -1,8 +1,7 @@
 version: '3.8'
 
-# Local Postgres aligned with .env.example.txt (avelis/avelis/avelis).
-# Room server is a separate Node process (tsx src/room/server.ts) — memory-only,
-# no DB. Start API + room via `npm run dev` / `npm start` after DB is healthy.
+# Local / staging topology: postgres + api + room.
+# Room is memory-only — no volume for room state.
 services:
   postgres:
     image: postgres:16-alpine
@@ -19,6 +18,48 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://avelis:avelis@postgres:5432/avelis
+      API_PORT: "3001"
+      JWT_SECRET: change-me-in-compose-not-for-prod
+      ROOM_SHARED_SECRET: change-me-room-secret-compose
+      KMS_PROVIDER: local
+      LOCAL_DEV_SIGNING_KEY: local-dev-signing-key-not-for-production-use
+      LOCAL_DEV_ENCRYPTION_KEY: local-dev-key-not-for-production-use
+      RETENTION_JOB_INTERVAL_MINUTES: "15"
+      TRUST_PROXY: "true"
+      LOG_REQUEST_BODIES: "false"
+      LOG_WEBSOCKET_PAYLOADS: "false"
+      SESSION_REPLAY_ENABLED: "false"
+      PRODUCT_ANALYTICS_ENABLED: "false"
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  room:
+    build:
+      context: .
+      dockerfile: Dockerfile.room
+    environment:
+      NODE_ENV: production
+      ROOM_PORT: "3002"
+      ROOM_SHARED_SECRET: change-me-room-secret-compose
+      ROOM_SWAP_DISABLED: "true"
+      ROOM_MESSAGE_MAX_BYTES: "8192"
+      LOG_WEBSOCKET_PAYLOADS: "false"
+    ports:
+      - "3002:3002"
+    mem_limit: 512m
+    depends_on:
+      - api
 
 volumes:
   postgres_data:
