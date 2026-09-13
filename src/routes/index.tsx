@@ -293,8 +293,9 @@ function Index() {
             <p className="principle__code">01</p>
             <h3 className="principle__title">The room has no file</h3>
             <p className="principle__body">
-              Speech lives in RAM while the session is open. Closing destroys the live room. Late
-              joiners have no history. A destruction receipt is the proof.
+              Speech lives in RAM while the session is open. A private turn is a real caucus — plenary
+              pauses, quotes do not return. Optional voice is browser-to-browser; Avelis does not hear
+              it. Closing destroys the live room. A destruction receipt is the proof.
             </p>
           </article>
           <article className="principle">

@@ -33,16 +33,31 @@ interface CaucusView {
   members: Presence[];
 }
 
+interface ClockView {
+  minutes: number;
+  endsAt: number;
+  elapsed: boolean;
+}
+
+interface SignalPacket {
+  from: string;
+  data: unknown;
+}
+
 interface RoomContextType {
   messages: Message[];
   whispers: Whisper[];
   processMove: ProcessMove | null;
   presence: Presence[];
   caucus: CaucusView;
+  clock: ClockView | null;
+  signals: SignalPacket[];
   sendMessage: (text: string) => void;
   invokeAgent: (prompt?: string) => void;
   openCaucus: (partyId: string) => void;
   closeCaucus: (processFact?: string) => void;
+  setClock: (minutes: number | null) => void;
+  sendSignal: (to: string, data: unknown) => void;
   isConnected: boolean;
   isFacilitator: boolean;
   identityClass: string;
@@ -79,6 +94,8 @@ export function RoomProvider({
   const [processMove, setProcessMove] = useState<ProcessMove | null>(null);
   const [presence, setPresence] = useState<Presence[]>([]);
   const [caucus, setCaucus] = useState<CaucusView>({ open: false, youAreIn: false, members: [] });
+  const [clock, setClockView] = useState<ClockView | null>(null);
+  const [signals, setSignals] = useState<SignalPacket[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const isFacilitator = identityClass === 'facilitator';
@@ -115,6 +132,11 @@ export function RoomProvider({
         youAreIn?: boolean;
         members?: Presence[];
         parties?: Presence[];
+        minutes?: number | null;
+        endsAt?: number | null;
+        elapsed?: boolean;
+        from?: string;
+        data?: unknown;
         message?: Message & { identityClass?: string; technique?: string };
       };
       try {
@@ -123,6 +145,18 @@ export function RoomProvider({
         return;
       }
       if (data.type === 'history') {
+        return;
+      }
+      if (data.type === 'clock_state') {
+        if (typeof data.endsAt === 'number' && typeof data.minutes === 'number') {
+          setClockView({ minutes: data.minutes, endsAt: data.endsAt, elapsed: Boolean(data.elapsed) });
+        } else {
+          setClockView(null);
+        }
+        return;
+      }
+      if (data.type === 'signal' && typeof data.from === 'string') {
+        setSignals((prev) => [...prev.slice(-24), { from: data.from!, data: data.data }]);
         return;
       }
       if (data.type === 'presence' && Array.isArray(data.parties)) {
@@ -231,6 +265,20 @@ export function RoomProvider({
     }
   };
 
+  const setClock = (minutes: number | null) => {
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'clock_set', minutes }));
+    }
+  };
+
+  const sendSignal = (to: string, data: unknown) => {
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'signal', to, data }));
+    }
+  };
+
   return (
     <RoomContext.Provider
       value={{
@@ -239,10 +287,14 @@ export function RoomProvider({
         processMove,
         presence,
         caucus,
+        clock,
+        signals,
         sendMessage,
         invokeAgent,
         openCaucus,
         closeCaucus,
+        setClock,
+        sendSignal,
         isConnected,
         isFacilitator,
         identityClass,
