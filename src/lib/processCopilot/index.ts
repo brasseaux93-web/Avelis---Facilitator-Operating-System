@@ -9,7 +9,7 @@ export { assertSpeechFree } from './firewall';
 export { runPlaybook, inferStage, buildMinuteOutline } from './playbook';
 export { buildSnapshot, applyProcessMarkPayloads } from './snapshot';
 export { mergeModelOutput, readModelConfig, copilotStatus, dialogueWithModel } from './model';
-export { AGENT_RULES, looksLikeSpeechPaste, SPEECH_REFUSAL, LEGAL_REFUSAL } from './rules';
+export { AGENT_RULES, AGENT_ROOM_RULES, looksLikeSpeechPaste, SPEECH_REFUSAL, LEGAL_REFUSAL } from './rules';
 export type { CopilotResult, CopilotAction, ProcessSnapshot, ProcessStage } from './types';
 export type { DialogueResult } from './model';
 

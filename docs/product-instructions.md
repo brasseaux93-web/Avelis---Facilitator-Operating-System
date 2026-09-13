@@ -4,11 +4,11 @@
 
 ## 1. Product definition
 
-Avelis is a facilitator operating system for a bounded session in which participants need live text and optional audio without creating a stored transcript.
+Avelis is a facilitator operating system for **AI conflict resolution in private rooms**: a bounded session where participants need live text, a visible conflict agent, and no stored transcript.
 
 Avelis stores a limited record of **process**. It does not store the conversation.
 
-The product object is a session. A session has a beginning, an active room, a close, a retention deadline, and destruction.
+The product object is a session. A session has a beginning, an active room, a conflict agent, a close, a retention deadline, and destruction.
 
 ## 2. Governing promise
 
@@ -18,7 +18,7 @@ Avelis must preserve all of the following:
 2. No transcript is created.
 3. Audio is not recorded.
 4. The ledger contains only closed-vocabulary process facts.
-5. No model writes, summarizes, interprets, or classifies ledger content. A facilitator-only process copilot may rank next closed-vocabulary actions from process facts; the facilitator confirms every line.
+5. No model writes ledger lines. A visible conflict agent may see a rolling RAM window of the live room while it is open and may speak process questions. A facilitator-only process copilot may rank closed-vocabulary actions from process facts. The facilitator confirms every ledger line.
 6. Participant identity is session-scoped and represented by a chosen identity class, not a profile.
 7. Retained session data is destroyed at the selected retention deadline.
 8. A destruction receipt is the only indefinite session-derived record.
@@ -36,7 +36,7 @@ Speech includes:
 - Sentiment, intent, emotional state, credibility, preference, or risk inferences derived from speech
 - Machine-generated descriptions or classifications of speech
 
-Speech exists only in connected clients' volatile memory and the active room server's volatile memory long enough to deliver it.
+Speech exists only in connected clients' volatile memory and the active room server's volatile memory long enough to deliver it. A rolling window of that same RAM may be sent to a configured inference provider for the conflict agent while the room is open. That path is disclosed to every party before they speak. It is not a transcript, not scrollback, and not stored by Avelis.
 
 Speech must not be written to:
 
@@ -52,7 +52,7 @@ Speech must not be written to:
 - Search indexes
 - Test fixtures
 - Support tools
-- Third-party integrations
+- Third-party integrations, except the disclosed, session-scoped conflict-agent inference path in §12
 
 ## 4. Process ledger
 
@@ -195,37 +195,35 @@ The interface must not use:
 
 See the Visual System for implementation guidance.
 
-## 12. Process copilot rule
+## 12. Conflict agent and process copilot
 
-Speech, audio, room text, captions, quotes, and paraphrases of party speech must not be sent to any model.
+Avelis may run a **visible conflict agent** in the live room.
 
-A process copilot may exist as a facilitator-only, non-authoritative aid.
+The agent:
 
-Avelis must not:
+- Is disclosed to every party before they speak
+- May receive a rolling RAM window of room text while the room is open
+- Speaks as identity class `avelis`
+- May whisper process notes to the facilitator only
+- Must not write ledger lines, minutes, or destruction receipts
+- Must follow `docs/agent-rules.md`
+- Forgets the window when the room is torn down
 
-- Summarize a room
+Avelis still must not:
+
+- Persist a transcript
 - Transcribe audio
 - Generate ledger lines
-- Assess sentiment, toxicity, agreement of persons, disagreement of persons, risk of persons, or intent
+- Assess sentiment, toxicity, or risk of persons as a stored score
 - Draft a joint minute from session speech
-- Classify parties
-- Analyze participant behavior
-- Send speech or session speech content to a model provider
+- Classify parties as profiles
+- Train on session speech
 
-Avelis may:
+A facilitator-only process copilot may still rank closed-vocabulary actions from a speech-free process snapshot.
 
-- Rank next closed-vocabulary process actions from a speech-free process snapshot
-- Hold a facilitator-only process dialogue on typed questions (not party speech)
-- Offer generic process questions for the facilitator (not quotes of parties)
-- Propose a joint-minute outline from items already marked agreed, parked, or refused
-- Rephrase facilitator-authored agenda labels or minute outlines on explicit request
-- Use a deterministic playbook always; use a configured model (including Groq or any OpenAI-compatible backend) only against a speech-free snapshot and the agent rules
+Prompts and completions are memory-only: not logged by Avelis, not stored, not used for training by Avelis. The inference vendor (for example Groq) is a processor for the live window only. Parties must be told that inference is in the path.
 
-The copilot must not append ledger lines, publish minutes, or close sessions. The facilitator confirms every action through existing APIs. Prompts and completions are memory-only: not logged, not stored, not used for training by Avelis. Facilitator–copilot turns are not retained after the tab closes.
-
-Agent conduct is defined in `docs/agent-rules.md` and must remain legally cautious: no privilege claims, no legal advice, no settlement amounts, no therapy language.
-
-This rule applies to first-party, third-party, embedded, hosted, local, and future model systems: none of them may receive speech.
+This rule applies to first-party, third-party, embedded, hosted, local, and future model systems.
 
 ## 13. Data residency and encryption
 
@@ -245,16 +243,16 @@ Avelis must:
 
 When requirements conflict, apply this order:
 
-1. Speech non-persistence
-2. No transcript or recording
+1. No stored transcript or recording
+2. Disclosed inference only; no silent listening
 3. Retention and destruction guarantee
 4. Closed process-ledger boundary
 5. Host-scoped isolation
 6. Session-scoped identity
-7. MVP scope discipline
+7. Agent legal/tactical rules
 8. Interface convenience
 
-Convenience never overrides the speech boundary.
+Convenience never creates an undelete path for speech.
 
 ## 15. Review requirement
 
@@ -279,6 +277,7 @@ If the answer to any question is uncertain, the change must not proceed until re
 | 2026-09-12 | Security audit data is separate from the process ledger and minimized by default | Accepted |
 | 2026-09-13 | Facilitator process copilot (ledger-only) accepted; speech-to-model remains forbidden | Accepted |
 | 2026-09-13 | Agent rules + facilitator process dialogue; Groq as optional inference backend | Accepted |
+| 2026-09-13 | Visible conflict agent in the live room; disclosed RAM window to inference; still no stored transcript | Accepted |
 
 ## 17. Amendment process
 

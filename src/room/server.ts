@@ -21,6 +21,7 @@ import {
   type WebSocketLike,
 } from './memory';
 import { createRoomControlServer } from './control';
+import { askedForAvelis, invokeAvelis, rememberTurn, scheduleCoach } from './conflictAgent';
 
 export {
   teardownRoom,
@@ -132,10 +133,15 @@ export function createRoomServer(port = PORT): WebSocketServer {
     addParty(sessionId, socket, { partyId, identityClass });
 
     ws.on('message', (data) => {
-      let parsed: { type?: string; text?: string };
+      let parsed: { type?: string; text?: string; prompt?: string };
       try {
         parsed = JSON.parse(data.toString());
       } catch {
+        return;
+      }
+
+      if (parsed?.type === 'agent_invoke' && identityClass === 'facilitator') {
+        void invokeAvelis(sessionId, parsed.prompt);
         return;
       }
 
@@ -164,6 +170,17 @@ export function createRoomServer(port = PORT): WebSocketServer {
           timestamp: Date.now(),
         },
       });
+
+      rememberTurn(sessionId, {
+        speaker: identityClass === 'facilitator' ? 'facilitator' : 'party',
+        identityClass,
+        text,
+      });
+      if (askedForAvelis(text) || (identityClass === 'facilitator' && /^\s*\/avelis\b/i.test(text))) {
+        void invokeAvelis(sessionId, text);
+      } else {
+        scheduleCoach(sessionId);
+      }
     });
 
     ws.on('close', () => {

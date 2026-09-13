@@ -16,6 +16,7 @@ const LABELS: Record<string, string> = {
   unnamed: 'Unnamed',
   facilitator: 'Facilitator',
   Host: 'Facilitator',
+  avelis: 'Avelis',
 };
 
 export function identityClassLabel(value: string | null | undefined): string {
