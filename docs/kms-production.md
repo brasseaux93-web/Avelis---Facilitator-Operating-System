@@ -1,8 +1,11 @@
 # Production KMS
 
-The local stub is a development object. Production boot refuses it.
+The local stub is a development object. Production boot refuses it, and refuses
+placeholder `LOCAL_DEV_*` / JWT / room secrets.
 
-Required:
+Required — pick one:
+
+AWS:
 
 ```
 NODE_ENV=production
@@ -12,9 +15,16 @@ AWS_KMS_KEY_ID=arn:...
 AWS_KMS_SIGNING_KEY_ID=arn:...
 ```
 
-Credentials come from the task role / instance profile. Do not embed long-lived
-keys. `assertProductionKms()` runs at API boot. If any of the above is missing,
-the process exits.
+Vault Transit:
 
-This is the operational boundary. Speech still never enters KMS — only process
-keys and destruction signatures do.
+```
+NODE_ENV=production
+KMS_PROVIDER=vault
+VAULT_ADDR=https://vault.example
+VAULT_TOKEN=...
+VAULT_TRANSIT_KEY=avelis
+```
+
+`GET /api/health/security` reports provider and isolation. It never returns secret values.
+
+`assertProductionKms()` runs at API boot. Speech still never enters KMS — only process keys and destruction signatures do.

@@ -19,7 +19,7 @@ import {
   sanitizeRequestId,
 } from '../lib/observability';
 import { db } from '../db/index';
-import { assertProductionKms } from '../lib/kms';
+import { assertProductionKms, securityHealthSnapshot } from '../lib/kms';
 
 const app = express();
 
@@ -60,6 +60,11 @@ const PORT = Number(process.env.API_PORT || process.env.PORT || 3001);
 /** Liveness - process is up. */
 app.get('/healthz', (_req, res) => {
   res.status(200).json({ ok: true });
+});
+
+/** Key management + isolation posture. Never returns secret values. */
+app.get('/api/health/security', (_req, res) => {
+  res.status(200).json(securityHealthSnapshot());
 });
 
 /** Readiness - database ping. */

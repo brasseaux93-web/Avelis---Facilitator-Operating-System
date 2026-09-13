@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import './sessions.css';
 import { useFacilitatorAuth } from '../lib/FacilitatorAuthContext';
 import { downloadPdfBytes, renderMinutePdfBytes } from '../lib/minutePdf';
+import { renderReceiptPdfBytes } from '../lib/receiptPdf';
 import { apiGet, apiPatch, apiPost } from '../lib/apiClient';
 import { IDENTITY_CLASS_OPTIONS, identityClassLabel } from '../lib/identityLabels';
 import { ProcessAgent, type CopilotAction, type CopilotState } from '../components/ProcessAgent';
@@ -338,6 +339,7 @@ function SessionConsolePage() {
       });
       downloadPdfBytes(bytes, 'avelis-joint-minute.pdf');
       await apiPost('/api/sessions/' + sessionId + '/minute/export-ack', { format: 'pdf' });
+      setExportMd(null);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not export joint minute.');
@@ -791,6 +793,7 @@ function SessionConsolePage() {
               <p className="sessions-empty__body">Could not load destruction receipt.</p>
             </div>
           ) : (
+            <>
             <dl className="receipt-dl">
               <dt>Purged at</dt>
               <dd>{new Date(receipt.purgedAt).toISOString()}</dd>
@@ -811,6 +814,28 @@ function SessionConsolePage() {
               <dt>Verify</dt>
               <dd>{receiptValid == null ? '…' : receiptValid ? 'valid' : 'invalid'}</dd>
             </dl>
+            <div className="sessions-actions">
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => {
+                  const bytes = renderReceiptPdfBytes({
+                    sessionId,
+                    purgedAt: new Date(receipt.purgedAt).toISOString(),
+                    retentionWindow: receipt.retentionWindow,
+                    bodiesDestroyed: receipt.bodiesDestroyed,
+                    finalSequenceNumber: receipt.finalSequenceNumber,
+                    ledgerRootHash: receipt.ledgerRootHash,
+                    destructionManifestDigest: receipt.destructionManifestDigest,
+                    valid: receiptValid,
+                  });
+                  downloadPdfBytes(bytes, 'avelis-destruction-receipt.pdf');
+                }}
+              >
+                Download receipt PDF
+              </button>
+            </div>
+            </>
           )}
         </div>
       )}

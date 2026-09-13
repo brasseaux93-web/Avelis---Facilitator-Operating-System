@@ -12,8 +12,6 @@ import { getKms, resetKmsForTests } from '../../src/lib/encryption';
 import { verifyDestructionReceipt } from '../../src/server/destructionWorker';
 import { resolveSecurityAuditRetentionHours } from '../../src/lib/securityAudit';
 
-const hasDb = Boolean(process.env.DATABASE_URL);
-
 describe('MVP lifecycle path (API-level / pure)', () => {
   beforeAll(() => {
     process.env.KMS_PROVIDER = 'local';
@@ -74,13 +72,4 @@ describe('MVP lifecycle path (API-level / pure)', () => {
   test('security audit retention policy matches env docs', () => {
     expect(resolveSecurityAuditRetentionHours({ SECURITY_AUDIT_RETENTION_HOURS: '720' })).toBe(720);
   });
-
-  test.runIf(hasDb)(
-    'live DATABASE_URL stack: create->invite->join->agenda->minute->close->purge',
-    async () => {
-      // Optional live path - operators set DATABASE_URL + seed facilitator.
-      // Kept as a skippable gate so CI without Postgres still greens the pure path.
-      expect(hasDb).toBe(true);
-    }
-  );
 });
