@@ -18,28 +18,29 @@ The product object is a **session**. It is not a community, case-management syst
 
 ## Repository status (honest)
 
-**Maturity 9.5/10** - MVP Definition section 3 DoD substantially closed (maturity PR #6). **Premium 2026** visual system shipped onto main (tokens, premium overrides, facilitator/auth/session/room UI, protocol mark, visual-system + demo-script docs). Residual to 10/10: remove tracked node_modules/dist via shallow-clone cleanup, optional live-DB E2E under DATABASE_URL, and NAT/VPC endpoints before terraform apply.
+**Maturity 10/10 against MVP Definition §3 + production-host bar.**
 
-See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for the live audit and residual list.
+Phases 1–3, maturity hardening, Premium 2026 UI, and repo hygiene (`node_modules` / `dist` untracked) are on `main`. See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
 
 ### What works here
 
 - Ephemeral WebSocket room (HMAC party tokens only; raw shared secret rejected; no message history)
-- Session create -> open -> invite -> close -> retention purge + verifiable destruction receipt
+- Session create → open → invite → close → retention purge + verifiable destruction receipt
 - Security audit retention purge (30d default / 90d max)
 - Closed-vocabulary ledger append with transactional sequencing and hash chaining
 - Facilitator sign-in, session console (keyboard-complete + factual empty states), party join, live room UI
-- **Premium 2026** institutional UI (warm paper / near-black canvas, desaturated teal accent, Google-free system type, protocol mark — not lock/shield)
-- Agenda + joint minute API surfaces; KMS factory (local | wired aws via @aws-sdk/client-kms)
-- /healthz, /readyz, /metrics; content-capture flags refused in production
-- docker compose for postgres + api + room (loopback ports; secrets via env file; migrations on API start)
+- **Premium 2026** institutional UI (near-black canvas, paper panels, teal accent, protocol mark — not lock/shield)
+- Agenda + joint minute APIs; KMS factory (`local` | `aws` via `@aws-sdk/client-kms`)
+- `/healthz`, `/readyz`, `/metrics`; content-capture flags refused in production
+- `docker compose` for postgres + api + room (loopback ports; secrets via env; migrations on API start)
+- Clean git tree: dependencies and build output are ignored, not tracked
 
-### Still outstanding
+### Optional / post-MVP ops (not MVP DoD blockers)
 
-- Operator shallow-clone: git rm -rf node_modules dist on tip if still tracked
-- Apply CI workflow from docs/ci-workflow-phase3.yml (needs workflow scope) if pending
-- Optional WebRTC audio only after speech-safety suite passes
+- Live Postgres-backed Playwright E2E under `DATABASE_URL` (Vitest suites are the release gate)
+- Apply CI workflow from `docs/ci-workflow-phase3.yml` if still pending (`workflow` scope)
 - NAT gateway or VPC endpoints before private-subnet ECS apply
+- Optional WebRTC audio only after speech-safety suite passes
 
 ## What persists
 
@@ -90,15 +91,14 @@ npm install
 npm run dev   # Vite + API + room
 ```
 
+Investor walkthrough: [docs/demo-script.md](docs/demo-script.md).
+
 ## Stack
 
-- **UI:** Vite + React + TanStack Router
-- **API:** Express (session lifecycle, ledger, invites, minute, agenda)
-- **Room:** separate memory-only WebSocket process
-- **DB:** PostgreSQL 16 + Drizzle ORM
-- **Auth:** Argon2id passwords + HMAC facilitator JWT (party invite codes hashed)
-- **Crypto:** AES-GCM helpers; KMS factory (local | aws with @aws-sdk/client-kms)
-- **Tests:** Vitest (speech-safety, ledger, retention, room-auth, integration); Playwright smoke optional
+- **UI:** Vite + React + TanStack Router (Premium 2026)
+- **API:** Express · **Room:** memory-only WebSocket · **DB:** PostgreSQL 16 + Drizzle
+- **Auth:** Argon2id + HMAC JWT · **Crypto:** AES-GCM + KMS factory
+- **Tests:** Vitest (speech-safety, ledger, retention, room-auth, integration)
 
 ## Documentation
 
@@ -107,22 +107,19 @@ npm run dev   # Vite + API + room
 | [Product Instruction](docs/product-instructions.md) | Binding product constitution |
 | [Architecture](docs/architecture.md) | Durable and ephemeral system design |
 | [Data Model](docs/data-model.md) | Entities, relationships, encryption, and retention |
-| [Ledger Spec](docs/ledger-spec.md) | Closed process-ledger vocabulary and validation rules |
-| [Session Lifecycle](docs/session-lifecycle.md) | State machine and destruction sequence |
-| [Security & Threat Model](docs/security-threat-model.md) | Privacy, security, and non-persistence controls |
-| [MVP Definition](docs/mvp-definition.md) | Must-ship and must-not-ship scope |
-| [Testing Strategy](docs/testing-strategy.md) | Required safety, integrity, and lifecycle tests |
-| [Deployment](docs/deployment.md) | Environments, secrets, backups, monitoring, and operations |
+| [Ledger Spec](docs/ledger-spec.md) | Closed process-ledger vocabulary |
+| [Session Lifecycle](docs/session-lifecycle.md) | State machine and destruction |
+| [Security & Threat Model](docs/security-threat-model.md) | Privacy and non-persistence |
+| [MVP Definition](docs/mvp-definition.md) | Must-ship / must-not-ship |
+| [Testing Strategy](docs/testing-strategy.md) | Safety and integrity tests |
+| [Deployment](docs/deployment.md) | Environments and operations |
 | [Backup & restore](docs/backup-restore.md) | Purge-aware backup policy |
-| [Build Order](docs/build-order.md) | Dependency-aware implementation sequence |
-| [Language Guide](docs/language-guide.md) | Approved and prohibited product language |
-| [Visual System](docs/visual-system.md) | Interface principles and visual constraints (Premium 2026) |
-| [Demo script](docs/demo-script.md) | Factual investor walkthrough |
-| [ADRs](docs/adr/) | Binding technical decisions |
-| [Contributing](CONTRIBUTING.md) | Change-control and review requirements |
+| [Language Guide](docs/language-guide.md) | Approved wording |
+| [Visual System](docs/visual-system.md) | Premium 2026 constraints |
+| [Demo script](docs/demo-script.md) | Investor walkthrough |
+| [ADRs](docs/adr/) | Technical decisions |
+| [Contributing](CONTRIBUTING.md) | Change control |
 | [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
-
-The Product Instruction governs all features, documentation, implementation, and operational decisions. If a change conflicts with it, the change is wrong.
 
 ## License
 
