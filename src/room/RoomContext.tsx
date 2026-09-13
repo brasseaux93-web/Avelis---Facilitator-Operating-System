@@ -8,6 +8,7 @@ interface Message {
   text: string;
   timestamp: number;
   technique?: string | null;
+  channel?: 'plenary' | 'caucus';
 }
 
 interface ProcessMove {
@@ -18,17 +19,34 @@ interface ProcessMove {
 interface Whisper {
   text: string;
   technique: string | null;
+  confirm: 'open_caucus' | 'close_caucus' | 'table_label' | null;
+}
+
+interface Presence {
+  partyId: string;
+  identityClass: string;
+}
+
+interface CaucusView {
+  open: boolean;
+  youAreIn: boolean;
+  members: Presence[];
 }
 
 interface RoomContextType {
   messages: Message[];
   whispers: Whisper[];
   processMove: ProcessMove | null;
+  presence: Presence[];
+  caucus: CaucusView;
   sendMessage: (text: string) => void;
   invokeAgent: (prompt?: string) => void;
+  openCaucus: (partyId: string) => void;
+  closeCaucus: (processFact?: string) => void;
   isConnected: boolean;
   isFacilitator: boolean;
   identityClass: string;
+  partyId: string;
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
@@ -59,6 +77,8 @@ export function RoomProvider({
   const [messages, setMessages] = useState<Message[]>([]);
   const [whispers, setWhispers] = useState<Whisper[]>([]);
   const [processMove, setProcessMove] = useState<ProcessMove | null>(null);
+  const [presence, setPresence] = useState<Presence[]>([]);
+  const [caucus, setCaucus] = useState<CaucusView>({ open: false, youAreIn: false, members: [] });
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const isFacilitator = identityClass === 'facilitator';
@@ -79,6 +99,8 @@ export function RoomProvider({
       setMessages([]);
       setWhispers([]);
       setProcessMove(null);
+      setPresence([]);
+      setCaucus({ open: false, youAreIn: false, members: [] });
     };
 
     socket.onmessage = (event) => {
@@ -87,6 +109,12 @@ export function RoomProvider({
         text?: string;
         technique?: string | null;
         label?: string | null;
+        confirm?: Whisper['confirm'];
+        channel?: 'plenary' | 'caucus';
+        open?: boolean;
+        youAreIn?: boolean;
+        members?: Presence[];
+        parties?: Presence[];
         message?: Message & { identityClass?: string; technique?: string };
       };
       try {
@@ -95,6 +123,21 @@ export function RoomProvider({
         return;
       }
       if (data.type === 'history') {
+        return;
+      }
+      if (data.type === 'presence' && Array.isArray(data.parties)) {
+        setPresence(data.parties);
+        return;
+      }
+      if (data.type === 'caucus_state') {
+        setCaucus({
+          open: Boolean(data.open),
+          youAreIn: Boolean(data.youAreIn),
+          members: Array.isArray(data.members) ? data.members : [],
+        });
+        if (!data.open) {
+          setMessages((prev) => prev.filter((m) => m.channel !== 'caucus'));
+        }
         return;
       }
       if (data.type === 'process_state' && typeof data.technique === 'string' && data.technique) {
@@ -107,7 +150,24 @@ export function RoomProvider({
       if (data.type === 'agent_whisper' && typeof data.text === 'string') {
         setWhispers((prev) => [
           ...prev.slice(-7),
-          { text: data.text!, technique: data.technique || null },
+          {
+            text: data.text!,
+            technique: data.technique || null,
+            confirm: data.confirm || null,
+          },
+        ]);
+        return;
+      }
+      if (data.type === 'notice' && typeof data.text === 'string') {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `notice-${Date.now()}`,
+            senderClass: 'notice',
+            text: data.text!,
+            timestamp: Date.now(),
+            channel: data.channel || 'plenary',
+          },
         ]);
         return;
       }
@@ -121,6 +181,7 @@ export function RoomProvider({
             text: msg.text,
             timestamp: msg.timestamp || Date.now(),
             technique: msg.technique || null,
+            channel: data.channel || msg.channel || 'plenary',
           },
         ]);
       } else if (data.type === 'room_closed') {
@@ -137,6 +198,8 @@ export function RoomProvider({
       setMessages([]);
       setWhispers([]);
       setProcessMove(null);
+      setPresence([]);
+      setCaucus({ open: false, youAreIn: false, members: [] });
     };
   }, [sessionId, partyId, roomToken, identityClass]);
 
@@ -154,17 +217,36 @@ export function RoomProvider({
     }
   };
 
+  const openCaucus = (memberId: string) => {
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'caucus_open', partyId: memberId }));
+    }
+  };
+
+  const closeCaucus = (processFact?: string) => {
+    const socket = socketRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'caucus_close', processFact: processFact || '' }));
+    }
+  };
+
   return (
     <RoomContext.Provider
       value={{
         messages,
         whispers,
         processMove,
+        presence,
+        caucus,
         sendMessage,
         invokeAgent,
+        openCaucus,
+        closeCaucus,
         isConnected,
         isFacilitator,
         identityClass,
+        partyId,
       }}
     >
       {children}

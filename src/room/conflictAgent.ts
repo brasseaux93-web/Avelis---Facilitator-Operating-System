@@ -2,15 +2,18 @@
  * Session-bound conflict agent. Lives only in room RAM.
  * A rolling window may be sent to the configured inference provider while
  * the room is open. Nothing here is written to Postgres, disk, or logs.
+ * Caucus windows are separate from plenary and die when the private turn ends.
  */
 
 import crypto from 'node:crypto';
-import { broadcast, broadcastWhere, onRoomTeardown } from './memory';
+import { broadcastWhere, onRoomTeardown } from './memory';
+import { deliver, getCaucus, isCaucusOpen, type Channel } from './caucus';
 import { readModelConfig, type ModelConfig } from '../lib/processCopilot/model';
 import { AGENT_ROOM_RULES } from '../lib/processCopilot/rules';
 import {
   TECHNIQUE_PROMPT,
   TECHNIQUES,
+  confirmForMove,
   selectTechnique,
   type TechniqueId,
   type TechniqueMove,
@@ -29,34 +32,54 @@ const AUTO_SPEAK_EVERY = 4;
 const windows = new Map<string, AgentTurn[]>();
 const humanCounts = new Map<string, number>();
 const pending = new Map<string, ReturnType<typeof setTimeout>>();
+const opened = new Set<string>();
+
+function windowKey(sessionId: string, channel: Channel): string {
+  return channel === 'caucus' ? `${sessionId}#caucus` : sessionId;
+}
+
+function activeChannel(sessionId: string): Channel {
+  return isCaucusOpen(sessionId) ? 'caucus' : 'plenary';
+}
 
 export function forgetSession(sessionId: string): void {
   windows.delete(sessionId);
+  windows.delete(`${sessionId}#caucus`);
   humanCounts.delete(sessionId);
+  humanCounts.delete(`${sessionId}#caucus`);
+  opened.delete(sessionId);
   const t = pending.get(sessionId);
   if (t) clearTimeout(t);
   pending.delete(sessionId);
 }
 
-export function rememberTurn(sessionId: string, turn: AgentTurn): AgentTurn[] {
+export function forgetCaucusWindow(sessionId: string): void {
+  windows.delete(`${sessionId}#caucus`);
+  humanCounts.delete(`${sessionId}#caucus`);
+}
+
+export function rememberTurn(sessionId: string, turn: AgentTurn, channel?: Channel): AgentTurn[] {
+  const ch = channel || activeChannel(sessionId);
+  const key = windowKey(sessionId, ch);
   const text = turn.text.trim().slice(0, MAX_TEXT);
-  if (!text) return windows.get(sessionId) || [];
-  const list = windows.get(sessionId) || [];
+  if (!text) return windows.get(key) || [];
+  const list = windows.get(key) || [];
   list.push({ ...turn, text });
   while (list.length > MAX_TURNS) list.shift();
-  windows.set(sessionId, list);
+  windows.set(key, list);
   if (turn.speaker !== 'avelis') {
-    humanCounts.set(sessionId, (humanCounts.get(sessionId) || 0) + 1);
+    humanCounts.set(key, (humanCounts.get(key) || 0) + 1);
   }
   return list;
 }
 
-export function sessionWindow(sessionId: string): AgentTurn[] {
-  return [...(windows.get(sessionId) || [])];
+export function sessionWindow(sessionId: string, channel?: Channel): AgentTurn[] {
+  const key = windowKey(sessionId, channel || activeChannel(sessionId));
+  return [...(windows.get(key) || [])];
 }
 
-function playbookReply(turns: AgentTurn[]): TechniqueMove {
-  return selectTechnique({ turns });
+function playbookReply(turns: AgentTurn[], caucusOpen: boolean): TechniqueMove {
+  return selectTechnique({ turns, caucusOpen });
 }
 
 async function complete(
@@ -116,8 +139,9 @@ export async function adviseRoom(
   intent: 'coach' | 'speak',
   fetchImpl: typeof fetch = fetch
 ): Promise<{ whisper: string; speak: string | null; source: 'model' | 'playbook'; technique: TechniqueId }> {
-  const turns = sessionWindow(sessionId);
-  const fallback = playbookReply(turns);
+  const channel = activeChannel(sessionId);
+  const turns = sessionWindow(sessionId, channel);
+  const fallback = playbookReply(turns, channel === 'caucus');
   const cfg = readModelConfig();
   if (!cfg) {
     return {
@@ -132,6 +156,7 @@ export async function adviseRoom(
       cfg,
       JSON.stringify({
         intent,
+        channel,
         suggested: fallback.id,
         turns: turns.map((t) => ({ speaker: t.speaker, identityClass: t.identityClass, text: t.text })),
       }),
@@ -166,15 +191,16 @@ export async function adviseRoom(
 export function publishAvelis(sessionId: string, text: string, technique?: TechniqueId): void {
   const line = text.trim();
   if (!line) return;
-  rememberTurn(sessionId, { speaker: 'avelis', identityClass: 'avelis', text: line });
+  const channel = activeChannel(sessionId);
+  rememberTurn(sessionId, { speaker: 'avelis', identityClass: 'avelis', text: line }, channel);
   const move = technique ? TECHNIQUES[technique] : null;
-  broadcast(sessionId, {
+  deliver(sessionId, channel, {
     type: 'process_state',
     technique: technique || null,
     label: move?.label || null,
     timestamp: Date.now(),
   });
-  broadcast(sessionId, {
+  deliver(sessionId, channel, {
     type: 'message',
     message: {
       id: crypto.randomUUID(),
@@ -190,9 +216,16 @@ export function publishAvelis(sessionId: string, text: string, technique?: Techn
 export function whisperFacilitator(sessionId: string, text: string, technique?: TechniqueId): void {
   const line = text.trim();
   if (!line) return;
+  const caucusOpen = Boolean(getCaucus(sessionId));
   broadcastWhere(
     sessionId,
-    { type: 'agent_whisper', text: line, technique: technique || null, timestamp: Date.now() },
+    {
+      type: 'agent_whisper',
+      text: line,
+      technique: technique || null,
+      confirm: confirmForMove(technique || null, caucusOpen),
+      timestamp: Date.now(),
+    },
     (meta) => meta.identityClass === 'facilitator'
   );
 }
@@ -210,7 +243,8 @@ export function scheduleCoach(sessionId: string): void {
 }
 
 async function runCoach(sessionId: string): Promise<void> {
-  const humans = humanCounts.get(sessionId) || 0;
+  const channel = activeChannel(sessionId);
+  const humans = humanCounts.get(windowKey(sessionId, channel)) || 0;
   const intent = humans > 0 && humans % AUTO_SPEAK_EVERY === 0 ? 'speak' : 'coach';
   const result = await adviseRoom(sessionId, intent);
   whisperFacilitator(sessionId, result.whisper, result.technique);
@@ -234,6 +268,16 @@ export async function invokeAvelis(
   const result = await adviseRoom(sessionId, 'speak');
   whisperFacilitator(sessionId, result.whisper, result.technique);
   if (result.speak) publishAvelis(sessionId, result.speak, result.technique);
+}
+
+/** First party in plenary: name the room. Idempotent. */
+export function openChamber(sessionId: string): boolean {
+  if (opened.has(sessionId)) return false;
+  opened.add(sessionId);
+  const move = TECHNIQUES.ground_rules;
+  whisperFacilitator(sessionId, move.whisper, move.id);
+  publishAvelis(sessionId, move.speak, move.id);
+  return true;
 }
 
 export function askedForAvelis(text: string): boolean {

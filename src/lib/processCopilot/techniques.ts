@@ -215,3 +215,13 @@ export function selectTechnique(input: TechniqueInput): TechniqueMove {
 export const TECHNIQUE_PROMPT = `You must pick one technique id from: ${TECHNIQUE_IDS.join(', ')}.
 Return JSON only: {"technique":"id","whisper":"string","speak":"string or null"}
 whisper = facilitator only. speak = optional room line. Follow the named move.`;
+
+export type ConfirmKind = 'open_caucus' | 'close_caucus' | 'table_label' | null;
+
+/** What the facilitator can confirm from a whisper without leaving the room. */
+export function confirmForMove(id: TechniqueId | null, caucusOpen: boolean): ConfirmKind {
+  if (caucusOpen) return 'close_caucus';
+  if (id === 'caucus_shuttle') return 'open_caucus';
+  if (id === 'frame_label' || id === 'interest_map') return 'table_label';
+  return null;
+}

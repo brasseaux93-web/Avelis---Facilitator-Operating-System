@@ -17,13 +17,23 @@ import { copilotStatus } from '../lib/processCopilot';
 import {
   addParty,
   removeParty,
-  broadcast,
-  teardownRoom,
   ensureRoom,
   type WebSocketLike,
 } from './memory';
 import { createRoomControlServer } from './control';
-import { askedForAvelis, invokeAvelis, rememberTurn, scheduleCoach } from './conflictAgent';
+import { askedForAvelis, invokeAvelis, openChamber, rememberTurn, scheduleCoach, forgetCaucusWindow, publishAvelis, whisperFacilitator } from './conflictAgent';
+import {
+  closeCaucus,
+  deliver,
+  emitPresence,
+  getCaucus,
+  inCaucus,
+  isCaucusOpen,
+  notifyCaucusState,
+  openCaucus,
+  sanitizeProcessFact,
+} from './caucus';
+import { TECHNIQUES } from '../lib/processCopilot/techniques';
 
 export {
   teardownRoom,
@@ -133,9 +143,14 @@ export function createRoomServer(port = PORT): WebSocketServer {
 
     ensureRoom(sessionId);
     addParty(sessionId, socket, { partyId, identityClass });
+    emitPresence(sessionId);
+    notifyCaucusState(sessionId);
+    if (identityClass !== 'facilitator') {
+      openChamber(sessionId);
+    }
 
     ws.on('message', (data) => {
-      let parsed: { type?: string; text?: string; prompt?: string };
+      let parsed: { type?: string; text?: string; prompt?: string; partyId?: string; processFact?: string };
       try {
         parsed = JSON.parse(data.toString());
       } catch {
@@ -144,6 +159,46 @@ export function createRoomServer(port = PORT): WebSocketServer {
 
       if (parsed?.type === 'agent_invoke') {
         void invokeAvelis(sessionId, parsed.prompt, identityClass === 'facilitator' ? 'facilitator' : 'party');
+        return;
+      }
+
+      if (parsed?.type === 'caucus_open' && identityClass === 'facilitator' && typeof parsed.partyId === 'string') {
+        const opened = openCaucus(sessionId, parsed.partyId);
+        if (!opened) return;
+        notifyCaucusState(sessionId);
+        deliver(sessionId, 'plenary', {
+          type: 'notice',
+          text: 'A private turn is open. Plenary is paused. Talk there does not return as quotes.',
+          timestamp: Date.now(),
+        });
+        deliver(sessionId, 'caucus', {
+          type: 'notice',
+          text: 'Private turn. This talk is not stored. Process facts may return; quotes will not.',
+          timestamp: Date.now(),
+        });
+        whisperFacilitator(sessionId, TECHNIQUES.caucus_shuttle.whisper, 'caucus_shuttle');
+        publishAvelis(
+          sessionId,
+          'Private turn. I am here and you can see me. This talk stays here. What does a workable outcome have to do, for you?',
+          'open_interests'
+        );
+        return;
+      }
+
+      if (parsed?.type === 'caucus_close' && identityClass === 'facilitator') {
+        if (!getCaucus(sessionId)) return;
+        const fact =
+          typeof parsed.processFact === 'string' && parsed.processFact.trim()
+            ? sanitizeProcessFact(parsed.processFact)
+            : null;
+        closeCaucus(sessionId);
+        forgetCaucusWindow(sessionId);
+        notifyCaucusState(sessionId);
+        deliver(sessionId, 'plenary', {
+          type: 'notice',
+          text: fact ? `Private turn closed. Process fact: ${fact}.` : 'Private turn closed. Plenary continues.',
+          timestamp: Date.now(),
+        });
         return;
       }
 
@@ -162,7 +217,28 @@ export function createRoomServer(port = PORT): WebSocketServer {
         return;
       }
 
-      broadcast(sessionId, {
+      const caucusOpen = isCaucusOpen(sessionId);
+      const senderIn = inCaucus(sessionId, { partyId, identityClass });
+
+      if (caucusOpen && identityClass !== 'facilitator' && !senderIn) {
+        try {
+          ws.send(
+            JSON.stringify({
+              type: 'notice',
+              channel: 'plenary',
+              text: 'Plenary is paused while a private turn is open.',
+              timestamp: Date.now(),
+            })
+          );
+        } catch {
+          // ignore
+        }
+        return;
+      }
+
+      const channel = caucusOpen && senderIn ? 'caucus' : 'plenary';
+
+      deliver(sessionId, channel, {
         type: 'message',
         message: {
           id: crypto.randomUUID(),
@@ -173,11 +249,15 @@ export function createRoomServer(port = PORT): WebSocketServer {
         },
       });
 
-      rememberTurn(sessionId, {
-        speaker: identityClass === 'facilitator' ? 'facilitator' : 'party',
-        identityClass,
-        text,
-      });
+      rememberTurn(
+        sessionId,
+        {
+          speaker: identityClass === 'facilitator' ? 'facilitator' : 'party',
+          identityClass,
+          text,
+        },
+        channel
+      );
       if (askedForAvelis(text) || (identityClass === 'facilitator' && /^\s*\/avelis\b/i.test(text))) {
         void invokeAvelis(sessionId, text);
       } else {
@@ -187,6 +267,7 @@ export function createRoomServer(port = PORT): WebSocketServer {
 
     ws.on('close', () => {
       removeParty(sessionId, socket);
+      emitPresence(sessionId);
     });
   });
 

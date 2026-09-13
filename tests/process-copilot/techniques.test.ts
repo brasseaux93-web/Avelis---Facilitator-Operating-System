@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { detectLooping, selectTechnique } from '../../src/lib/processCopilot/techniques';
+import { detectLooping, selectTechnique, confirmForMove } from '../../src/lib/processCopilot/techniques';
 
 describe('mediation techniques', () => {
   test('empty room names the room', () => {
@@ -65,5 +65,11 @@ describe('mediation techniques', () => {
       ],
     });
     expect(move.id).toBe('objective_criteria');
+  });
+
+  test('whisper confirm maps shuttle to a private turn', () => {
+    expect(confirmForMove('caucus_shuttle', false)).toBe('open_caucus');
+    expect(confirmForMove('frame_label', false)).toBe('table_label');
+    expect(confirmForMove('open_interests', true)).toBe('close_caucus');
   });
 });

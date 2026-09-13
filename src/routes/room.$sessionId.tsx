@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useRouterState } from '@tanstack/react-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './sessions.css';
 import { RoomProvider, useRoom } from '../room/RoomContext';
 import { identityClassLabel } from '../lib/identityLabels';
 import { TECHNIQUES, type TechniqueId } from '../lib/processCopilot/techniques';
 import { ProtocolMark } from '../components/Logo';
 import { setPartyViewToken } from './party';
+import { apiPost } from '../lib/apiClient';
 
 export const Route = createFileRoute('/room/$sessionId')({
   component: RoomPage,
@@ -19,34 +20,87 @@ type JoinState = {
 };
 
 function RoomInner() {
+  const { sessionId } = Route.useParams();
   const {
     messages,
     whispers,
     processMove,
+    presence,
+    caucus,
     sendMessage,
     invokeAgent,
+    openCaucus,
+    closeCaucus,
     isConnected,
     isFacilitator,
     identityClass,
+    partyId,
   } = useRoom();
   const [text, setText] = useState('');
+  const [label, setLabel] = useState('');
+  const [fact, setFact] = useState('');
   const feedRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const inPrivateTurn = caucus.open && caucus.youAreIn;
+  const plenaryPaused = caucus.open && !caucus.youAreIn;
+
+  const feed = useMemo(() => {
+    if (inPrivateTurn) {
+      return messages.filter((m) => m.channel === 'caucus' || m.senderClass === 'notice');
+    }
+    return messages.filter((m) => m.channel !== 'caucus');
+  }, [messages, inPrivateTurn]);
+
+  const others = presence.filter((p) => p.identityClass !== 'facilitator' && p.partyId !== partyId);
 
   useEffect(() => {
     const el = feedRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+  }, [feed]);
 
   useEffect(() => {
     inputRef.current?.focus();
-  }, [isConnected]);
+  }, [isConnected, inPrivateTurn]);
 
   const onSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || plenaryPaused) return;
     sendMessage(text.trim());
     setText('');
+  };
+
+  const recordCaucusLedger = async (action: 'open' | 'close') => {
+    try {
+      await apiPost('/api/sessions/' + sessionId + '/caucus', { action });
+      if (action === 'close') {
+        await apiPost('/api/sessions/' + sessionId + '/process-marks', { mark: 'return_to_plenary' });
+      }
+    } catch {
+      // Room is the source of truth. Ledger stamp is best-effort.
+    }
+  };
+
+  const tableLabel = async () => {
+    const title = label.trim().slice(0, 80);
+    if (!title) return;
+    try {
+      await apiPost('/api/sessions/' + sessionId + '/agenda', { title });
+      setLabel('');
+    } catch {
+      // remain in the room
+    }
+  };
+
+  const takeAside = async (id: string) => {
+    openCaucus(id);
+    await recordCaucusLedger('open');
+  };
+
+  const returnPlenary = async () => {
+    closeCaucus(fact);
+    setFact('');
+    await recordCaucusLedger('close');
   };
 
   const moveLabel =
@@ -54,14 +108,25 @@ function RoomInner() {
     (processMove?.technique && TECHNIQUES[processMove.technique as TechniqueId]?.label) ||
     null;
 
+  const pageClass =
+    'room-page room-page--conflict' +
+    (inPrivateTurn ? ' room-page--caucus' : '') +
+    (plenaryPaused ? ' room-page--paused' : '');
+
   return (
-    <div className="room-page room-page--conflict">
+    <div className={pageClass}>
       <div className="room-page__main">
         <header className="room-chamber">
           <ProtocolMark className="room-chamber__mark" accent="currentColor" width="28" height="28" />
           <div>
-            <p className="sessions-page__eyebrow">Private room</p>
-            <h1 className="sessions-page__title">This conversation is not kept</h1>
+            <p className="sessions-page__eyebrow">{inPrivateTurn ? 'Private turn' : 'Private room'}</p>
+            <h1 className="sessions-page__title">
+              {inPrivateTurn
+                ? 'This talk stays here'
+                : plenaryPaused
+                  ? 'Plenary is paused'
+                  : 'This conversation is not kept'}
+            </h1>
           </div>
         </header>
 
@@ -72,19 +137,64 @@ function RoomInner() {
               aria-hidden="true"
             />
             {isConnected ? 'live' : 'disconnected'}
+            {inPrivateTurn ? ' · caucus' : ''}
           </span>
           <span>You appear as {identityClassLabel(identityClass)}</span>
           {isFacilitator && <Link to="/party">Process view</Link>}
         </div>
 
-        {moveLabel && (
+        {moveLabel && !plenaryPaused && (
           <p className="room-move" aria-live="polite">
             Current move · {moveLabel}
           </p>
         )}
 
+        {isFacilitator && others.length > 0 && !caucus.open && (
+          <div className="room-presence" aria-label="Take a private turn">
+            <p className="room-line__meta">Take a private turn with</p>
+            {others.map((p) => (
+              <button
+                key={p.partyId}
+                type="button"
+                className="room-chip"
+                onClick={() => void takeAside(p.partyId)}
+              >
+                {identityClassLabel(p.identityClass)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {isFacilitator && inPrivateTurn && (
+          <form
+            className="room-return"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void returnPlenary();
+            }}
+          >
+            <label htmlFor="process-fact">Return a process fact, not a quote</label>
+            <input
+              id="process-fact"
+              value={fact}
+              onChange={(e) => setFact(e.target.value)}
+              placeholder="One constraint a workable outcome has to satisfy"
+              maxLength={80}
+              autoComplete="off"
+            />
+            <button type="submit" className="btn btn--primary">
+              Return to plenary
+            </button>
+          </form>
+        )}
+
         <div className="room-feed" ref={feedRef} aria-live="polite" aria-label="Live room">
-          {messages.length === 0 ? (
+          {plenaryPaused ? (
+            <div className="room-feed__empty">
+              <p>A private turn is underway.</p>
+              <p>Plenary will resume. You will not hear that talk. You may hear a process fact.</p>
+            </div>
+          ) : feed.length === 0 ? (
             <div className="room-feed__empty">
               <p>Three facts, then the work.</p>
               <ol>
@@ -94,15 +204,21 @@ function RoomInner() {
               </ol>
             </div>
           ) : (
-            messages.map((m) => (
+            feed.map((m) => (
               <div
                 key={m.id}
-                className={'room-line' + (m.senderClass === 'avelis' ? ' room-line--avelis' : '')}
+                className={
+                  'room-line' +
+                  (m.senderClass === 'avelis' ? ' room-line--avelis' : '') +
+                  (m.senderClass === 'notice' ? ' room-line--notice' : '')
+                }
               >
                 <div className="room-line__meta">
                   {m.senderClass === 'avelis'
                     ? `Avelis${m.technique && TECHNIQUES[m.technique as TechniqueId] ? ` · ${TECHNIQUES[m.technique as TechniqueId].label}` : ''}`
-                    : identityClassLabel(m.senderClass)}
+                    : m.senderClass === 'notice'
+                      ? 'Process'
+                      : identityClassLabel(m.senderClass)}
                 </div>
                 <div className="room-line__text">{m.text}</div>
               </div>
@@ -115,12 +231,18 @@ function RoomInner() {
             ref={inputRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={isFacilitator ? 'Speak to the room' : 'Speak to the room'}
+            placeholder={
+              plenaryPaused
+                ? 'Plenary is paused'
+                : inPrivateTurn
+                  ? 'Speak in the private turn'
+                  : 'Speak to the room'
+            }
             aria-label="Message"
-            disabled={!isConnected}
+            disabled={!isConnected || plenaryPaused}
             autoComplete="off"
           />
-          <button type="submit" className="btn btn--primary" disabled={!isConnected}>
+          <button type="submit" className="btn btn--primary" disabled={!isConnected || plenaryPaused}>
             Send
           </button>
           <button
@@ -130,7 +252,7 @@ function RoomInner() {
               invokeAgent(text.trim() || undefined);
               setText('');
             }}
-            disabled={!isConnected}
+            disabled={!isConnected || plenaryPaused}
           >
             Ask Avelis
           </button>
@@ -140,19 +262,51 @@ function RoomInner() {
       <aside className="room-agent" aria-label="Conflict agent">
         <p className="sessions-page__eyebrow">Avelis</p>
         <p className="room-agent__lede">
-          Visible conflict agent. Named mediation moves. Does not write the ledger. Not a lawyer.
+          {inPrivateTurn
+            ? 'Visible in this private turn. Talk here does not become a quote in plenary.'
+            : 'Visible conflict agent. Named mediation moves. Does not write the ledger. Not a lawyer.'}
         </p>
         {moveLabel && <p className="room-move room-move--rail">{moveLabel}</p>}
         {isFacilitator && whispers.length > 0 && (
           <div className="room-whispers">
             <p className="room-line__meta">Facilitator only</p>
             {whispers.map((w, i) => (
-              <p key={i} className="room-whisper">
+              <div key={i} className="room-whisper">
                 {w.technique && TECHNIQUES[w.technique as TechniqueId] && (
                   <span className="room-line__meta">{TECHNIQUES[w.technique as TechniqueId].label}</span>
                 )}
-                {w.text}
-              </p>
+                <p>{w.text}</p>
+                {w.confirm === 'open_caucus' && others[0] && !caucus.open && (
+                  <button type="button" className="btn btn--secondary" onClick={() => void takeAside(others[0]!.partyId)}>
+                    Take a private turn
+                  </button>
+                )}
+                {w.confirm === 'close_caucus' && inPrivateTurn && (
+                  <button type="button" className="btn btn--secondary" onClick={() => void returnPlenary()}>
+                    Return to plenary
+                  </button>
+                )}
+                {w.confirm === 'table_label' && (
+                  <form
+                    className="room-whisper__table"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void tableLabel();
+                    }}
+                  >
+                    <input
+                      value={label}
+                      onChange={(e) => setLabel(e.target.value)}
+                      placeholder="Process label, not a quote"
+                      maxLength={80}
+                      aria-label="Process label"
+                    />
+                    <button type="submit" className="btn btn--secondary" disabled={!label.trim()}>
+                      Table
+                    </button>
+                  </form>
+                )}
+              </div>
             ))}
           </div>
         )}
