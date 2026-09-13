@@ -1,18 +1,21 @@
 version: '3.8'
 
+# Local Postgres aligned with .env.example.txt (avelis/avelis/avelis).
+# Room server is a separate Node process (tsx src/room/server.ts) — memory-only,
+# no DB. Start API + room via `npm run dev` / `npm start` after DB is healthy.
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: avelis_admin
-      POSTGRES_PASSWORD: avelis_password
-      POSTGRES_DB: avelis_dev
+      POSTGRES_USER: avelis
+      POSTGRES_PASSWORD: avelis
+      POSTGRES_DB: avelis
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U avelis_admin -d avelis_dev"]
+      test: ["CMD-SHELL", "pg_isready -U avelis -d avelis"]
       interval: 5s
       timeout: 5s
       retries: 5
