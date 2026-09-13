@@ -13,4 +13,4 @@
 9. Deployment topology (api / room / postgres) + TLS notes
 10. Premium visual polish (separate pass)
 
-Do not ship AI interpretation, transcript features, or product analytics over session content.
+Do not ship speech-to-model interpretation, transcript features, or product analytics over session content.

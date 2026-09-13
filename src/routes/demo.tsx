@@ -71,7 +71,7 @@ function DemoPage() {
       <p className="sessions-page__eyebrow">Investor path</p>
       <h1 className="sessions-page__title">Demo</h1>
       <p className="sessions-disclosure" role="note">
-        Facilitator-facing walkthrough. No AI features. Room messages are delivered live and are
+        Facilitator-facing walkthrough. Room messages are delivered live and are
         not stored by Avelis. This page does not claim legal privilege or confidentiality beyond
         implemented technical controls.
       </p>
@@ -161,7 +161,7 @@ function DemoPage() {
           <li>Closing ends room access and destroys the live room. Messages cannot be recovered.</li>
           <li>The joint minute is optional. It is separate from the live room and may be exported or wiped.</li>
           <li>Session records were destroyed. The destruction receipt remains. (after purge)</li>
-          <li>v1 has no AI. Parties have no standing accounts.</li>
+          <li>The process copilot does not read the room. Parties have no standing accounts.</li>
         </ul>
         <p className="sessions-page__subtitle">
           Full script:{' '}

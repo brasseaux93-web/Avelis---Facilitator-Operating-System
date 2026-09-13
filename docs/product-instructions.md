@@ -18,7 +18,7 @@ Avelis must preserve all of the following:
 2. No transcript is created.
 3. Audio is not recorded.
 4. The ledger contains only closed-vocabulary process facts.
-5. No AI writes, summarizes, interprets, classifies, or recommends ledger content.
+5. No model writes, summarizes, interprets, or classifies ledger content. A facilitator-only process copilot may rank next closed-vocabulary actions from process facts; the facilitator confirms every line.
 6. Participant identity is session-scoped and represented by a chosen identity class, not a profile.
 7. Retained session data is destroyed at the selected retention deadline.
 8. A destruction receipt is the only indefinite session-derived record.
@@ -78,7 +78,7 @@ No line may contain unrestricted narrative text, speech, inference, delivery add
 
 The joint minute is an explicit and optional exception to the no-speech-persistence boundary.
 
-It may contain facilitator-authored substantive text intended for participant review. It is not a transcript and must not be generated from room content by a model.
+It may contain facilitator-authored substantive text intended for participant review. It is not a transcript and must not be generated from room content by a model. A process copilot may propose an outline from already-marked agenda facts; the facilitator authors the minute.
 
 The joint minute:
 
@@ -130,7 +130,8 @@ Avelis defaults to:
 - No participant analytics
 - No room telemetry retained per party
 - No recording
-- No AI
+- No speech-to-model path
+- Optional facilitator process copilot (ledger-only; off the speech path)
 - No third-party session-content integrations
 - No durable browser cache for room content
 - No social or cross-session features
@@ -155,10 +156,11 @@ The MVP includes:
 - Retention enforcement
 - Tamper-evident ledger verification
 - Destruction receipt
+- Facilitator process copilot (ledger-only context; never writes the ledger)
 
 The MVP excludes:
 
-- AI of every kind
+- Speech-to-model paths, transcription, room summarization, or sentiment
 - Persistent participant accounts
 - Mobile native applications
 - Third-party platform integrations
@@ -193,23 +195,33 @@ The interface must not use:
 
 See the Visual System for implementation guidance.
 
-## 12. No AI rule
+## 12. Process copilot rule
 
-No model may be placed in the critical path or offered as a product feature.
+Speech, audio, room text, captions, quotes, and paraphrases of party speech must not be sent to any model.
+
+A process copilot may exist as a facilitator-only, non-authoritative aid.
 
 Avelis must not:
 
 - Summarize a room
 - Transcribe audio
 - Generate ledger lines
-- Suggest process marks
-- Assess sentiment, toxicity, agreement, disagreement, risk, or intent
+- Assess sentiment, toxicity, agreement of persons, disagreement of persons, risk of persons, or intent
 - Draft a joint minute from session speech
 - Classify parties
 - Analyze participant behavior
-- Send speech or session content to a model provider
+- Send speech or session speech content to a model provider
 
-This prohibition applies to first-party, third-party, embedded, hosted, local, and future model systems.
+Avelis may:
+
+- Rank next closed-vocabulary process actions from a speech-free process snapshot
+- Offer generic process questions for the facilitator (not quotes of parties)
+- Propose a joint-minute outline from items already marked agreed, parked, or refused
+- Use a deterministic playbook always; use a configured model only to rank and phrase the same snapshot
+
+The copilot must not append ledger lines, publish minutes, or close sessions. The facilitator confirms every action through existing APIs. Prompts and completions are memory-only: not logged, not stored, not used for training by Avelis.
+
+This rule applies to first-party, third-party, embedded, hosted, local, and future model systems: none of them may receive speech.
 
 ## 13. Data residency and encryption
 
@@ -248,7 +260,7 @@ Every proposed change must answer:
 2. Does it create a participant profile, behavioral record, or cross-session graph?
 3. Does it broaden the ledger beyond the closed vocabulary?
 4. Does it change retention, destruction, encryption, or access semantics?
-5. Does it introduce an AI, analytics, integration, or recovery path?
+5. Does it introduce a speech-to-model path, analytics, integration, or recovery path?
 6. Does it require an amendment or ADR?
 
 If the answer to any question is uncertain, the change must not proceed until reviewed.
@@ -261,6 +273,7 @@ If the answer to any question is uncertain, the change must not proceed until re
 | 2026-09-12 | Ledger integrity through sequence ordering, hash chaining, and signed roots is MVP scope | Accepted |
 | 2026-09-12 | Identity class becomes immutable at party join; retention becomes immutable at session open | Accepted |
 | 2026-09-12 | Security audit data is separate from the process ledger and minimized by default | Accepted |
+| 2026-09-13 | Facilitator process copilot (ledger-only) accepted; speech-to-model remains forbidden | Accepted |
 
 ## 17. Amendment process
 

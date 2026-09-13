@@ -197,7 +197,7 @@ A destruction receipt must not contain ledger payloads, minute content, party co
 | Caucus content | Never persisted |
 | Party profile | Does not exist |
 | Cross-session party directory | Does not exist |
-| AI output | Does not exist in product data |
+| Process copilot snapshot | Memory-only; never persisted. Ledger facts only. |
 | File attachment body | Not supported in MVP |
 | Participant analytics | Not collected |
 | Device, IP, browser, or location history | Not included in process ledger |

@@ -97,7 +97,7 @@ function Index() {
               <span className="hero__ioa-header">Process accountability // Speech non-persistence</span>
               <p className="hero__ioa-text">
                 Designed for facilitators who need live conversation without a stored transcript, plus a durable record of process actions only.
-                v1 has no AI and no model writes ledger lines.
+                The process copilot does not read the room. No model writes ledger lines.
               </p>
               <div className="hero__ioa-badges">
                 <span className="hero__ioa-badge">L1 Speech is Ephemeral</span>
@@ -306,8 +306,8 @@ function Index() {
             <p className="principle__code">L3 — The facilitator authors the ledger</p>
             <h3 className="principle__title">No model writes a ledger line</h3>
             <p className="principle__desc">
-              v1 has no AI. No model writes, summarizes, interprets, or proposes ledger lines.
-              The facilitator authors every process line.
+              A process copilot may rank next process actions from the ledger. It does not read the
+              room. The facilitator confirms every line.
             </p>
           </article>
 
@@ -421,7 +421,7 @@ function Index() {
               <svg className="commitment__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" />
               </svg>
-              <p className="commitment__text"><strong>v1 has no AI.</strong> No model training on Avelis content. No model writes ledger lines.</p>
+              <p className="commitment__text"><strong>No model writes the ledger.</strong> The process copilot does not read the room. No training on Avelis content.</p>
             </li>
             <li className="commitment">
               <svg className="commitment__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
