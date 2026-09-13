@@ -215,11 +215,15 @@ Avelis must not:
 Avelis may:
 
 - Rank next closed-vocabulary process actions from a speech-free process snapshot
+- Hold a facilitator-only process dialogue on typed questions (not party speech)
 - Offer generic process questions for the facilitator (not quotes of parties)
 - Propose a joint-minute outline from items already marked agreed, parked, or refused
-- Use a deterministic playbook always; use a configured model only to rank and phrase the same snapshot
+- Rephrase facilitator-authored agenda labels or minute outlines on explicit request
+- Use a deterministic playbook always; use a configured model (including Groq or any OpenAI-compatible backend) only against a speech-free snapshot and the agent rules
 
-The copilot must not append ledger lines, publish minutes, or close sessions. The facilitator confirms every action through existing APIs. Prompts and completions are memory-only: not logged, not stored, not used for training by Avelis.
+The copilot must not append ledger lines, publish minutes, or close sessions. The facilitator confirms every action through existing APIs. Prompts and completions are memory-only: not logged, not stored, not used for training by Avelis. Facilitator–copilot turns are not retained after the tab closes.
+
+Agent conduct is defined in `docs/agent-rules.md` and must remain legally cautious: no privilege claims, no legal advice, no settlement amounts, no therapy language.
 
 This rule applies to first-party, third-party, embedded, hosted, local, and future model systems: none of them may receive speech.
 
@@ -274,6 +278,7 @@ If the answer to any question is uncertain, the change must not proceed until re
 | 2026-09-12 | Identity class becomes immutable at party join; retention becomes immutable at session open | Accepted |
 | 2026-09-12 | Security audit data is separate from the process ledger and minimized by default | Accepted |
 | 2026-09-13 | Facilitator process copilot (ledger-only) accepted; speech-to-model remains forbidden | Accepted |
+| 2026-09-13 | Agent rules + facilitator process dialogue; Groq as optional inference backend | Accepted |
 
 ## 17. Amendment process
 

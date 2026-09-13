@@ -32,6 +32,7 @@ Use language that:
 | Remove party visibility | Withdraw from party view |
 | Technical failure | Could not complete [action] |
 | Process aid | Process copilot |
+| Copilot turn | Ask a process question |
 | Non-persistence disclosure | Room messages are not stored |
 
 ## 3. Forbidden vocabulary
