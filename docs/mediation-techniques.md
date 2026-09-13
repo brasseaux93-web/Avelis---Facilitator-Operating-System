@@ -52,6 +52,8 @@ Fisher, Ury, Patton, and the Harvard Negotiation Project treat negotiation as se
 
 The four *Getting to Yes* methods, in order Avelis actually uses them: people vs problem → interests not positions → invent options → independent standard. Jujitsu is `ask_why` plus refusing to counter-position. The one-text procedure is `single_text`.
 
+Teaching cases (facilitator / copilot only, never lectured into the room): [principled-cases.md](./principled-cases.md).
+
 ## How selection works
 
 Deterministic first (always). Groq may rephrase the same move; it may not invent a new class of move.
