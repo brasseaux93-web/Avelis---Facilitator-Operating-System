@@ -22,6 +22,8 @@ The product object is a **session**. It is not a community, case-management syst
 
 Phases 1–3, maturity hardening, Premium 2026 UI, and repo hygiene (`node_modules` / `dist` untracked) are on `main`. See [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
 
+**Pre-test max-value cluster:** demo one-click path (`/demo`), invite resend/revoke/deliver, Playwright lifecycle E2E, destruction receipt + party ledger/minute UI — see branch notes in PRODUCTION_READINESS.
+
 ### What works here
 
 - Ephemeral WebSocket room (HMAC party tokens only; raw shared secret rejected; no message history)
@@ -34,10 +36,13 @@ Phases 1–3, maturity hardening, Premium 2026 UI, and repo hygiene (`node_modul
 - `/healthz`, `/readyz`, `/metrics`; content-capture flags refused in production
 - `docker compose` for postgres + api + room (loopback ports; secrets via env; migrations on API start)
 - Clean git tree: dependencies and build output are ignored, not tracked
+- **Demo** `/demo` + `ENABLE_DEMO_SEED` prepare API (dev/demo only)
+- Invite deliver/resend/revoke; party `/party` ledger + minute initial
+- Playwright `npm run test:e2e` (see [docs/e2e.md](docs/e2e.md))
 
 ### Optional / post-MVP ops (not MVP DoD blockers)
 
-- Live Postgres-backed Playwright E2E under `DATABASE_URL` (Vitest suites are the release gate)
+- Live Postgres-backed Playwright E2E under `E2E_BASE_URL` / compose (Vitest suites remain the release gate)
 - Apply CI workflow from `docs/ci-workflow-phase3.yml` if still pending (`workflow` scope)
 - NAT gateway or VPC endpoints before private-subnet ECS apply
 - Optional WebRTC audio only after speech-safety suite passes
@@ -87,18 +92,20 @@ Dev without full compose (Postgres required):
 
 ```bash
 cp .env.example.txt .env
+# ENABLE_DEMO_SEED=true  # optional investor path
 npm install
 npm run dev   # Vite + API + room
+# open /demo
 ```
 
-Investor walkthrough: [docs/demo-script.md](docs/demo-script.md).
+Investor walkthrough: [docs/demo-script.md](docs/demo-script.md). E2E: [docs/e2e.md](docs/e2e.md).
 
 ## Stack
 
 - **UI:** Vite + React + TanStack Router (Premium 2026)
 - **API:** Express · **Room:** memory-only WebSocket · **DB:** PostgreSQL 16 + Drizzle
 - **Auth:** Argon2id + HMAC JWT · **Crypto:** AES-GCM + KMS factory
-- **Tests:** Vitest (speech-safety, ledger, retention, room-auth, integration)
+- **Tests:** Vitest (speech-safety, ledger, retention, room-auth, integration) · Playwright E2E (optional)
 
 ## Documentation
 
@@ -117,6 +124,7 @@ Investor walkthrough: [docs/demo-script.md](docs/demo-script.md).
 | [Language Guide](docs/language-guide.md) | Approved wording |
 | [Visual System](docs/visual-system.md) | Premium 2026 constraints |
 | [Demo script](docs/demo-script.md) | Investor walkthrough |
+| [E2E](docs/e2e.md) | Playwright + compose |
 | [ADRs](docs/adr/) | Technical decisions |
 | [Contributing](CONTRIBUTING.md) | Change control |
 | [Production readiness](PRODUCTION_READINESS.md) | Live maturity audit |
