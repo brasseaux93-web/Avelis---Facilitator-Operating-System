@@ -3,13 +3,15 @@ import React, { useEffect, useState } from 'react';
 import { LogoLockup } from '../components/Logo';
 import '../../base.css';
 import '../../style.css';
+import '../styles/tokens.css';
+import '../styles/premium-overrides.css';
 
 export const Route = createRootRoute({
   component: RootLayout,
 });
 
 function RootLayout() {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -20,8 +22,10 @@ function RootLayout() {
   };
 
   useEffect(() => {
-    // Determine initial theme based on system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      setTheme('light');
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
       setTheme('dark');
       document.documentElement.setAttribute('data-theme', 'dark');
     }
@@ -32,10 +36,7 @@ function RootLayout() {
       setIsScrolled(window.scrollY > 8);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Check initial scroll position
     handleScroll();
-    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -56,7 +57,6 @@ function RootLayout() {
       <div className="ambient-bg" aria-hidden="true"></div>
       <a href="#main" className="skip-link">Skip to main content</a>
 
-      {/* Header */}
       <header className={`header ${isScrolled ? 'header--scrolled' : ''}`} id="header">
         <div className="container header__inner">
           <Link to="/" className="logo" aria-label="Avelis home" onClick={closeNav}>
@@ -64,10 +64,10 @@ function RootLayout() {
           </Link>
 
           <nav className="nav" aria-label="Primary navigation">
-            <button 
-              className="nav-toggle" 
-              aria-expanded={isNavOpen} 
-              aria-controls="nav-list" 
+            <button
+              className="nav-toggle"
+              aria-expanded={isNavOpen}
+              aria-controls="nav-list"
               aria-label="Toggle navigation menu"
               onClick={() => setIsNavOpen(!isNavOpen)}
             >
@@ -79,7 +79,7 @@ function RootLayout() {
               <li><a href="/#principles" className="nav__link" onClick={closeNav}>Principles</a></li>
               <li><a href="/#how-it-works" className="nav__link" onClick={closeNav}>Session Model</a></li>
               <li><a href="/#audience" className="nav__link" onClick={closeNav}>Who It's For</a></li>
-              <li><Link to="/auth" className="nav__link" onClick={closeNav}>Request Access</Link></li>
+              <li><Link to="/auth" className="nav__link" onClick={closeNav}>Sign in</Link></li>
             </ul>
           </nav>
 
@@ -96,7 +96,7 @@ function RootLayout() {
                 </svg>
               )}
             </button>
-            <Link to="/auth" className="btn btn--nav" onClick={closeNav}>Request Access</Link>
+            <Link to="/auth" className="btn btn--nav" onClick={closeNav}>Sign in</Link>
           </div>
         </div>
       </header>
