@@ -35,7 +35,7 @@ describe('mediation techniques', () => {
     expect(selectTechnique({ turns }).id).toBe('caucus_shuttle');
   });
 
-  test('demand expands options', () => {
+  test('demand asks why under the position', () => {
     const move = selectTechnique({
       turns: [
         { speaker: 'party', identityClass: 'named', text: 'We should talk about schedule.' },
@@ -44,6 +44,26 @@ describe('mediation techniques', () => {
         { speaker: 'party', identityClass: 'named', text: 'They must not change. We refuse.' },
       ],
     });
-    expect(move.id).toBe('expand_options');
+    expect(move.id).toBe('ask_why');
+  });
+
+  test('repeated demand invents options', () => {
+    const turns = Array.from({ length: 6 }, (_, i) => ({
+      speaker: 'party' as const,
+      identityClass: i % 2 ? 'named' : 'role_only',
+      text: i === 5 ? 'This is non-negotiable. We refuse.' : 'The schedule still has to work.',
+    }));
+    expect(selectTechnique({ turns }).id).toBe('expand_options');
+  });
+
+  test('fairness language asks for an independent standard', () => {
+    const move = selectTechnique({
+      turns: [
+        { speaker: 'party', identityClass: 'named', text: 'We need a process for hours.' },
+        { speaker: 'party', identityClass: 'role_only', text: 'A workable outcome has to keep coverage.' },
+        { speaker: 'party', identityClass: 'named', text: 'Then split it fifty-fifty. That is fair.' },
+      ],
+    });
+    expect(move.id).toBe('objective_criteria');
   });
 });

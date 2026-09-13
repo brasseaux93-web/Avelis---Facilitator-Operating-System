@@ -15,7 +15,10 @@ export const TECHNIQUE_IDS = [
   'separate_people',
   'turn_taking',
   'interest_map',
+  'ask_why',
   'expand_options',
+  'objective_criteria',
+  'yesable',
   'park_blocker',
   'caucus_shuttle',
   'pause',
@@ -76,12 +79,33 @@ export const TECHNIQUES: Record<TechniqueId, TechniqueMove> = {
     whisper: 'Each party names one constraint the outcome must satisfy. Not a position. Not a number.',
     speak: 'Each of you: one constraint a workable outcome has to satisfy. Not your position. We will hear both before anyone answers.',
   },
+  ask_why: {
+    id: 'ask_why',
+    label: 'Why under the position',
+    family: 'principled',
+    whisper: 'A demand is a position. Ask what it protects. Do not attack it. Do not offer a counter-number.',
+    speak: 'I heard a position. What does that protect — time, standing, safety, a relationship that has to survive this room? Answer that, not the demand.',
+  },
   expand_options: {
     id: 'expand_options',
     label: 'Invent options',
     family: 'principled',
     whisper: 'Generate options before anyone evaluates. One option each. No scoring.',
     speak: 'No evaluating yet. Each of you: one option that is not your opening position. We will look at them after both are on the table.',
+  },
+  objective_criteria: {
+    id: 'objective_criteria',
+    label: 'Independent standard',
+    family: 'principled',
+    whisper: 'When interests conflict, ask for a standard neither of them owns. You do not pick the number.',
+    speak: 'If the interests still collide: what standard, independent of either of you — a policy, a precedent, a published rule — would make this fair? I will not pick the number.',
+  },
+  yesable: {
+    id: 'yesable',
+    label: 'Yesable proposition',
+    family: 'principled',
+    whisper: 'Ask for the smallest yes the other person could give that you can live with. Not a concession race.',
+    speak: 'What is the smallest yes the other person could give that you can live with — and that they could defend tomorrow? One sentence.',
   },
   park_blocker: {
     id: 'park_blocker',
@@ -122,6 +146,8 @@ export const TECHNIQUES: Record<TechniqueId, TechniqueMove> = {
 
 const ACCUSATION = /\b(always|never|you people|your fault|liar|lying)\b/i;
 const DEMAND = /\b(must|refuse|won't|will not|non-negotiable)\b/i;
+const FAIRNESS = /\b(fair|unfair|policy|precedent|market|standard|fifty-fifty|split (it|this))\b/i;
+const CONDITIONAL = /\b(only if|if you|agree to|deal if|i(?:'?ll| will) if)\b/i;
 
 function tokens(text: string): Set<string> {
   return new Set(
@@ -160,6 +186,8 @@ export function selectTechnique(input: TechniqueInput): TechniqueMove {
   const looping = detectLooping(input.turns);
   const accused = last ? ACCUSATION.test(last.text) : false;
   const demanded = last ? DEMAND.test(last.text) : false;
+  const fairness = last ? FAIRNESS.test(last.text) : false;
+  const conditional = last ? CONDITIONAL.test(last.text) : false;
   const partyTurns = humans.filter((t) => t.speaker === 'party');
   const byClass = new Map<string, number>();
   for (const t of partyTurns) byClass.set(t.identityClass, (byClass.get(t.identityClass) || 0) + 1);
@@ -170,7 +198,10 @@ export function selectTechnique(input: TechniqueInput): TechniqueMove {
   if (partyTurns.length === 0) return TECHNIQUES.ground_rules;
   if (partyTurns.length <= 2) return TECHNIQUES.open_interests;
   if (accused) return TECHNIQUES.separate_people;
+  if (demanded && partyTurns.length <= 5) return TECHNIQUES.ask_why;
   if (demanded) return TECHNIQUES.expand_options;
+  if (conditional) return TECHNIQUES.yesable;
+  if (fairness) return TECHNIQUES.objective_criteria;
   if (airtimeSkew) return TECHNIQUES.turn_taking;
   if (looping && !input.caucusOpen) return TECHNIQUES.caucus_shuttle;
   if (looping) return TECHNIQUES.park_blocker;
