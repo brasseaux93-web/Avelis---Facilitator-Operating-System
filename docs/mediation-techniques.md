@@ -19,7 +19,7 @@ The live agent picks one named move from the rolling room window. The facilitato
 | Independent standard | Principled | A criterion neither party owns. Avelis does not pick the number. |
 | Yesable proposition | Principled | Smallest yes the other person could give that you can live with |
 | Park the blocker | Process | Parks the looping item; smaller item first |
-| Shuttle / caucus | Moore / shuttle diplomacy | Private turn; process facts return, not the talk |
+| Shuttle / caucus | Moore / shuttle diplomacy | Real RAM private turn. Plenary pauses. Process facts return; quotes do not. |
 | Pause | Process | Heat is a reason to stop, not to finish |
 | Process reality test | Facilitative | What must be on the minute before the room dies — not who would win in court |
 | Single text | Principled | One joint minute from marked-agreed labels |

@@ -209,6 +209,8 @@ The agent:
 - Must follow `docs/agent-rules.md`
 - Forgets the window when the room is torn down
 
+A **caucus** is a RAM-only private turn: facilitator plus chosen party. Plenary is paused. Caucus talk is never copied into plenary, never written, and is forgotten when the turn ends. The facilitator may return a process label (not a quote). The agent may sit in the caucus under the same disclosure.
+
 Avelis still must not:
 
 - Persist a transcript
@@ -278,6 +280,7 @@ If the answer to any question is uncertain, the change must not proceed until re
 | 2026-09-13 | Facilitator process copilot (ledger-only) accepted; speech-to-model remains forbidden | Accepted |
 | 2026-09-13 | Agent rules + facilitator process dialogue; Groq as optional inference backend | Accepted |
 | 2026-09-13 | Visible conflict agent in the live room; disclosed RAM window to inference; still no stored transcript | Accepted |
+| 2026-09-13 | RAM caucus: private turn, plenary paused, process facts return, quotes do not | Accepted |
 
 ## 17. Amendment process
 
